@@ -1,35 +1,304 @@
----
-layout: default
----
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Notes &amp; Essays — Mapix</title>
+  <meta name="description" content="关于 AI、系统演进与创造方式的思考随笔。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
 
-<div class="posts">
-  {% for post in paginator.posts %}
-  <div class="post">
-    <h1>
-      <a href="{{ post.url }}">
-        {{ post.title }}
-      </a>
-    </h1>
-    <span class="post-date">{{ post.date | date_to_string }}</span>
-    {{ post.content }}
-  </div>
-  {% endfor %}
-</div>
+      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
 
-<!-- Pagination links -->
-<div class="pagination">
-  {% if paginator.next_page %}
-    <a href="/page{{paginator.next_page}}" class="older">Older</a>
-  {% else %}
-    <span class="next">Older</span>
-  {% endif %}
-  {% if paginator.previous_page %}
-    {% if paginator.page == 2 %}
-      <a href="/" class="newer">Newer</a>
-    {% else %}
-      <a href="/page{{paginator.previous_page}}" class="newer">Newer</a>
-    {% endif %}
-  {% else %}
-    <span class="previous">Newer</span>
-  {% endif %}
-</div>
+      --measure: 740px;
+      --wrap: 1080px;
+    }
+
+    html[data-theme="dark"] {
+      --bg-paper: #141311;
+      --bg-elevated: #1d1b18;
+      --ink: #ece6dc;
+      --ink-secondary: #b8b0a4;
+      --ink-muted: #857d72;
+      --rule: #2e2a25;
+      --rule-strong: #ece6dc;
+      --accent: #e06d53;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 22px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 14px;
+    }
+    .site-nav a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+
+    main.index-wrap {
+      max-width: var(--measure);
+      margin: 0 auto;
+      padding: clamp(36px, 6vw, 68px) 24px 96px;
+    }
+
+    .masthead {
+      margin-bottom: 44px;
+      padding-bottom: 24px;
+      border-bottom: 1.5px solid var(--rule-strong);
+    }
+    .masthead h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(30px, 4vw, 42px);
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 0 0 10px;
+      letter-spacing: -0.01em;
+    }
+    .masthead p {
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      color: var(--ink-secondary);
+    }
+
+    .essay-list {
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+
+    article.essay-card {
+      padding-bottom: 48px;
+      border-bottom: 1px solid var(--rule);
+    }
+    article.essay-card:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .essay-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+    }
+    .essay-issue {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .essay-card h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(23px, 3vw, 30px);
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 0 0 14px;
+    }
+    .essay-card h2 a {
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .essay-card h2 a:hover {
+      color: var(--accent);
+    }
+
+    .essay-thumb {
+      display: block;
+      margin: 16px 0 18px;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+    }
+    .essay-thumb img {
+      display: block;
+      width: 100%;
+      height: auto;
+      transition: transform 0.35s ease;
+    }
+    .essay-thumb:hover img {
+      transform: scale(1.012);
+    }
+
+    .essay-excerpt {
+      margin: 0 0 16px;
+      color: var(--ink-secondary);
+      font-size: 17px;
+      line-height: 1.78;
+    }
+
+    .read-link {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    .read-link:hover {
+      color: var(--accent);
+    }
+
+    footer.site-footer {
+      max-width: var(--measure);
+      margin: 0 auto;
+      padding: 28px 24px 56px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="导航">
+      <a href="02-the-next-flat-world.html">#02 下一个 Flat 时代</a>
+      <a href="01-think-big-build-from-small.html">#01 Think Big &amp; Build from Small</a>
+      <button type="button" class="theme-btn" id="theme-toggle" title="切换明暗主题">
+        <span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="index-wrap">
+    <section class="masthead">
+      <h1>Notes &amp; Essays</h1>
+      <p>关于 AI、系统演进与创造方式的思考记录。</p>
+    </section>
+
+    <div class="essay-list">
+      <article class="essay-card">
+        <div class="essay-meta">
+          <span class="essay-issue">ESSAY #02</span>
+          <span>·</span>
+          <time datetime="2026-11-05">2026-11-05</time>
+          <span>·</span>
+          <span>6 分钟阅读</span>
+        </div>
+        <h2><a href="02-the-next-flat-world.html">下一个 Flat 时代</a></h2>
+        <a class="essay-thumb" href="02-the-next-flat-world.html">
+          <img src="assets/flat-world-horizon.png" alt="下一个 Flat 时代铜版画插图" width="1400" height="788">
+        </a>
+        <p class="essay-excerpt">
+          二十年前《世界是平的》打通的只是信息与连接的管道；站在 2026 年的今天，从微软与谷歌的自愿买断、漫过软硬件的许愿编程、逆向一切黑盒的 REA，直到被递归自我改进（RSI）淹没的 Taste，从想法到现实之间的一切中间层正在被彻底抹平。
+        </p>
+        <a class="read-link" href="02-the-next-flat-world.html">阅读全文 &rarr;</a>
+      </article>
+
+      <article class="essay-card">
+        <div class="essay-meta">
+          <span class="essay-issue">ESSAY #01</span>
+          <span>·</span>
+          <time datetime="2026-11-04">2026-11-04</time>
+          <span>·</span>
+          <span>7 分钟阅读</span>
+        </div>
+        <h2><a href="01-think-big-build-from-small.html">Think Big 与 Build from Small：和 AI 共事的两点体会</a></h2>
+        <a class="essay-thumb" href="01-think-big-build-from-small.html">
+          <img src="assets/modo_de_volar.jpg" alt="Francisco Goya, Modo de volar" width="1400" height="981">
+        </a>
+        <p class="essay-excerpt">
+          在模型能力每隔几周就会跃升一次的时代，单靠许大愿极易引发系统爆炸。我们需要用高度、深度和广度打开想象力去 Think Big，同时用边界极窄的大积木与微雕刻，像组装一台光刻机一样稳住脚步，去 Build from Small。
+        </p>
+        <a class="read-link" href="01-think-big-build-from-small.html">阅读全文 &rarr;</a>
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>&copy; 2026 Mapix</span>
+    <span>Published on GitHub Pages</span>
+  </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      if (saved === "dark" || saved === "light") {
+        root.setAttribute("data-theme", saved);
+        label.textContent = saved.toUpperCase();
+      }
+
+      btn.addEventListener("click", function () {
+        var current = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", current);
+        label.textContent = current.toUpperCase();
+        try { localStorage.setItem("blog.theme", current); } catch (e) {}
+      });
+    })();
+  </script>
+</body>
+</html>

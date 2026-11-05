@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Think Big 与 Build from Small：和 AI 共事的两点体会</title>
+  <meta name="description" content="最近和 AI 一起 cowork 最大的感受是两个点：一个是要 Think Big，另一个是 Build from Small。我更希望 AI 想更大的积木，在积木上做微雕刻，而落地的脚步要像组装一台光刻机。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+
+      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+
+      --measure: 660px;
+      --wrap: 1080px;
+    }
+
+    html[data-theme="dark"] {
+      --bg-paper: #141311;
+      --bg-elevated: #1d1b18;
+      --ink: #ece6dc;
+      --ink-secondary: #b8b0a4;
+      --ink-muted: #857d72;
+      --rule: #2e2a25;
+      --rule-strong: #ece6dc;
+      --accent: #e06d53;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.85;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: clip;
+    }
+
+    /* Reading progress strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--bg-paper);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+      transition: transform 0.2s ease;
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      height: 2px;
+      background: var(--ink);
+      width: 0%;
+    }
+
+    /* Top Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 22px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 14px;
+    }
+    .site-nav a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+    .theme-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Main Layout Grid */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 200px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Left Rail TOC */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 10px;
+      border-left: 1.5px solid transparent;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a.is-active {
+      color: var(--ink);
+      font-weight: 600;
+      border-left-color: var(--ink);
+    }
+
+    /* Article Header */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(28px, 3.8vw, 40px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 18px;
+      color: var(--ink);
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 32px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt {
+      color: var(--ink-muted);
+    }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose Content */
+    .post-content p {
+      margin: 0 0 1.4em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.8vw, 28px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.2em 0 0.75em;
+      color: var(--ink);
+      scroll-margin-top: 64px;
+    }
+    .post-content a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
+    }
+    .post-content a:hover {
+      color: var(--accent);
+    }
+    .post-content ul {
+      margin: 0 0 1.5em;
+      padding-left: 1.35em;
+    }
+    .post-content li {
+      margin-bottom: 0.6em;
+    }
+
+    .post-content blockquote {
+      margin: 1.6em 0;
+      padding: 16px 22px;
+      background: var(--bg-elevated);
+      border-left: 2.5px solid var(--ink);
+      font-size: 16.5px;
+      line-height: 1.75;
+      color: var(--ink-secondary);
+    }
+    .post-content blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Figures */
+    figure.editorial-figure {
+      margin: 2em -32px;
+    }
+    figure.editorial-figure.naturalist-plate {
+      margin: 1.8em 0;
+    }
+    figure.editorial-figure.naturalist-plate img {
+      background: #ffffff;
+      padding: 14px 18px;
+    }
+    @media (max-width: 760px) {
+      figure.editorial-figure {
+        margin: 1.6em 0;
+      }
+    }
+    figure.editorial-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--rule);
+    }
+    figure.editorial-figure figcaption {
+      margin-top: 10px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--ink-muted);
+    }
+
+    /* Post Series Nav */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--ink-muted);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm 18mm 20mm 18mm;
+    }
+
+    @media print {
+      :root {
+        --bg-paper: #ffffff;
+        --bg-elevated: #f5f2eb;
+      }
+      html, body {
+        background: #ffffff !important;
+        font-size: 11.5pt;
+        line-height: 1.75;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .reading-strip,
+      header.site-header,
+      aside.toc-rail {
+        display: none !important;
+      }
+      main.layout {
+        display: block;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      article.post {
+        max-width: 100%;
+      }
+      figure.editorial-figure {
+        margin: 1.4em 0;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .post-content blockquote {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .post-content h2 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">Think Big 与 Build from Small：和 AI 共事的两点体会</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="导航">
+      <a href="index.html">全部文章</a>
+      <a href="#think-big">高度、深度与广度</a>
+      <a href="#printing-and-carving">当许愿变成系统爆炸</a>
+      <a href="#lithography">积木与光刻机</a>
+      <button type="button" class="theme-btn" id="theme-toggle" title="切换明暗主题">
+        <span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="目录">
+      <ul class="toc-list" id="toc-list">
+        <li><a href="#intro" class="is-active">开篇</a></li>
+        <li><a href="#think-big">高度、深度与广度</a></li>
+        <li><a href="#printing-and-carving">当许愿变成系统爆炸</a></li>
+        <li><a href="#lithography">积木、微雕刻与光刻机</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1>Think Big 与 Build from Small：和 AI 共事的两点体会</h1>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-04">2026 年 11 月 4 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>7 分钟</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#01</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <figure class="editorial-figure" id="intro">
+          <img src="assets/modo_de_volar.jpg" alt="Francisco Goya, Modo de volar (A Way of Flying)" width="1400" height="981">
+          <figcaption>
+            Francisco Goya，《Modo de volar》（飞翔的方式，约 1816–1823）。
+          </figcaption>
+        </figure>
+
+        <p>最近和 AI 一起 cowork，我最大的感受可以归结为两点：一是要 <strong>Think Big</strong>，二是要 <strong>Build from Small</strong>。</p>
+
+        <p>我平时本来就是一个习惯 Think Big 的人。前阵子读到 Felix Rieseberg 写的 <a href="https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/" target="_blank" rel="noopener"><em>How to be more ambitious: A tutorial for humans with models</em></a>，非常有共鸣。他在 Anthropic 负责 Claude 和 Cowork，每天都能看到别人用模型做出他没想过的事——有业余天文爱好者用它辅助找出了新的系外行星，有人做出了真正耐看的音乐短片，陶哲轩也在聊“数学 2.0”。</p>
+
+        <p>模型的能力长得很不均衡，借用陶哲轩的话说，“在某些方向上令人惊叹，在另一些方向上又捉襟见肘”。有的人已经摸透了那些惊人的部分，飞得很高；但大多数时候，人们面对模型，日常还是停留在问“法国的首都是哪里”，或者“帮我把这封邮件改得客气一点”。</p>
+
+        <p>每次看到别人做出惊艳的东西，大家转发时最爱写一句“还是不够有野心”。这句感慨很容易发，真要做到 Think Big，却需要具体的方法和心理上的破障。</p>
+
+        <h2 id="think-big">高度、深度与广度</h2>
+
+        <p>Felix 把和模型共事时的野心拆成了四个维度：速度（Speed）、高度（Altitude）、深度（Depth）和广度（Range）。“速度”是指用更少的时间干完同样的活，这当然有价值，但不太需要想象力。真正能让事情发生质变的，是后面三个维度。</p>
+
+        <p><strong>高度（Altitude）</strong>是往上走一层抽象，少盯眼前的单次任务，多想最终要的结果。平时我们给模型交代一个具体任务，那个任务往往只是为了拿到最终结果而自己拆出来的中间步骤。往上走一层，就是多问一句：接下来希望发生什么？目标背后的目标又是什么？</p>
+
+        <p>Felix 拿他自己的经历举过例子：去年年初他还会把单次报错丢给 Claude 去修，后来他的要求直接变成了“让应用保持零故障”。一旦目标拉高到这一层，工作方式就得跟着变——他得先让模型能自己拉取故障报告、看懂每次改动前后的关联，再给模型配好不同系统的运行环境，让它能自己复现和验证。</p>
+
+        <p>日常里的事情同样可以这样一层层往上推。比如准备一份季度复盘（QBR）的演示稿，最常规的做法是把数据丢给模型填模板；往高处走一步，可以把能拿到的所有业务数据都交给它，让它理出这个季度发生了什么变化、原因是什么、眼下最紧迫的三个决定是什么，以及每个方向的利弊；再往高处想一步，季度复盘本身只是人类处理不了海量信息时的产物，它的真正目的是尽早发现问题、调配资源。那完全可以让模型设计一套比季度汇报更灵敏的预警机制，拿历史数据跑一遍，验证它确实能更早抓住问题，再跟现有流程并行跑起来。</p>
+
+        <p><strong>深度（Depth）</strong>则是往下深挖一层，像那个领域最顶尖的专家那样去干活，直接去碰最原始的数据、工具和问题。</p>
+
+        <p>比如同样是分析用户流失问题，有几个把任务往深处推的办法非常管用：</p>
+
+        <ul>
+          <li><strong>坚持使用行业里最好的工具：</strong>只让模型“像专家一样思考”，它通常只会换一套专业的词藻，干活的方法并没有变。当它习惯性地想画张普通表格应付差事时，直接要求它上数据库和统计模型。使用者自己不需要精通这些工具，模型知道专家用什么。</li>
+          <li><strong>提一个苛刻的目标，并告诉它这很合理：</strong>原本想从 10 秒压到 5 秒，不妨直接要求 200 毫秒。模型觉得做不到时，告诉它这个问题一定有解，继续试。</li>
+          <li><strong>用原始数据验证既定印象：</strong>很多我们习以为常的判断只是粗糙的近似。可以把最原始的数据交给模型去反证：“大家都觉得流失是因为前期引导不好，试着从原始记录里看看能不能印证这件事。”</li>
+          <li><strong>顺便产出新认知：</strong>既然模型已经钻进数据里了，可以让它顺手找找盲区：“根据过去一年的记录做一个用户仿真，找出那个还没被注意到的最早期流失信号，并在未见过的数据上验证它的预测能力。”</li>
+          <li><strong>引入外部裁判：</strong>不要让模型自己评价自己。坚持引入外部验证，最好是一个模型能直接运行并立刻拿到客观反馈的工具。</li>
+        </ul>
+
+        <p>Felix 给过一段提示词模板，很适合用来把任务往深处推：</p>
+
+        <blockquote>
+          <p>我想要这个任务更深的版本，而不是更大的版本。在改写之前，请先说明：（1）这个领域的顶尖专家在这里会做哪些我没要求的事；（2）他们会从什么最原始的材料出发，而不是看已经整理好的摘要；（3）他们具体会用什么方法和工具；（4）除了你和我之外，什么客观结果能证明做对了。然后再按这个标准改写我的提示词。</p>
+        </blockquote>
+
+        <p><strong>广度（Range）</strong>是借用不同学科的视角来看同一件事。就像劫案电影开头总要花半小时把各路奇才凑齐一样，现在用多智能体引入跨学科视角已经非常方便。</p>
+
+        <p>这里可以用《创新的艺术》里的一个老办法：<strong>把名词换成动词</strong>。季度复盘不是“一份演示稿”，而是“让一群大忙人在 30 分钟内看清因果关系，并在不确定中做出决定”。一旦换成动词，就很容易看清该从哪些学科借力——除了数据分析师，还可以拉来记者、编辑、视觉设计师，甚至拉一个做空机构的研究员和法务会计来做“红队”挑刺。唯一要注意的是别掉进角色扮演的怪圈：不要让模型模仿做空者的腔调说话，而是让模型去做做空者调查问题时真正会做的事。</p>
+
+        <p>除了高度、深度和广度这些具体方法，阻碍人们去 Think Big 的往往还有一层心理门槛：我们太容易被“自己觉得什么事情可能做成”给限制住。米开朗基罗当年不想画西斯廷教堂的天顶画，理由是他觉得自己是个雕塑家，不是画家。</p>
+
+        <p>心理学里把这种现象叫作<strong>自我效能感（Self-efficacy）</strong>。洛克（Locke）和莱瑟姆（Latham）梳理了 35 年的目标设定研究，发现设定具体的高难度目标，人的表现反而远好于只要求“尽力而为”。回看历史，帮人跨过这层心理门槛的往往是三件事：</p>
+
+        <ul>
+          <li><strong>因为相信它有解而解开：</strong>1939 年，乔治·丹齐格（George Dantzig）在伯克利上统计课时迟到了，把黑板上的两道题当成课后作业抄回去解了出来，其实那是统计学界当时还没解开的两道公开难题。</li>
+          <li><strong>看到别人做到之后自己也做到了：</strong>人类追逐“4 分钟跑完 1 英里”追了几十年，直到 1954 年 5 月罗杰·班尼斯特（Roger Bannister）首次跑进 4 分钟；而在那之后仅仅 46 天，第二个人也破纪录了。今年 4 月的伦敦马拉松上也发生了类似的事，Sabastian Sawe 跑出了首个官方破两小时的成绩，同一场比赛的亚军也紧跟着跑进了两小时。</li>
+          <li><strong>卸下包袱反而发挥得更好：</strong>《网球的内心游戏》（<em>The Inner Game of Tennis</em>）的核心观点是，人太紧绷、太怕搞砸时，反而打不出好状态。就像当年 Linux 刚发布时，林纳斯也只是说“这只是个业余爱好，不会像 GNU 那样庞大而专业”。</li>
+        </ul>
+
+        <h2 id="printing-and-carving">当许愿变成系统爆炸</h2>
+
+        <p>在 Think Big 这件事上，我和 Felix 的看法是一致的。但也正因为我平时就习惯 Think Big，在和 AI 一起往大了做的时候，我很快撞上了另一面墙：<strong>当人只管许大愿、让 AI 直接去 Think Big 时，事情极其容易失控。</strong></p>
+
+        <p>好几次，当我把一个宏大的想法直接交给模型去发挥，模型确实能很快端出一整套庞大的系统；但仔细一看，这套系统并不那么 solid。等我真正接手过来时，发现自己已经完全失去了掌控力，想做优化也无处下手。</p>
+
+        <p>这背后的原因，其实可以追溯到非 AI 时代的一个老问题。A. Jesse Jiryu Davis 写过一篇很有名的文章叫 <a href="https://emptysqua.re/blog/api-evolution-the-right-way/" target="_blank" rel="noopener"><em>API Evolution the Right Way</em></a>，他在里面打了个比方：设计系统就像造物主设计生物的演化，看到一条蛇，一时兴起想给它插上羽毛、安上鹿角，觉得这样功能更强大；但“特性就像孩子：在一时冲动下怀上，却得养活好多年（Features are like children: conceived in a moment of passion, they must be supported for years）”。他拿 Python 的 <code>asyncio</code> 举过例子：早期为了方便调试协程，开发者顺手暴露了一个权限极大的 <code>set_coroutine_wrapper</code>，结果它可以把所有协程改成任何东西，导致整个生态都没法放心假设协程的行为，最后不得不痛苦地把它删掉，换成窄得多的接口。所以在传统时代，有经验的设计者总是拼命克制：<strong>少加特性（Minimize Features），把边界收窄（Keep Features Narrow）</strong>。一旦冗余的设计长进了系统的身体结构里，事后想砍掉它，永远比当初加上它痛苦十倍。</p>
+
+        <figure class="editorial-figure naturalist-plate">
+          <img src="assets/feathers.jpg" alt="18世纪博物学版画：上方是一条光滑的蛇，下方是一条长满羽毛的蛇" width="1442" height="888">
+          <figcaption>
+            “不要给蛇插上羽毛！（Don't add feathers to a snake!）”——配图引自 A. Jesse Jiryu Davis，《API Evolution the Right Way》。
+          </figcaption>
+        </figure>
+
+        <p>在非 AI 时代，人的精力是有限的。以前全靠自己动手，做东西就像 <strong>3D 打印</strong>，每一层都得从无到有一点点敲出来。这个过程很慢，但也正因为慢，它成了天然的刹车片——就算一时冲动想给蛇插羽毛，也得自己一根一根去敲，敲到一半可能就嫌麻烦放弃了；而且每一层都是亲手铺出来的，里面的结构每一处都清楚。</p>
+
+        <p>到了 AI 时代，尤其是当我们开始“许愿式编程”的时候，这块天然的刹车片彻底消失了。</p>
+
+        <p>AI 会把过去那种边界扩张和失控的过程成倍放大。对着模型许一个很大的愿、让它自由去 Think Big 时，模型“一时冲动”的成本是零。原本只想要一条能钻进洞里的蛇，模型在几十秒内不仅给它插满了羽毛，还顺手安上了鹿角和四叉舌头——它会大幅扩展任务的边界，预设十种根本不存在的未来需求，把每个模块的口子都开得极大，而且内部互相缠绕。以前在人手里需要几年才会慢慢长歪的系统，在许愿编程下几个回合就会直接<strong>系统爆炸</strong>，整个系统彻底不再收敛。</p>
+
+        <figure class="editorial-figure naturalist-plate">
+          <img src="assets/horns.jpg" alt="18世纪博物学版画：一条长着鹿角与四叉舌头的怪蛇" width="2000" height="811">
+          <figcaption>
+            当“一时冲动”的成本变成零，系统几个回合就会长出鹿角和四叉舌头（Or horns and a quadruple-forked tongue）。
+          </figcaption>
+        </figure>
+
+        <p>这也是为什么我接手那套系统时会觉得无从下手。它早就不像以前 <strong>3D 打印</strong> 那样是一层层长出来的了；可面对这头长满羽毛和鹿角的庞然大物，也没法像 <strong>雕刻</strong> 一样反过来拿凿子把它修出来。雕刻能够成立，前提是石料本身致密均质，凿掉外面一层，底下还是好石头。而一个已经爆炸、不再收敛的系统，内部到处都在互相依赖那些发散出来的特性——凿子一碰，旁边好几块地方就跟着塌了。</p>
+
+        <figure class="editorial-figure">
+          <img src="assets/printing-carving-lithography.png" alt="三联铜版画：左侧是一层层手工堆叠的3D打印，中间是一锤下去纷纷碎裂的整块石料雕刻，右侧是打磨精密积木并组装进光刻机框架" width="1400" height="788">
+          <figcaption>
+            左：一层层亲手堆出来的 3D 打印；中：系统爆炸后不再收敛，试图逆向雕刻却一碰就塌；右：大积木 + 微雕刻 + 光刻机式组装。
+          </figcaption>
+        </figure>
+
+        <h2 id="lithography">积木、微雕刻与光刻机</h2>
+
+        <p>夹在 3D 打印和逆向雕刻这两个极端之间，要想让事情重新收敛，我摸索出来的方式是 <strong>积木 + 微雕刻</strong>。</p>
+
+        <p>我依然希望 AI 帮我想更大的积木，我也可以许愿更大、Think 更大。在单块积木的内部，完全可以用足前面说的高度、深度和广度，让 AI 做出以前单凭人力很难做出来的那种大积木。但对外，这块积木必须死守“把边界收窄”的原则——它只是一块接口极窄、职责收敛的积木，绝不允许它自己蔓延成整个系统。</p>
+
+        <p>当范围被严格收敛在单块积木内时，我就可以在它上面做 <strong>微雕刻</strong>。我能看清这块积木的内部结构，趁着其他部分还没有依赖它多余的枝节，拿刻刀把那些“羽毛和鹿角”削干净，用外部工具去测它，把它打磨得真正 solid。哪怕哪块积木实在长歪了，因为它的边界足够窄，直接换掉重做一块就行，不会引起系统爆炸。</p>
+
+        <p>而真正把这些积木往上搭的过程，落地的脚步要像 <strong>组装一台光刻机</strong>。光刻机非常庞大复杂，但它的每一个模块、每一段光路都是清晰、收敛、可控的。我可以许愿更大、Think 更大，让 AI 帮我想更大的积木；但落地的每一步要像组装一台光刻机，在设计足够大的同时，足够清晰可控。</p>
+
+        <figure class="editorial-figure">
+          <img src="assets/wings-and-optics.png" alt="铜版画：工坊上方悬挂着巨大的机械飞翼，下方的工匠正专注校准一台精密的光学仪器" width="1400" height="788">
+          <figcaption>
+            头顶的飞翼是 Think Big，桌上的精密光路与校准台是 Build from Small。
+          </figcaption>
+        </figure>
+
+        <p>在一个模型能力每隔几周就会跃升一次的时代，我们需要能帮自己打开想象力的方法，去 Think Big；同时也需要用大积木和微雕刻，像组装光刻机一样稳住自己的脚步，去 Build from Small。</p>
+
+        <p>这是我在当下对 AI 的思考，做任何创造性的事情莫过于此。</p>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇导航">
+        <a href="index.html">&uarr; 返回目录</a>
+        <a href="02-the-next-flat-world.html">#02 下一个 Flat 时代 &rarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p>本文关于 Think Big 的框架与案例参考自 Felix Rieseberg 的文章 <a href="https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/" target="_blank" rel="noopener"><em>How to be more ambitious: A tutorial for humans with models</em></a>；关于特性演化与边界克制的讨论及博物学插图引自 A. Jesse Jiryu Davis 的文章 <a href="https://emptysqua.re/blog/api-evolution-the-right-way/" target="_blank" rel="noopener"><em>API Evolution the Right Way</em></a>；题图源自 Francisco Goya 的版画《Modo de volar》。</p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      if (saved === "dark" || saved === "light") {
+        root.setAttribute("data-theme", saved);
+        label.textContent = saved.toUpperCase();
+      }
+
+      btn.addEventListener("click", function () {
+        var current = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", current);
+        label.textContent = current.toUpperCase();
+        try { localStorage.setItem("blog.theme", current); } catch (e) {}
+      });
+
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var sections = ["intro", "think-big", "printing-and-carving", "lithography", "epilogue"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      var tocLinks = document.querySelectorAll("#toc-list a");
+
+      function onScroll() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+
+        if (scrollTop > 220) {
+          strip.classList.add("is-visible");
+        } else {
+          strip.classList.remove("is-visible");
+        }
+
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+
+        var currentSectionId = "intro";
+        for (var i = 0; i < sections.length; i++) {
+          var rect = sections[i].getBoundingClientRect();
+          if (rect.top <= 160) {
+            currentSectionId = sections[i].id;
+          }
+        }
+        tocLinks.forEach(function (link) {
+          if (link.getAttribute("href") === "#" + currentSectionId) {
+            link.classList.add("is-active");
+          } else {
+            link.classList.remove("is-active");
+          }
+        });
+      }
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    })();
+  </script>
+</body>
+</html>
