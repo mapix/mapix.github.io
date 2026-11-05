@@ -292,6 +292,10 @@
     figure.editorial-figure {
       margin: 2em -32px;
     }
+    figure.editorial-figure.portrait-plate {
+      margin: 2em auto;
+      max-width: 480px;
+    }
     @media (max-width: 760px) {
       figure.editorial-figure {
         margin: 1.6em 0;
@@ -450,9 +454,9 @@
 
       <div class="post-content">
         <figure class="editorial-figure" id="intro">
-          <img src="assets/flat-world-horizon.png" alt="18世纪铜版画：昔日代表行业壁垒的城墙与高塔坍塌，化作一望无际的几何平地，天球仪与望远镜并排立于同一条起跑线上" width="1400" height="788">
+          <img src="assets/bruegel_babel.jpg" alt="Pieter Bruegel the Elder, The Tower of Babel (1563)" width="1920" height="1405">
           <figcaption>
-            当昔日的专业高墙坍塌，所有人再次站在同一条平坦的起跑线上。
+            Pieter Bruegel the Elder，《The Tower of Babel》（巴别塔，1563，维也纳艺术史博物馆藏）。当“把人类意图翻译成机器语言”的专业巴别塔坍塌，背后的平坦大地再次显露出来。
           </figcaption>
         </figure>
 
@@ -460,9 +464,9 @@
 
         <p>但回过头看，二十年前的那次“抹平”，打通的其实只是<strong>信息与连接的管道</strong>。</p>
 
-        <p>在那条跑道上，人与人、企业与企业之间依然隔着厚重的专业高墙。一个想法要想变成现实，必须经过漫长的“翻译”——你得懂编程语言、懂系统架构、懂硬件电路，或者养得起一整支懂这些的工程团队。在长达二十年的时间里，知识工作者和软件公司正是靠着这层“把想法翻译成机器语言”的壁垒，享受着全球化最大的红利。</p>
+        <p>在那条跑道上，人与人、企业与企业之间依然立着一座高耸的“巴别塔”。一个想法要想变成现实，必须经过漫长的专业翻译——你得懂编程语言、懂系统架构、懂硬件电路，或者养得起一整支懂这些的工程团队。在长达二十年的时间里，知识工作者和软件公司正是靠着这层“把想法翻译成机器语言”的壁垒，享受着全球化最大的红利。</p>
 
-        <p>站在 2026 年的今天，这堵墙突然塌了。</p>
+        <p>站在 2026 年的今天，这座塔突然塌了。</p>
 
         <p>不久前，微软和谷歌相继启动并扩大了大规模的“自愿离职计划”（Voluntary Exit Program）。微软向全球约 6 万名涵盖至 VP 级别（Level 70 及以下）的员工开放自愿买断；谷歌也把买断计划一路扩展到了美、英、瑞、日等多个核心工程区，唯独把 DeepMind 和 AI 算力基础设施排除在外。这不再是过去因为业务收缩而做的周期性裁员，而是一场静默的置换：巨头们正在把维持庞大传统白领与中层工程团队的预算抽出来，换成机房里的算力。原因再直接不过——AI 已经进化到把知识工作积累多年的技能壁垒，在一夜之间全干掉了。</p>
 
@@ -491,13 +495,13 @@
         <p>REA 通过 MCP 协议，把 Claude Code、Codex、Antigravity 等编程智能体和 Ghidra、IDA Pro、Hopper、Chrome DevTools 等逆向工程工具连在了一起。在这套工具面前，编译后的二进制文件、桌面端的 Electron 应用、打包好的商业软件不再有黑盒可言。你只需要让 Agent 用 REA 去观察某款成熟软件是怎么处理某个核心特性的，它就能自己反编译、追踪内存偏移与调用栈，把底层的业务逻辑和边缘处理规则连同真实证据链一起提取出来，再在净室（Clean-room）环境下用全新的技术栈重写出一份干净的代码。</p>
 
         <figure class="editorial-figure">
-          <img src="assets/wishing-and-dissecting.png" alt="双联铜版画：左图为孩童张口许愿，空中自动组装出齿轮与电路机械；右图为学者用光学透镜穿透密闭铁盒，将内部齿轮结构完整投射在图纸上" width="1400" height="788">
+          <img src="assets/rembrandt_anatomy.jpg" alt="Rembrandt van Rijn, The Anatomy Lesson of Dr. Nicolaes Tulp (1632)" width="1920" height="1465">
           <figcaption>
-            左：孩童张口许愿，软硬件与机械结构便在空中自动成形；右：REA 借光学透镜穿透密闭黑盒，将内部齿轮与逻辑完整映射在图纸上。
+            Rembrandt van Rijn，《The Anatomy Lesson of Dr. Nicolaes Tulp》（尼古拉斯·杜尔博士的解剖学课，1632，莫瑞泰斯皇家美术馆藏）。正如解剖刀挑开表皮、暴露出内部的肌腱联动与解剖图谱，REA 让任何软件黑盒在智能体面前都变成了透明的底层逻辑。
           </figcaption>
         </figure>
 
-        <p>当写新代码可以靠许愿，而旧代码的工程积累又可以被 REA 随时逆向拆解时，纯代码作为壁垒的时代就彻底结束了。</p>
+        <p>当写新代码可以靠许愿，而旧代码的工程积累又可以被 REA 随时像解剖课一样拆解重构时，纯代码作为壁垒的时代就彻底结束了。</p>
 
         <h2 id="taste-and-rsi">当 Taste 遇上递归自我改进（RSI）</h2>
 
@@ -517,10 +521,10 @@
 
         <p>在 RSI 的闭环里，只要标尺立住了，系统就能在一个周末跑完人类几十年才经历得完的“尝试—评估—修正”循环。人类靠直觉攒下的那点微弱优势，在递归自我改进的指数级迭代面前，就像沙滩上的城堡一样被迅速漫过。</p>
 
-        <figure class="editorial-figure">
-          <img src="assets/taste-and-rsi-caliper.png" alt="铜版画：背景是无限递归咬合的螺旋齿轮大潮，前景的工匠正用游标卡尺、天平与光学棱镜校准机械" width="1400" height="788">
+        <figure class="editorial-figure portrait-plate">
+          <img src="assets/blake_ancient_of_days.jpg" alt="William Blake, The Ancient of Days (1794)" width="1920" height="2644">
           <figcaption>
-            背景是无限递归演化的机械洪流，前景的工匠正将模糊的 Taste 具象化为卡尺、天平与棱镜构成的客观标尺（Verifier）。
+            William Blake，《The Ancient of Days》（亘古常在者，1794，大英博物馆藏）。将混沌的直觉与 Taste 具象化为那把伸向深渊的圆规与标尺（Verifier），才能驾驭递归自我改进的演化闭环。
           </figcaption>
         </figure>
 
@@ -547,7 +551,7 @@
 
       <footer class="post-footer">
         <div class="end-mark">— END —</div>
-        <p>本文提到的历史背景参考自 Thomas L. Friedman 2005 年著作《The World Is Flat: A Brief History of the Twenty-first Century》；2026 年行业动态综合自微软（VEO）与谷歌全球自愿离职计划报道、开源逆向工具 <a href="https://rea.tools" target="_blank" rel="noopener">REA (Reverse Engineer Anything)</a> 技术文档，以及近期关于硬件 Vibe Coding 与递归自我改进（RSI / Model-Harness Co-evolution）的研究讨论。</p>
+        <p>本文提到的历史背景参考自 Thomas L. Friedman 2005 年著作《The World Is Flat: A Brief History of the Twenty-first Century》；2026 年行业动态综合自微软（VEO）与谷歌全球自愿离职计划报道、开源逆向工具 <a href="https://rea.tools" target="_blank" rel="noopener">REA (Reverse Engineer Anything)</a> 技术文档，以及近期关于硬件 Vibe Coding 与递归自我改进（RSI / Model-Harness Co-evolution）的研究讨论；文中画作依次引自老彼得·勃鲁盖尔《巴别塔》（1563）、伦勃朗《尼古拉斯·杜尔博士的解剖学课》（1632）与威廉·布莱克《亘古常在者》（1794）。</p>
       </footer>
     </article>
   </main>

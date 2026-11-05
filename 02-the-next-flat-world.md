@@ -1,15 +1,15 @@
 # 下一个 Flat 时代
 
-![从高墙林立的旧城池到一望无际的平坦跑道](assets/flat-world-horizon.png)
-*当昔日的专业高墙坍塌，所有人再次站在同一条平坦的起跑线上。*
+![Pieter Bruegel the Elder，《巴别塔》（The Tower of Babel，1563）](assets/bruegel_babel.jpg)
+*Pieter Bruegel the Elder，《The Tower of Babel》（巴别塔，1563，维也纳艺术史博物馆藏）。当“把人类意图翻译成机器语言”的专业巴别塔坍塌，背后的平坦大地再次显露出来。*
 
 2005 年，托马斯·弗里德曼（Thomas L. Friedman）在《世界是平的：21 世纪简史》（*The World Is Flat: A Brief History of the Twenty-first Century*）里讲过一个核心观察：进入 21 世纪，由于互联网、跨洋光缆、工作流软件、外包和全球供应链的迅猛发展，横亘在世界各地之间的地理与制度阻碍被彻底打通。整个世界被“抹平”了，无论身处硅谷、班加罗尔还是北京，全球的企业和个人第一次站在了同一条竞技跑道上。
 
 但回过头看，二十年前的那次“抹平”，打通的其实只是**信息与连接的管道**。
 
-在那条跑道上，人与人、企业与企业之间依然隔着厚重的专业高墙。一个想法要想变成现实，必须经过漫长的“翻译”——你得懂编程语言、懂系统架构、懂硬件电路，或者养得起一整支懂这些的工程团队。在长达二十年的时间里，知识工作者和软件公司正是靠着这层“把想法翻译成机器语言”的壁垒，享受着全球化最大的红利。
+在那条跑道上，人与人、企业与企业之间依然立着一座高耸的“巴别塔”。一个想法要想变成现实，必须经过漫长的专业翻译——你得懂编程语言、懂系统架构、懂硬件电路，或者养得起一整支懂这些的工程团队。在长达二十年的时间里，知识工作者和软件公司正是靠着这层“把想法翻译成机器语言”的壁垒，享受着全球化最大的红利。
 
-站在 2026 年的今天，这堵墙突然塌了。
+站在 2026 年的今天，这座塔突然塌了。
 
 不久前，微软和谷歌相继启动并扩大了大规模的“自愿离职计划”（Voluntary Exit Program）。微软向全球约 6 万名涵盖至 VP 级别（Level 70 及以下）的员工开放自愿买断；谷歌也把买断计划一路扩展到了美、英、瑞、日等多个核心工程区，唯独把 DeepMind 和 AI 算力基础设施排除在外。这不再是过去因为业务收缩而做的周期性裁员，而是一场静默的置换：巨头们正在把维持庞大传统白领与中层工程团队的预算抽出来，换成机房里的算力。原因再直接不过——AI 已经进化到把知识工作积累多年的技能壁垒，在一夜之间全干掉了。
 
@@ -37,10 +37,10 @@
 
 REA 通过 MCP 协议，把 Claude Code、Codex、Antigravity 等编程智能体和 Ghidra、IDA Pro、Hopper、Chrome DevTools 等逆向工程工具连在了一起。在这套工具面前，编译后的二进制文件、桌面端的 Electron 应用、打包好的商业软件不再有黑盒可言。你只需要让 Agent 用 REA 去观察某款成熟软件是怎么处理某个核心特性的，它就能自己反编译、追踪内存偏移与调用栈，把底层的业务逻辑和边缘处理规则连同真实证据链一起提取出来，再在净室（Clean-room）环境下用全新的技术栈重写出一份干净的代码。
 
-![左：从数字到物理的许愿造物；右：REA 穿透黑盒逆向一切结构](assets/wishing-and-dissecting.png)
-*左：孩童张口许愿，软硬件与机械结构便在空中自动成形；右：REA 借光学透镜穿透密闭黑盒，将内部齿轮与逻辑完整映射在图纸上。*
+![Rembrandt van Rijn，《尼古拉斯·杜尔博士的解剖学课》（The Anatomy Lesson of Dr. Nicolaes Tulp，1632）](assets/rembrandt_anatomy.jpg)
+*Rembrandt van Rijn，《The Anatomy Lesson of Dr. Nicolaes Tulp》（尼古拉斯·杜尔博士的解剖学课，1632，莫瑞泰斯皇家美术馆藏）。正如解剖刀挑开表皮、暴露出内部的肌腱联动与解剖图谱，REA 让任何软件黑盒在智能体面前都变成了透明的底层逻辑。*
 
-当写新代码可以靠许愿，而旧代码的工程积累又可以被 REA 随时逆向拆解时，纯代码作为壁垒的时代就彻底结束了。
+当写新代码可以靠许愿，而旧代码的工程积累又可以被 REA 随时像解剖课一样拆解重构时，纯代码作为壁垒的时代就彻底结束了。
 
 ## 当 Taste 遇上递归自我改进（RSI）
 
@@ -60,8 +60,8 @@ REA 通过 MCP 协议，把 Claude Code、Codex、Antigravity 等编程智能体
 
 在 RSI 的闭环里，只要标尺立住了，系统就能在一个周末跑完人类几十年才经历得完的“尝试—评估—修正”循环。人类靠直觉攒下的那点微弱优势，在递归自我改进的指数级迭代面前，就像沙滩上的城堡一样被迅速漫过。
 
-![在递归自我改进的齿轮洪流前校准标尺](assets/taste-and-rsi-caliper.png)
-*背景是无限递归演化的机械洪流，前景的工匠正将模糊的 Taste 具象化为卡尺、天平与棱镜构成的客观标尺（Verifier）。*
+![William Blake，《亘古常在者》（The Ancient of Days，1794）](assets/blake_ancient_of_days.jpg)
+*William Blake，《The Ancient of Days》（亘古常在者，1794，大英博物馆藏）。将混沌的直觉与 Taste 具象化为那把伸向深渊的圆规与标尺（Verifier），才能驾驭递归自我改进的演化闭环。*
 
 ## 下一个平的世界
 
@@ -78,4 +78,4 @@ REA 通过 MCP 协议，把 Claude Code、Codex、Antigravity 等编程智能体
 
 ---
 
-*本文提到的历史背景参考自 Thomas L. Friedman 2005 年著作《The World Is Flat: A Brief History of the Twenty-first Century》；2026 年行业动态综合自微软（VEO）与谷歌全球自愿离职计划报道、开源逆向工具 [REA (Reverse Engineer Anything)](https://rea.tools) 技术文档，以及近期关于硬件 Vibe Coding 与递归自我改进（RSI / Model-Harness Co-evolution）的研究讨论。*
+*本文提到的历史背景参考自 Thomas L. Friedman 2005 年著作《The World Is Flat: A Brief History of the Twenty-first Century》；2026 年行业动态综合自微软（VEO）与谷歌全球自愿离职计划报道、开源逆向工具 [REA (Reverse Engineer Anything)](https://rea.tools) 技术文档，以及近期关于硬件 Vibe Coding 与递归自我改进（RSI / Model-Harness Co-evolution）的研究讨论；文中画作依次引自老彼得·勃鲁盖尔《巴别塔》（1563）、伦勃朗《尼古拉斯·杜尔博士的解剖学课》（1632）与威廉·布莱克《亘古常在者》（1794）。*
