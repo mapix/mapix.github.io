@@ -1,0 +1,2592 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>多 Agent 协作演进：从单兵到 Swarm</title>
+  <meta name="description" content="以 Antigravity 为例，从单 Agent 的 ReAct 循环讲起，沿着真实踩坑与范式演进的线索，一个一个请出 Subagents、/boost、/teamwork 与 /swarm 里的协作角色。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <style>
+    :root {
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --bg-card: #fbf8f2;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+      --accent-soft: rgba(158, 51, 33, 0.11);
+      --ok: #256b45;
+      --ok-soft: rgba(37, 107, 69, 0.12);
+      --warn: #b36b16;
+      --warn-soft: rgba(179, 107, 22, 0.12);
+      --blue: #235884;
+      --blue-soft: rgba(35, 88, 132, 0.11);
+      --purple: #5c3d82;
+      --purple-soft: rgba(92, 61, 130, 0.11);
+
+      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+
+      --measure: 660px;
+      --wrap: 1080px;
+    }
+
+    html[data-theme="dark"] {
+      --bg-paper: #141311;
+      --bg-elevated: #1d1b18;
+      --bg-card: #191714;
+      --ink: #ece6dc;
+      --ink-secondary: #b8b0a4;
+      --ink-muted: #857d72;
+      --rule: #2e2a25;
+      --rule-strong: #ece6dc;
+      --accent: #e06d53;
+      --accent-soft: rgba(224, 109, 83, 0.15);
+      --ok: #52b780;
+      --ok-soft: rgba(82, 183, 128, 0.14);
+      --warn: #e09f3e;
+      --warn-soft: rgba(224, 159, 62, 0.14);
+      --blue: #63a4d8;
+      --blue-soft: rgba(99, 164, 216, 0.14);
+      --purple: #a584d6;
+      --purple-soft: rgba(165, 132, 214, 0.14);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.85;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: clip;
+    }
+
+    /* Reading progress strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--bg-paper);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+      transition: transform 0.2s ease;
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      height: 2px;
+      background: var(--ink);
+      width: 0%;
+    }
+
+    /* Top Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 22px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .site-nav a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+    .theme-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Main Layout Grid */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 200px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Left Rail TOC */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 10px;
+      border-left: 1.5px solid transparent;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a.is-active {
+      color: var(--ink);
+      font-weight: 600;
+      border-left-color: var(--ink);
+    }
+
+    /* Article Header */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(27px, 3.6vw, 38px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+    .post-subtitle {
+      margin: 0 0 20px;
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.65;
+      color: var(--ink-secondary);
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 32px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt {
+      color: var(--ink-muted);
+    }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose Content */
+    .post-content p {
+      margin: 0 0 1.32em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.8vw, 27px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.3em 0 0.75em;
+      color: var(--ink);
+      scroll-margin-top: 64px;
+    }
+    .post-content h3 {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      margin: 1.8em 0 0.5em;
+      color: var(--ink);
+    }
+    .post-content a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
+    }
+    .post-content a:hover {
+      color: var(--accent);
+    }
+    .post-content ul {
+      margin: 0 0 1.4em;
+      padding-left: 1.35em;
+    }
+    .post-content li {
+      margin-bottom: 0.55em;
+    }
+    .post-content code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+    }
+
+    /* Quiet Editorial Inline Role Plate (unslopped: calm border, no pill spam) */
+    figure.role-plate {
+      margin: 1.5em 0 1.7em;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border-left: 2px solid var(--rule-strong);
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+    @media (max-width: 640px) {
+      figure.role-plate {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+    .role-plate-svg {
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 6px;
+    }
+    .role-plate-svg svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .role-plate-note {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--ink-secondary);
+    }
+    .role-plate-note .role-name {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    /* Interactive Stage Containers (Quiet Chrome, Focus on Content) */
+    .stage-card {
+      margin: 2em -44px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    @media (max-width: 820px) {
+      .stage-card {
+        margin: 1.6em 0;
+      }
+    }
+
+    .stage-header {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .stage-meta-readout {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+    }
+
+    .stage-canvas {
+      padding: 14px 16px 10px;
+      background: var(--bg-card);
+    }
+    .stage-canvas svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+
+    .stage-controls {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .btn-ctl {
+      appearance: none;
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 4px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-ctl:hover:not(:disabled) {
+      border-color: var(--ink);
+    }
+    .btn-ctl:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-ctl.is-primary {
+      background: var(--ink);
+      color: var(--bg-paper);
+      border-color: var(--ink);
+    }
+    .btn-ctl.is-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-ctl.is-active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .scrubber-wrap {
+      flex: 1 1 180px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 160px;
+    }
+    .scrubber {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+      height: 4px;
+    }
+    .stage-caption {
+      padding: 8px 16px 11px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+      border-top: 1px dashed var(--rule);
+      background: var(--bg-card);
+    }
+
+    /* Swarm split view inside stage */
+    .swarm-split {
+      display: grid;
+      grid-template-columns: 1.05fr 1.25fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+    @media (max-width: 680px) {
+      .swarm-split {
+        grid-template-columns: 1fr;
+      }
+    }
+    .board-feed {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      min-height: 250px;
+    }
+    .board-feed-head {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .board-msg {
+      padding: 7px 9px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      line-height: 1.45;
+      opacity: 0.28;
+      transform: translateY(4px);
+      transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    }
+    .board-msg.is-live {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .board-msg.is-current {
+      border-color: var(--accent);
+    }
+    .board-seq {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+      margin-right: 5px;
+    }
+    .board-author {
+      font-weight: 600;
+      color: var(--ink);
+      margin-right: 4px;
+    }
+    .board-mention {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 0 4px;
+      border-radius: 3px;
+    }
+
+    /* Comparison Table */
+    .matrix-wrap {
+      margin: 1.8em -44px;
+      overflow-x: auto;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--bg-card);
+    }
+    @media (max-width: 820px) {
+      .matrix-wrap {
+        margin: 1.5em 0;
+      }
+    }
+    table.compare-table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    table.compare-table th,
+    table.compare-table td {
+      padding: 11px 13px;
+      text-align: left;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    table.compare-table th {
+      background: var(--bg-elevated);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    table.compare-table tr:last-child td {
+      border-bottom: none;
+    }
+    table.compare-table td:first-child {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    /* Scenario Compass Output Panel */
+    .compass-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+    @media (max-width: 600px) {
+      .compass-details {
+        grid-template-columns: 1fr;
+      }
+    }
+    .compass-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 9px 11px;
+    }
+    .compass-pill span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      margin-bottom: 3px;
+    }
+    .compass-pill strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* Post Series Nav */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--ink-muted);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">多 Agent 协作演进：从单兵到 Swarm</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="导航">
+      <a href="index.html">全部文章</a>
+      <a href="#single-agent">单 Agent</a>
+      <a href="#subagents">Subagents</a>
+      <a href="#boost">/boost</a>
+      <a href="#teamwork">/teamwork</a>
+      <a href="#swarm">/swarm</a>
+      <a href="#compass">怎么选</a>
+      <button type="button" class="theme-btn" id="theme-toggle" title="切换明暗主题">
+        <span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="目录">
+      <ul class="toc-list" id="toc-list">
+        <li><a href="#intro" class="is-active">开篇：为什么聊起协作</a></li>
+        <li><a href="#single-agent">单 Agent 翻车的那一刻</a></li>
+        <li><a href="#subagents">Subagents：把脏活甩出去</a></li>
+        <li><a href="#boost">/boost：查案与动刀分开</a></li>
+        <li><a href="#teamwork">/teamwork：先立规矩再开工</a></li>
+        <li><a href="#swarm">/swarm：把金字塔拍平</a></li>
+        <li><a href="#compass">一张表看懂平时怎么选</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1>多 Agent 协作演进：从单兵到 Swarm</h1>
+        <p class="post-subtitle">多 Agent 协同并不只是找几个分身一起打字。沿着实际写代码时踩过的坑走一遍，你会发现每一次多请一个角色进场，都只是为了解开上一层刚刚卡死的那个结。</p>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-13">2026 年 11 月 13 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>10 分钟（含交互图解）</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#03</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <div id="intro"></div>
+        <p>过去大半年，身边的工程师聊起 AI 编程，话题悄悄变了。</p>
+
+        <p>去年大家还在比谁家的单模型一次能吐出几千行代码、谁的推理分高；到了今年，聊得最多的词变成了 Subagent、Swarm、Agent Teams。很多人的第一反应是：哦，无非是多开几个窗口并发干活，打字速度翻几倍。</p>
+
+        <p>其实只要你真的陪着一个编程 Agent 连续改过两小时代码，就知道瓶颈很少出在“打字不够快”上。真正让它卡住的，往往是两个非常像人的毛病。</p>
+
+        <p>第一个毛病是<strong>脑子被碎纸片埋住了</strong>。它翻过的三十个文件、终端吐出的四百行报错、试错时写废的脚本，全堆在同一个上下文窗口里。聊到第十轮，它早就忘了你第一句话叮嘱过“别动老接口的返回值”。</p>
+
+        <p>第二个毛病更隐蔽：<strong>自己写完的作业，自己舍不得打低分</strong>。写代码和写测试用的是同一个上下文，带着一模一样的偏见，改着改着，模型甚至会顺手把一条棘手的断言改弱，只为了笑着告诉你“测试全部通过了”。</p>
+
+        <p>前两天我顺着 Google Antigravity 2026 年的几次大版本迭代一路捋下来，发现它的演进路线很克制，也挺反直觉：并没有一上来就搞平级群聊，而是顺着 <strong>Single Agent → Subagents → <code>/boost</code> → <code>/teamwork</code> → <code>/swarm</code></strong> 五级台阶，每撞一次真实的天花板，才多请一个角色进场——先用严格的层级与制度镇住大工程，最后才把金字塔拍平成共享黑板。</p>
+
+        <!-- SECTION 1: SINGLE AGENT -->
+        <h2 id="single-agent">单 Agent 很好用，直到它的桌子被埋住</h2>
+
+        <p>一切的起点，都是你每天最熟悉的那个单兵窗口：一个 <code>Primary Agent</code>。</p>
+
+        <p>它骨子里跑着一个极朴素的循环：先想一步（Thought），接着调工具读文件、改代码或跑测试（Tool Call），再把返回的结果原封不动塞回自己的对话记录（Observation），然后接着往下想。</p>
+
+        <p>如果只是写个数据清洗脚本，或者修一个行号明明白白的报错，这种单兵作战几乎是无敌的——没有沟通损耗，几十秒就收工。可只要你让它跨过五六个文件改状态机，下面这台时间线播放器里的画面就会很快出现。</p>
+
+        <!-- STAGE 1: REMOTION-STYLE TIMELINE PLAYER -->
+        <figure class="stage-card" id="stage-single">
+          <div class="stage-header">
+            <span class="stage-title">单 Agent 的 ReAct 循环与桌面堆满的过程</span>
+            <span class="stage-meta-readout" id="s1-readout">FRAME 000 / 240 · 22% CONTEXT</span>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 320" aria-label="单 Agent ReAct 循环与上下文窗口膨胀动画">
+              <rect x="14" y="16" width="415" height="288" rx="8" fill="var(--bg-elevated)" stroke="var(--rule)" />
+              <text x="30" y="42" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-muted)">SINGLE AGENT · ReAct LOOP</text>
+              <path id="s1-orbit" d="M 222 86 L 342 206 L 102 206 Z" fill="none" stroke="var(--rule)" stroke-width="2" stroke-dasharray="5 5" />
+
+              <g id="s1-node-thought">
+                <rect x="157" y="58" width="130" height="44" rx="6" fill="var(--bg-card)" stroke="var(--ink)" stroke-width="1.5" />
+                <text x="222" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ink)">1. Thought</text>
+                <text x="222" y="94" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">推理下一步</text>
+              </g>
+              <g id="s1-node-tool">
+                <rect x="282" y="184" width="132" height="44" rx="6" fill="var(--bg-card)" stroke="var(--blue)" stroke-width="1.5" />
+                <text x="348" y="204" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--blue)">2. Tool Call</text>
+                <text x="348" y="220" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">grep / edit / test</text>
+              </g>
+              <g id="s1-node-obs">
+                <rect x="30" y="184" width="136" height="44" rx="6" fill="var(--bg-card)" stroke="var(--warn)" stroke-width="1.5" />
+                <text x="98" y="204" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--warn)">3. Observation</text>
+                <text x="98" y="220" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">全部日志进对话</text>
+              </g>
+
+              <circle id="s1-packet" cx="222" cy="86" r="7" fill="var(--accent)" />
+              <rect x="34" y="246" width="375" height="42" rx="5" fill="var(--bg-card)" stroke="var(--rule)" />
+              <text id="s1-step-text" x="48" y="271" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">[Round 1] 上下文干净：读取目标与核心文件</text>
+
+              <rect x="448" y="16" width="298" height="288" rx="8" fill="var(--bg-elevated)" stroke="var(--rule)" />
+              <text x="464" y="42" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-muted)">CONTEXT WINDOW (唯一共享记忆)</text>
+              <rect x="468" y="58" width="146" height="224" rx="5" fill="var(--bg-card)" stroke="var(--rule-strong)" stroke-width="1.2" />
+              <rect x="472" y="248" width="138" height="30" rx="3" fill="var(--ok-soft)" stroke="var(--ok)" />
+              <text x="541" y="267" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ok)">核心约束 &amp; 目标</text>
+
+              <rect id="s1-fill-grep" x="472" y="245" width="138" height="0" rx="2" fill="var(--blue-soft)" stroke="var(--blue)" opacity="0" />
+              <text id="s1-lbl-grep" x="541" y="232" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--blue)" opacity="0">grep / 读 20 个文件</text>
+              <rect id="s1-fill-logs" x="472" y="210" width="138" height="0" rx="2" fill="var(--warn-soft)" stroke="var(--warn)" opacity="0" />
+              <text id="s1-lbl-logs" x="541" y="182" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--warn)" opacity="0">400 行报错堆栈</text>
+              <rect id="s1-fill-retry" x="472" y="140" width="138" height="0" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" opacity="0" />
+              <text id="s1-lbl-retry" x="541" y="108" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent)" opacity="0">废稿试错 + 同源盲区</text>
+
+              <text x="630" y="78" font-family="var(--font-sans)" font-size="12" fill="var(--ink-muted)">占用率</text>
+              <text id="s1-pct" x="630" y="106" font-family="var(--font-mono)" font-size="24" font-weight="600" fill="var(--ok)">22%</text>
+              <text x="630" y="144" font-family="var(--font-sans)" font-size="12" fill="var(--ink-muted)">推理清晰度</text>
+              <text id="s1-clarity" x="630" y="170" font-family="var(--font-mono)" font-size="20" font-weight="600" fill="var(--ok)">98%</text>
+              <rect x="628" y="196" width="104" height="84" rx="5" fill="var(--bg-card)" stroke="var(--rule)" />
+              <text x="638" y="216" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">状态诊断</text>
+              <text id="s1-diag-1" x="638" y="238" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ok)">游刃有余</text>
+              <text id="s1-diag-2" x="638" y="258" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">适合单文件</text>
+              <text id="s1-diag-3" x="638" y="274" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">明确任务</text>
+            </svg>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl is-primary" id="s1-play">▶ 播放</button>
+            <button type="button" class="btn-ctl" id="s1-prev" disabled>◀ 上一步</button>
+            <button type="button" class="btn-ctl" id="s1-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl is-active" data-s1-jump="0">1. 干净启动</button>
+            <button type="button" class="btn-ctl" data-s1-jump="85">2. 翻找文件</button>
+            <button type="button" class="btn-ctl" data-s1-jump="160">3. 报错堆叠</button>
+            <button type="button" class="btn-ctl" data-s1-jump="235">4. 记忆过载</button>
+            <div class="scrubber-wrap">
+              <input type="range" class="scrubber" id="s1-scrub" min="0" max="240" value="0" aria-label="单 Agent 时间线进度">
+            </div>
+          </div>
+          <div class="stage-caption">支持点击“上一步 / 下一步”逐帧停顿观察，或直接拖动进度条：<code>grep</code> 检索和终端报错全堆在主对话里，早期约定被一步步挤出视野。</div>
+        </figure>
+
+        <p>你看，它并不是突然变笨了，只是像一个老厨师，既要掌勺盯火候，又要自己跑去门口收快递、剥蒜、洗碗，最后案板上堆满了烂菜叶，连客人在外面点了什么菜都忘了。</p>
+
+        <p>所以解决的办法也很直觉：大厨别亲自去洗菜了，门外找几个临时工，干完活只把洗好的菜递进来就行。这就是 Antigravity 迈出的第一步：<strong>Subagents</strong>。</p>
+
+        <!-- SECTION 2: SUBAGENTS -->
+        <h2 id="subagents">Subagents：先学会把满手灰的活外包出去</h2>
+
+        <p>Subagent 说白了就是主 Agent 通过 <code>invoke_subagent</code> 临时喊来的短工。它的妙处在于<strong>自带一张空白桌子</strong>——在自己沙盒里翻五十个文件、踩十个坑，全都不占主 Agent 的脑子；干完之后，只往回递一张折好的结论小纸条，然后就地解散。</p>
+
+        <p>Antigravity 并没有一次塞给你一堆工种，而是顺着主 Agent 平常最常被弄脏的三个场景，逐个配齐了三个内置帮手。</p>
+
+        <h3>先解决翻代码：research</h3>
+        <p>以前主 Agent 改一个老接口前，得先用 <code>grep</code> 把全库里调用它的地方全搜出来看一遍，光这一步就能吃掉小半个上下文窗口。其实“找线索”这件事根本不需要改文件，主 Agent 真正想要的只是“究竟哪几个文件调了它”。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="research 子智能体结构图">
+              <rect x="8" y="28" width="76" height="46" rx="5" fill="var(--bg-card)" stroke="var(--ink)" />
+              <text x="46" y="55" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--ink)">主 Agent</text>
+              <line x1="84" y1="45" x2="128" y2="45" stroke="var(--blue)" stroke-width="1.5" stroke-dasharray="3 3" />
+              <line x1="128" y1="59" x2="84" y2="59" stroke="var(--ok)" stroke-width="1.8" />
+              <polygon points="88,55 81,59 88,63" fill="var(--ok)" />
+              <rect x="130" y="14" width="102" height="76" rx="6" fill="var(--bg-card)" stroke="var(--blue)" stroke-width="1.5" />
+              <text x="181" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--blue)">research</text>
+              <text x="181" y="53" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">只读沙盒 · 0 写入</text>
+              <text x="181" y="72" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">消化 48k 检索噪声</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">research（只读代码库侦察兵）</span>
+            它跑在无网络、只读的 <code>inherit</code> 沙盒里，专门替主 Agent 去啃那些动辄几万字符的源码检索，最后只带回一页摘要。请出它之后，主大脑能省下大半注意力专心设计改动，也不用提心吊胆怕侦察兵顺手改坏了什么。
+          </figcaption>
+        </figure>
+
+        <h3>再解决点网页：browser</h3>
+        <p>源码读懂了、代码也编译过了，但写前端和全栈的人都知道，页面上点下去到底报不报错，光看源码是猜不出来的。可如果把整个浏览器的 DOM 树、截图和几十条 Console 日志直接倒进主对话，主窗口照样立刻喘不过气。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="browser 子智能体结构图">
+              <rect x="8" y="28" width="76" height="46" rx="5" fill="var(--bg-card)" stroke="var(--ink)" />
+              <text x="46" y="55" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--ink)">主 Agent</text>
+              <line x1="84" y1="45" x2="128" y2="45" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="3 3" />
+              <line x1="128" y1="59" x2="84" y2="59" stroke="var(--ok)" stroke-width="1.8" />
+              <polygon points="88,55 81,59 88,63" fill="var(--ok)" />
+              <rect x="130" y="14" width="102" height="76" rx="6" fill="var(--bg-card)" stroke="var(--purple)" stroke-width="1.5" />
+              <text x="181" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--purple)">browser</text>
+              <text x="181" y="53" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">点击 · 截屏 · Console</text>
+              <text x="181" y="72" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">隔离 32k DOM 快照</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">browser（沙盒浏览器实测员）</span>
+            它自己在隔离的浏览器里打开页面、点按钮、录下操作轨迹和网络请求，把几万字的界面快照锁在外面，只给主 Agent 传回一句“点完提交按钮后请求 404”。第一次，改代码和真实界面验证接上了头，主大脑还没被弄乱。
+          </figcaption>
+        </figure>
+
+        <h3>遇到想并行写代码的时刻：self</h3>
+        <p>前面两位都只看不写。可有时候我们想同时试两种不同的重构路线，或者有两个互不相干的模块想一起动工，这时候只读帮手就帮不上忙了；可如果让两个能写代码的 Agent 共用同一个目录，一转眼就会互相覆盖。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="self 子智能体与 Git worktree 隔离图">
+              <rect x="8" y="28" width="76" height="46" rx="5" fill="var(--bg-card)" stroke="var(--ink)" />
+              <text x="46" y="55" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--ink)">主 Agent</text>
+              <path d="M 84 44 C 106 44, 108 26, 130 26" fill="none" stroke="var(--ok)" stroke-width="1.5" />
+              <path d="M 84 58 C 106 58, 108 76, 130 76" fill="none" stroke="var(--ok)" stroke-width="1.5" />
+              <rect x="130" y="10" width="102" height="34" rx="5" fill="var(--bg-card)" stroke="var(--ok)" />
+              <text x="181" y="31" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ok)">self (worktree-1)</text>
+              <rect x="130" y="60" width="102" height="34" rx="5" fill="var(--bg-card)" stroke="var(--ok)" />
+              <text x="181" y="81" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ok)">self (worktree-2)</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">self（同构分身 + Git Worktree 隔离）</span>
+            它完整克隆主 Agent 的工具权限和系统规则，再搭上 <code>workspace: "branch"</code> 参数，自动在后台签出一棵独立的 Git worktree。两个满血分身同时改代码也不会踩到同一只脚。
+          </figcaption>
+        </figure>
+
+        <p>看看这组对比：同样是“搜库 + 测浏览器”，把 <code>research</code> 和 <code>browser</code> 放出去，主窗口水位几乎纹丝不动；硬塞进同一个窗口，立刻就会红灯报警。</p>
+
+        <!-- STAGE 2: SUBAGENT ISOLATION -->
+        <figure class="stage-card" id="stage-subagent">
+          <div class="stage-header">
+            <span class="stage-title">对比：把脏活外包给 Subagents vs 全部硬塞进主窗口</span>
+            <span class="stage-meta-readout" id="s2-readout">STEP 0 / 3 · WITH SUBAGENTS</span>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 300" aria-label="Subagent 上下文隔离动画">
+              <rect x="24" y="88" width="214" height="124" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.8" />
+              <text x="131" y="114" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">Primary Agent</text>
+              <text x="131" y="133" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-muted)">只掌握主线决策</text>
+              <rect x="44" y="150" width="174" height="18" rx="4" fill="var(--bg-card)" stroke="var(--rule)" />
+              <rect id="s2-main-bar" x="46" y="152" width="42" height="14" rx="3" fill="var(--ok)" />
+              <text id="s2-main-pct" x="131" y="188" text-anchor="middle" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ok)">主窗口占用: 24%</text>
+
+              <path id="s2-path-top" d="M 238 128 C 320 128, 340 66, 430 66" fill="none" stroke="var(--blue)" stroke-width="2" stroke-dasharray="5 5" />
+              <path id="s2-path-bot" d="M 238 172 C 320 172, 340 234, 430 234" fill="none" stroke="var(--purple)" stroke-width="2" stroke-dasharray="5 5" />
+              <circle id="s2-pkt-top" cx="238" cy="128" r="6" fill="var(--blue)" opacity="0" />
+              <circle id="s2-pkt-bot" cx="238" cy="172" r="6" fill="var(--purple)" opacity="0" />
+              <rect id="s2-ret-top" x="420" y="58" width="18" height="12" rx="3" fill="var(--ok)" opacity="0" />
+              <rect id="s2-ret-bot" x="420" y="226" width="18" height="12" rx="3" fill="var(--ok)" opacity="0" />
+
+              <g id="s2-sub-top">
+                <rect x="434" y="20" width="302" height="104" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5" />
+                <text x="452" y="44" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--blue)">subagent: research</text>
+                <text x="640" y="44" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">inherit · 只读</text>
+                <text id="s2-sub1-stat" x="452" y="68" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink-secondary)">待命中：点击下方按钮派发代码库检索</text>
+                <rect x="452" y="82" width="266" height="14" rx="3" fill="var(--bg-card)" stroke="var(--rule)" />
+                <rect id="s2-sub1-noise" x="454" y="84" width="0" height="10" rx="2" fill="var(--warn)" />
+                <text x="452" y="112" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">48k 检索垃圾留在独立沙盒，任务结束即销毁</text>
+              </g>
+
+              <g id="s2-sub-bot">
+                <rect x="434" y="176" width="302" height="104" rx="8" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5" />
+                <text x="452" y="200" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--purple)">subagent: browser</text>
+                <text x="640" y="200" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">sandbox · E2E</text>
+                <text id="s2-sub2-stat" x="452" y="224" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink-secondary)">待命中：点击下方按钮启动浏览器实测</text>
+                <rect x="452" y="238" width="266" height="14" rx="3" fill="var(--bg-card)" stroke="var(--rule)" />
+                <rect id="s2-sub2-noise" x="454" y="240" width="0" height="10" rx="2" fill="var(--warn)" />
+                <text x="452" y="268" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">32k DOM 快照与控制台日志不回传主窗口</text>
+              </g>
+            </svg>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s2-prev" disabled>◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s2-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s2-run-sub">▶ 自动播放</button>
+            <button type="button" class="btn-ctl" id="s2-run-raw">对比：硬塞进主 Agent</button>
+            <button type="button" class="btn-ctl" id="s2-reset">重置</button>
+          </div>
+          <div class="stage-caption" id="s2-cap">支持逐帧单步播放：点击“下一步”依次观察 <code>派发请求 → 沙盒消化 80k 噪声 → 只带回精炼结论</code>，或切换“硬塞进主 Agent”对比。</div>
+        </figure>
+
+        <p>靠着这几位帮手，日常开发其实已经很舒服了。直到有一天，我撞上了一个只在特定并发时序下才偶发的死锁 Bug。</p>
+
+        <p>连着让它修了两轮、甚至也派了 <code>research</code> 去搜代码，问题还是时好时坏。盯了几轮执行记录后我才看明白原因：Subagent 更像是跑腿的临时工，主 Agent 自己一看到报错就手痒，还没把调用链查穿就急着改一行试试；改完一测没过，又带着愧疚感继续打补丁，把案发现场弄得面目全非。</p>
+
+        <p>对付这种深水 Bug，要的不是找人帮忙翻书，而是得把“查案”和“动刀”强行隔开。这就是 <code>/boost</code> 上场的时刻。</p>
+
+        <!-- SECTION 3: /BOOST -->
+        <h2 id="boost">/boost：先请法医锁死案情，再让主刀医生上台</h2>
+
+        <p>在 Antigravity 里输入 <code>/boost</code>，相当于按需拉起一套三层深思流水线。它不急着把代码改出来，而是先把三件事分别交到三类互不越权的角色手里。</p>
+
+        <h3>先按住急着写代码的手：Orchestrator</h3>
+        <p>平时写着写着跑偏，往往是因为“定计划的人”和“敲代码的人”是同一颗脑子，一钻进某段报错的细节里，就忘了全局还差哪几条边界没验。所以 <code>/boost</code> 的第一件事，是在最顶层放一个全程不碰业务代码的总调度。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Orchestrator 调度结构图">
+              <rect x="44" y="10" width="152" height="32" rx="5" fill="var(--bg-card)" stroke="var(--ink)" stroke-width="1.6" />
+              <text x="120" y="30" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="700" fill="var(--ink)">Orchestrator</text>
+              <line x1="88" y1="42" x2="62" y2="66" stroke="var(--rule-strong)" stroke-width="1.4" />
+              <line x1="152" y1="42" x2="178" y2="66" stroke="var(--rule-strong)" stroke-width="1.4" />
+              <rect x="16" y="66" width="92" height="28" rx="4" fill="var(--bg-card)" stroke="var(--rule)" />
+              <text x="62" y="84" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">可验证子任务 A</text>
+              <rect x="132" y="66" width="92" height="28" rx="4" fill="var(--bg-card)" stroke="var(--rule)" />
+              <text x="178" y="84" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">可验证子任务 B</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">Orchestrator（总调度）</span>
+            它站在高处把一条模糊的硬骨头拆成几个能客观验证的子目标，再往下派单、汇总最终全量测试。哪怕中间推翻重算了好几轮，最初的验收线始终握在它手里，不会写着写着走丢。
+          </figcaption>
+        </figure>
+
+        <h3>把写权限收走：DeepInvestigator</h3>
+        <p>接着是最关键的一步。人也好、模型也好，只要手里握着编辑器，看到诡异报错就总想“先改一行打印看看”——结果经常把本来还能复现的现场改散了。要治这个毛病，最管用的办法就是请一个没有写入权限的侦探。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="DeepInvestigator 只读侦探结构图">
+              <rect x="18" y="16" width="114" height="72" rx="6" fill="var(--bg-card)" stroke="var(--blue)" stroke-width="1.6" />
+              <text x="75" y="40" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--blue)">DeepInvestigator</text>
+              <text x="75" y="59" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">纯只读 · 禁止写文件</text>
+              <text x="75" y="76" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">追踪调用栈/竞态</text>
+              <line x1="132" y1="52" x2="162" y2="52" stroke="var(--blue)" stroke-width="1.6" />
+              <polygon points="158,48 166,52 158,56" fill="var(--blue)" />
+              <rect x="166" y="24" width="60" height="56" rx="5" fill="var(--blue-soft)" stroke="var(--blue)" />
+              <text x="196" y="49" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="var(--blue)">根因</text>
+              <text x="196" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="var(--blue)">证据链</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">DeepInvestigator（纯只读侦探）</span>
+            它被剥夺了改代码的能力，只能安安静静追调用栈、复现并发时序、查日志，直到拿出一条有据可查的根因报告。退路一断，盲目瞎猜的现象立马就消失了。
+          </figcaption>
+        </figure>
+
+        <h3>拿着证据上手术台：DeepCoder 与独立测试沙盒</h3>
+        <p>案情水落石出之后，才轮到真正动手改代码的人出场，改完还得交给一个不认识作者的独立沙盒去验货。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="DeepCoder 与独立验证器结构图">
+              <rect x="12" y="24" width="94" height="56" rx="5" fill="var(--bg-card)" stroke="var(--purple)" stroke-width="1.5" />
+              <text x="59" y="47" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--purple)">DeepCoder</text>
+              <text x="59" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">凭证据写最小补丁</text>
+              <line x1="106" y1="46" x2="132" y2="46" stroke="var(--ok)" stroke-width="1.6" />
+              <polygon points="129,42 136,46 129,50" fill="var(--ok)" />
+              <path d="M 180 78 C 180 96, 59 96, 59 80" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="3 3" />
+              <rect x="136" y="24" width="92" height="56" rx="5" fill="var(--bg-card)" stroke="var(--ok)" stroke-width="1.5" />
+              <text x="182" y="47" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--ok)">Test Runner</text>
+              <text x="182" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">不过即打回重修</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">DeepCoder &amp; Isolated Test Runner（外科医生 + 独立门禁）</span>
+            <code>DeepCoder</code> 不需要再在大海里捞针，直接对着侦探递过来的证据写最小补丁，精准得多；而写完之后由完全隔离的测试沙盒去跑压测，哪怕还漏掉百分之一的边缘死锁，也会带着真实报错堆栈打回顶层重修。
+          </figcaption>
+        </figure>
+
+        <p>把这三层闭环拆开走一遍——留意第 4 步压测没过时，它是怎么带着报错堆栈打回顶层重修的：</p>
+
+        <!-- STAGE 3: /BOOST 3-TIER PIPELINE -->
+        <figure class="stage-card" id="stage-boost">
+          <div class="stage-header">
+            <span class="stage-title">/boost 三层闭环：查案（只读）→ 动刀（写入）→ 独立验收</span>
+            <span class="stage-meta-readout" id="s3-readout">STEP 0 / 6 · READY</span>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 320" aria-label="/boost 三层深度推理流水线动画">
+              <text x="20" y="54" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">TIER 1</text>
+              <text x="20" y="160" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">TIER 2</text>
+              <text x="20" y="266" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">TIER 3</text>
+
+              <g id="s3-orch">
+                <rect x="200" y="22" width="360" height="58" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6" />
+                <text x="380" y="46" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">Orchestrator（总调度）</text>
+                <text id="s3-orch-sub" x="380" y="66" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-muted)">分解可验证任务 · 掌控重试与验收闭环</text>
+              </g>
+
+              <path d="M 310 80 L 235 126" fill="none" stroke="var(--rule-strong)" stroke-width="1.5" stroke-dasharray="4 4" />
+              <path d="M 340 156 L 420 156" fill="none" stroke="var(--rule-strong)" stroke-width="1.5" />
+              <polygon points="416,151 426,156 416,161" fill="var(--rule-strong)" />
+
+              <g id="s3-inv">
+                <rect x="92" y="126" width="248" height="64" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6" />
+                <text x="216" y="150" text-anchor="middle" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--blue)">DeepInvestigator</text>
+                <text x="216" y="170" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">纯只读侦探：复现竞态 · 锁定根因</text>
+              </g>
+
+              <g id="s3-coder">
+                <rect x="428" y="126" width="248" height="64" rx="8" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.6" />
+                <text x="552" y="150" text-anchor="middle" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--purple)">DeepCoder</text>
+                <text x="552" y="170" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">只凭证据动刀：合成最小修复补丁</text>
+              </g>
+
+              <path d="M 552 190 L 470 236" fill="none" stroke="var(--rule-strong)" stroke-width="1.5" stroke-dasharray="4 4" />
+
+              <g id="s3-runner">
+                <rect x="200" y="236" width="360" height="62" rx="8" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6" />
+                <text x="380" y="260" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ok)">Isolated Test Runner（独立验收层）</text>
+                <text id="s3-run-sub" x="380" y="280" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-muted)">脱离代码作者独立跑压测 · 不过即打回</text>
+              </g>
+
+              <path id="s3-retry-arc" d="M 560 267 C 724 267, 724 51, 560 51" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4" opacity="0.35" />
+              <text x="698" y="162" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent)" transform="rotate(90 698 162)">失败诊断打回重算</text>
+              <circle id="s3-pulse" cx="380" cy="51" r="8" fill="var(--accent)" opacity="0" />
+            </svg>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s3-prev" disabled>◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s3-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s3-play-retry">▶ 自动播放（含打回）</button>
+            <button type="button" class="btn-ctl" id="s3-play-pass">▶ 一次通过</button>
+            <button type="button" class="btn-ctl" id="s3-reset">重置</button>
+          </div>
+          <div class="stage-caption" id="s3-cap">点击“下一步”单步跟踪 <code>/boost</code>：看它如何先把写权限关掉查清根因，再由独立测试把漏改的边缘情况打回第 2 轮重修。</div>
+        </figure>
+
+        <p>把 <code>/boost</code> 比作一台往地下深钻的钻井机很贴切——对付单点深水难题非常趁手。可一旦走出单个 Bug，把视野拉到<strong>跨好几天的整库重构、老框架迁移，或者高难度仿真工程</strong>上，光靠一口井就远远不够了。</p>
+
+        <p>多天长跑最先暴露的是两个硬伤：一是开头如果没把“究竟要做成什么样”聊透，跑了一天半才发现方向偏了；而且连续干上几天后，连总控自己的上下文都会变得粘稠疲劳。二是任务一难、时间一长，模型甚至可能动起“写个假测试糊弄过去”的歪脑筋。</p>
+
+        <p>大工程靠的从来不是临场发挥，而是制度。这也是为什么早在 2026 年中、比后来的 Swarm 更早几个月，Antigravity 就先推出了这套纵向的重装体系：<code>/teamwork</code>。</p>
+
+        <!-- SECTION 4: /TEAMWORK -->
+        <h2 id="teamwork">/teamwork：先立规矩再开工，跨天工程的正规军</h2>
+
+        <p>比起随叫随到的临时协作，<code>/teamwork</code> 更像一支真正拉出来打硬仗的正规工程团队。它把过去人类公司里用血泪换来的几条规矩，一条一条写进了智能体的运行流程里。</p>
+
+        <h3>动工前的十分钟：需求面试官（Scoping Interview）</h3>
+        <p>大项目最怕“还没想清楚就开始写代码”。所以 <code>/teamwork</code> 上来不会立刻建文件，而是先拉着你做一轮结构化访谈，遵循一句老话：<strong>Specify what, not how（说清要什么，别瞎指挥怎么写）</strong>。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Scoping Interview 需求面试图">
+              <rect x="14" y="24" width="66" height="56" rx="5" fill="var(--bg-card)" stroke="var(--ink)" />
+              <text x="47" y="50" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="var(--ink)">User</text>
+              <text x="47" y="66" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ink-muted)">拍板目标</text>
+              <line x1="80" y1="44" x2="112" y2="44" stroke="var(--accent)" stroke-width="1.4" />
+              <line x1="112" y1="60" x2="80" y2="60" stroke="var(--accent)" stroke-width="1.4" />
+              <rect x="114" y="14" width="114" height="76" rx="5" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5" />
+              <text x="171" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--accent)">Prompt Artifact</text>
+              <text x="171" y="54" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">What, not how</text>
+              <text x="171" y="72" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ok)">锁定客观验收标尺</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">Phase 1 · Scoping Interview（需求面试与隔离立项）</span>
+            它会先把目标人群、每条核心需求和客观验证脚本对清楚，写成一份书面的 Prompt 工件请你拍板；确认之后再在 <code>~/teamwork_projects/</code> 下划出完全隔离的工程目录开工，再也不用担心跑两天偏离初衷，或者把现有工作区弄乱。
+          </figcaption>
+        </figure>
+
+        <h3>跑到第五天依然清醒：里程碑接力（Milestone Handoff）</h3>
+        <p>不管上下文窗口标称有多大，同一个总控跑上几千步之后，注意力一定会变钝。<code>/teamwork</code> 对付上下文衰老的办法相当干脆：既然一个人跑久了会累，那就别让他跑到底。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Milestone Handoff 换棒接力图">
+              <rect x="12" y="24" width="88" height="56" rx="5" fill="var(--bg-card)" stroke="var(--blue)" />
+              <text x="56" y="47" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--blue)">M1 Orch</text>
+              <text x="56" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">满载历史归档</text>
+              <line x1="100" y1="52" x2="138" y2="52" stroke="var(--accent)" stroke-width="1.6" />
+              <polygon points="135,48 142,52 135,56" fill="var(--accent)" />
+              <text x="120" y="42" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent)">换棒</text>
+              <rect x="142" y="24" width="86" height="56" rx="5" fill="var(--bg-card)" stroke="var(--ok)" stroke-width="1.5" />
+              <text x="185" y="47" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--ok)">M2 Orch</text>
+              <text x="185" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">干净上下文接棒</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">Phase 2 · Milestone Handoff（里程碑换棒）</span>
+            项目被切成几个清晰的里程碑。每过一站，当前总控就把干净的阶段产出和文档交棒给一个上下文完全清零的新继任者。跑到大工程的第五天，带队干活的依然是一颗刚睡醒的清亮脑子。
+          </figcaption>
+        </figure>
+
+        <h3>交付前的最后三道关：把验收权拆成三权分立</h3>
+        <p>到了跨天大项目里，光靠一个测试沙盒远远看不住死角——代码能不能长期维护、极端并发抗不抗得住、有没有人在偷偷写假测试？<code>/teamwork</code> 干脆把验收拆给了三位性格迥异的审查官。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Critic 独立代码审查图">
+              <rect x="14" y="26" width="84" height="52" rx="5" fill="var(--bg-card)" stroke="var(--rule-strong)" />
+              <text x="56" y="49" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink)">候选 Diff</text>
+              <text x="56" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">测试已跑通</text>
+              <line x1="98" y1="52" x2="128" y2="52" stroke="var(--purple)" stroke-width="1.6" />
+              <polygon points="125,48 132,52 125,56" fill="var(--purple)" />
+              <rect x="132" y="20" width="96" height="64" rx="5" fill="var(--bg-card)" stroke="var(--purple)" stroke-width="1.6" />
+              <text x="180" y="44" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--purple)">Critic</text>
+              <text x="180" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-secondary)">审接口契约与规范</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">第一关 · Critic（架构与代码品味审查）</span>
+            很多时候单测全绿了，代码却写得东拼西凑、模块乱耦合，下一个里程碑根本没法接着改。<code>Critic</code> 专门盯着逻辑完备性、接口契约和代码风格挑刺，拦住那些“今天能跑、明天炸雷”的短视改动。
+          </figcaption>
+        </figure>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Challenger 对抗压测图">
+              <rect x="14" y="20" width="96" height="64" rx="5" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="62" y="44" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent)">Challenger</text>
+              <text x="62" y="63" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-secondary)">恶意输入 / 内存极限</text>
+              <line x1="110" y1="52" x2="140" y2="52" stroke="var(--accent)" stroke-width="1.6" />
+              <polygon points="137,48 144,52 137,56" fill="var(--accent)" />
+              <rect x="144" y="26" width="84" height="52" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" />
+              <text x="186" y="49" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="var(--accent)">打穿脆弱路径</text>
+              <text x="186" y="65" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-secondary)">退回修正</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">第二关 · Challenger（专门来掀桌子的压测员）</span>
+            自己写的用例总是温和体面，只测正常流程。<code>Challenger</code> 上场只有一个念头——把你的系统弄崩。它会专门造畸形边界输入、恶劣并发和内存耗时极限去撞你的代码，把脆弱路径提前打穿。
+          </figcaption>
+        </figure>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Auditor 防作弊审计图">
+              <rect x="14" y="22" width="88" height="60" rx="5" fill="var(--bg-card)" stroke="var(--rule-strong)" />
+              <text x="58" y="46" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink)">终端真实日志</text>
+              <text x="58" y="64" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ink-muted)">无 Mock · 真执行</text>
+              <line x1="102" y1="52" x2="132" y2="52" stroke="var(--ok)" stroke-width="1.6" />
+              <polygon points="129,48 136,52 129,56" fill="var(--ok)" />
+              <rect x="136" y="20" width="92" height="64" rx="5" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6" />
+              <text x="182" y="44" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--ok)">Auditor</text>
+              <text x="182" y="63" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">验 Integrity 模式</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">第三关 · Auditor（逐行对日志的防作弊审计）</span>
+            遇到硬任务卡住时，大模型真可能会悄悄写个 Mock 假装过了测试，甚至偷看评测集猜答案。<code>Auditor</code> 不听任何口头汇报，直接去翻真实的终端执行日志，并对照你指定的诚信模式（<code>development</code>、<code>demo</code>，或只能用标准库从零手写的 <code>benchmark</code>），最后由 <code>Success Auditor</code> 签字放行。
+          </figcaption>
+        </figure>
+
+        <p>顺着这张图一步步往后点，再切一下右侧的诚信模式，就能看出 <code>/teamwork</code> 这套制度卡得有多严：</p>
+
+        <!-- STAGE 4: /TEAMWORK PHASES & INTEGRITY MODES -->
+        <figure class="stage-card" id="stage-teamwork">
+          <div class="stage-header">
+            <span class="stage-title">/teamwork 三阶段生命周期与 Integrity 审计模式</span>
+            <span class="stage-meta-readout" id="s5-readout">STEP 1 / 5 · PHASE 1 · DEVELOPMENT</span>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 276" aria-label="/teamwork 三阶段生命周期与铁面审计门禁图">
+              <g id="s5-p1">
+                <rect x="18" y="24" width="198" height="224" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6" />
+                <text x="34" y="48" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent)">PHASE 1 · 立项面试</text>
+                <text x="34" y="72" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">Scoping Interview</text>
+                <rect x="34" y="88" width="166" height="44" rx="5" fill="var(--bg-card)" stroke="var(--rule)" />
+                <text x="44" y="107" font-family="var(--font-sans)" font-size="12" fill="var(--ink)">1. 澄清目标与受众</text>
+                <text x="44" y="123" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">Specify what, not how</text>
+                <rect x="34" y="140" width="166" height="44" rx="5" fill="var(--bg-card)" stroke="var(--rule)" />
+                <text x="44" y="159" font-family="var(--font-sans)" font-size="12" fill="var(--ink)">2. 约定客观验证标尺</text>
+                <text x="44" y="175" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">Benchmark / Test Suite</text>
+                <rect x="34" y="192" width="166" height="40" rx="5" fill="var(--ok-soft)" stroke="var(--ok)" />
+                <text x="117" y="216" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--ok)">用户拍板 · 隔离目录立项</text>
+              </g>
+
+              <line x1="218" y1="136" x2="246" y2="136" stroke="var(--ink)" stroke-width="1.8" />
+              <polygon points="244,131 253,136 244,141" fill="var(--ink)" />
+
+              <g id="s5-p2" opacity="0.45">
+                <rect x="255" y="24" width="224" height="224" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6" />
+                <text x="271" y="48" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--blue)">PHASE 2 · 里程碑接力</text>
+                <text x="271" y="72" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">Milestone Handoff</text>
+                <rect x="271" y="88" width="192" height="56" rx="5" fill="var(--bg-card)" stroke="var(--blue)" />
+                <text x="283" y="110" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--blue)">Milestone #1 Orch</text>
+                <text x="283" y="129" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">搭骨架 + 并行子任务</text>
+                <text x="367" y="162" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent)">↓ 清空污染 · 换新上下文接棒</text>
+                <rect x="271" y="172" width="192" height="58" rx="5" fill="var(--bg-card)" stroke="var(--blue)" />
+                <text x="283" y="194" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--blue)">Milestone #2 Orch</text>
+                <text x="283" y="213" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">第 5 天依然拥有第 1 天的清醒</text>
+              </g>
+
+              <line x1="481" y1="136" x2="509" y2="136" stroke="var(--ink)" stroke-width="1.8" />
+              <polygon points="507,131 516,136 507,141" fill="var(--ink)" />
+
+              <g id="s5-p3" opacity="0.45">
+                <rect x="518" y="24" width="224" height="224" rx="8" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6" />
+                <text x="534" y="48" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--ok)">PHASE 3 · 铁面审计门</text>
+                <text x="534" y="72" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">3-Gate Verification</text>
+                <g id="s5-gate-1">
+                  <rect x="534" y="86" width="192" height="44" rx="5" fill="var(--bg-card)" stroke="var(--rule)" />
+                  <text x="545" y="105" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--purple)">1. Critic</text>
+                  <text x="545" y="121" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">独立代码审查 · 接口契约</text>
+                </g>
+                <g id="s5-gate-2">
+                  <rect x="534" y="137" width="192" height="44" rx="5" fill="var(--bg-card)" stroke="var(--rule)" />
+                  <text x="545" y="156" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--accent)">2. Challenger</text>
+                  <text x="545" y="172" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">构造极端输入 / 内存时间压测</text>
+                </g>
+                <g id="s5-gate-3">
+                  <rect x="534" y="188" width="192" height="48" rx="5" fill="var(--ok-soft)" stroke="var(--ok)" />
+                  <text x="545" y="207" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--ok)">3. Auditor + Integrity</text>
+                  <text id="s5-mode-txt" x="545" y="224" font-family="var(--font-mono)" font-size="10.2" fill="var(--ok)">mode: development (常规)</text>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s5-prev" disabled>◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s5-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s5-auto">▶ 自动播放</button>
+            <button type="button" class="btn-ctl is-active" data-s5-phase="1">1. 面试</button>
+            <button type="button" class="btn-ctl" data-s5-phase="2">2. 接力</button>
+            <button type="button" class="btn-ctl" data-s5-phase="3">3. 审计三门</button>
+            <div style="display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; margin-left:auto;">
+              <span style="font-size:12px; color:var(--ink-muted);">Integrity：</span>
+              <button type="button" class="btn-ctl is-active" data-s5-mode="development">development</button>
+              <button type="button" class="btn-ctl" data-s5-mode="demo">demo</button>
+              <button type="button" class="btn-ctl" data-s5-mode="benchmark">benchmark</button>
+            </div>
+          </div>
+          <div class="stage-caption" id="s5-cap">Step 1 / 5 · Phase 1 需求面试：花几分钟签好“要什么、怎么验”的书面契约，再进隔离目录开工，省得跑两天发现理解错了。</div>
+        </figure>
+
+        <p>用过几回 <code>/teamwork</code> 之后，你会发现它确实能把跨周大迁移管得稳稳当当。可反过来看，它的毛病也很明显——<strong>太沉了</strong>。</p>
+
+        <p>如果今天下午你只是想快速做完一个常规新功能：后端接口、前端页面、集成测试本来可以三路齐头并进，写完一个字段想随手喊一声“我提交了，帮我跑下测试”，难道每次都要先开面试签契约、再一棒一棒按里程碑往上层汇报吗？</p>
+
+        <p>而且回头仔细一想，无论是 <code>Subagents</code>、<code>/boost</code> 还是 <code>/teamwork</code>，本质上都还是<strong>金字塔式的纵向汇报</strong>——工人之间没法直接对话。于是到了 2026 年 11 月，Antigravity 干脆把金字塔拍平，往工坊正中间搬出了一块大家都能看见的公共黑板：这就是最新一代的 <code>/swarm</code>。</p>
+
+        <!-- SECTION 5: /SWARM -->
+        <h2 id="swarm">/swarm：把金字塔拍平，搬出一块公共黑板</h2>
+
+        <p>输入 <code>/swarm</code> 的那一刻，你所在的对话就变成了一间热闹但井井有条的工坊。为了让多个人同时动工不打架、还不至于在群里无意义刷屏烧光额度，Swarm 依次立起了四个角色。</p>
+
+        <h3>先把包工头的手按住：Coordinator</h3>
+        <p>很多人自己试着拉几个 Agent 并行干活时，最容易犯的错就是：一边给别人派活，主窗口自己也顺手去改某个文件。结果写代码写得太投入，旁边有个 Agent 问了一句“接口返回格式是什么”，半天没人理，整场协作静悄悄地凉在那里。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Coordinator 角色图">
+              <rect x="52" y="12" width="136" height="36" rx="6" fill="var(--bg-card)" stroke="var(--ink)" stroke-width="1.6" />
+              <text x="120" y="34" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="700" fill="var(--ink)">Coordinator</text>
+              <line x1="86" y1="48" x2="54" y2="70" stroke="var(--accent)" stroke-width="1.4" />
+              <line x1="154" y1="48" x2="186" y2="70" stroke="var(--accent)" stroke-width="1.4" />
+              <rect x="14" y="70" width="84" height="24" rx="4" fill="var(--bg-card)" stroke="var(--rule)" />
+              <text x="56" y="86" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-secondary)">切分任务边界</text>
+              <rect x="142" y="70" width="84" height="24" rx="4" fill="var(--bg-card)" stroke="var(--rule)" />
+              <text x="184" y="86" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-secondary)">裁判与合并</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">Coordinator（专职协调者）</span>
+            Antigravity 对它有一条硬规矩：自己绝对不下场写业务代码。它只管三件事——提前把活切干净（谁管哪几个文件先说好）、盯着黑板做裁判、最后把分支合并起来向你交差。
+          </figcaption>
+        </figure>
+
+        <h3>按工种命名、靠门铃叫醒的：Workers + 共享白板</h3>
+        <p>早先的 Subagent 彼此之间像隔着墙，<code>@ui</code> 想问 <code>@api</code> 一句话，必须绕道主 Agent 当传话筒。而在 Swarm 里，所有工人共同盯着同一块按 <code>#1</code>、<code>#2</code> 顺序往上贴条的共享消息板（Board）。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="具名 Workers 与共享白板结构图">
+              <rect x="12" y="16" width="86" height="72" rx="5" fill="var(--bg-card)" stroke="var(--accent)" />
+              <text x="55" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--accent)">Board (#1..#4)</text>
+              <text x="55" y="53" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">@api 门铃叫醒</text>
+              <text x="55" y="70" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">未点名不唤醒</text>
+              <line x1="98" y1="36" x2="128" y2="30" stroke="var(--blue)" stroke-width="1.4" />
+              <line x1="98" y1="68" x2="128" y2="74" stroke="var(--purple)" stroke-width="1.4" />
+              <rect x="130" y="14" width="98" height="32" rx="4" fill="var(--bg-card)" stroke="var(--blue)" />
+              <text x="179" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--blue)">@api (share-A)</text>
+              <rect x="130" y="58" width="98" height="32" rx="4" fill="var(--bg-card)" stroke="var(--purple)" />
+              <text x="179" y="78" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--purple)">@ui (share-B)</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">具名 Workers（如 @api / @ui）</span>
+            写代码的工人都拿到了各自独立的 <code>share</code> 工作副本，并发修改互不撞车；更巧的是“门铃机制”——没被叫到名字的工人直接进入 <code>waiting</code> 休眠，不花一分钱 Token；只有帖子敲出 <code>@api</code> 时门铃才响。引用前面的讨论只需写 <code>#4</code>，也不用把长汇报重复抄送。队伍再大时还能拆出 <code>#channel</code> 分频道，免得不相干的人老被吵醒。
+          </figcaption>
+        </figure>
+
+        <h3>只挑刺、绝不越界替人改的：对抗式 Verifier</h3>
+        <p>工人们自己写完代码，自然总觉得差不多能用了；可如果让检查者顺手去帮作者改 Bug，两个人又会撞进同一个文件里把现场写乱。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="对抗式 Verifier 结构图">
+              <rect x="12" y="28" width="84" height="48" rx="5" fill="var(--bg-card)" stroke="var(--blue)" />
+              <text x="54" y="49" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--blue)">@api</text>
+              <text x="54" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">负责写 &amp; 修</text>
+              <line x1="96" y1="42" x2="142" y2="42" stroke="var(--ok)" stroke-width="1.4" />
+              <polygon points="139,38 145,42 139,46" fill="var(--ok)" />
+              <line x1="142" y1="62" x2="96" y2="62" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="3 3" />
+              <polygon points="99,58 93,62 99,66" fill="var(--accent)" />
+              <rect x="144" y="28" width="84" height="48" rx="5" fill="var(--bg-card)" stroke="var(--ok)" stroke-width="1.5" />
+              <text x="186" y="49" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--ok)">@verifier</text>
+              <text x="186" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">只测不改代码</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">对抗式 Verifier（每 2~4 个工人配 1 位）</span>
+            它只读 Diff、跑真实单测、像挑剔的用户一样试探边界；抓出问题之后绝不动手替人改，直接在黑板上 <code>@原作者</code> 把活退回去。点对点交锋修好之后，再一起向协调者交差，效率高出不少。
+          </figcaption>
+        </figure>
+
+        <h3>怕整群安静下来没人管的：Monitor</h3>
+        <p>既然平时大家都在睡眠等门铃，万一某个工人发完消息忘了顺手 <code>@</code> 下家，整个群就会突然陷入一种滑稽的冷场——每个人都在等别人先开口，谁也没注意到活还没完。</p>
+
+        <figure class="role-plate">
+          <div class="role-plate-svg">
+            <svg viewBox="0 0 240 104" aria-label="Monitor 巡检哨兵图">
+              <rect x="16" y="18" width="88" height="68" rx="5" fill="var(--bg-card)" stroke="var(--warn)" stroke-dasharray="4 3" />
+              <text x="60" y="45" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--warn)">monitor</text>
+              <text x="60" y="64" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-muted)">定时巡检白板</text>
+              <line x1="104" y1="52" x2="142" y2="52" stroke="var(--accent)" stroke-width="1.6" />
+              <polygon points="139,48 145,52 139,56" fill="var(--accent)" />
+              <rect x="146" y="24" width="82" height="56" rx="5" fill="var(--bg-card)" stroke="var(--ink)" />
+              <text x="187" y="48" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--accent)">[stall] 警报</text>
+              <text x="187" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-secondary)">@coordinator</text>
+            </svg>
+          </div>
+          <figcaption class="role-plate-note">
+            <span class="role-name">Monitor（巡检哨兵）</span>
+            它平时在角落里一声不吭，绝不抢戏；只有检测到整块黑板半天没动静时，才会敲出一条 <code>@coordinator [stall]</code>，指出卡在了第几楼、谁忘了接棒，让这群异步合作的团队不至于悄悄熄火。
+          </figcaption>
+        </figure>
+
+        <p>四个角色站齐之后，整场配合看下来就很有意思了。你可以一步步点“下一步”，看看一条 <code>#1</code> 到 <code>#5</code> 的消息流是怎么把大家按需叫醒的（在 Antigravity App 的 Swarm 面板里，也能用 Board / Members / Graph 三个视图直接围观这个过程）：</p>
+
+        <!-- STAGE 5: /SWARM BOARD + GRAPH -->
+        <figure class="stage-card" id="stage-swarm">
+          <div class="stage-header">
+            <span class="stage-title">/swarm 共享黑板与 @mention 门铃唤醒过程</span>
+            <span class="stage-meta-readout" id="s4-readout">STEP 0 / 5 · 0 ACTIVE</span>
+          </div>
+          <div class="stage-canvas">
+            <div class="swarm-split">
+              <div class="board-feed" aria-label="Swarm 共享消息板">
+                <div class="board-feed-head">
+                  <span>#main · LIVE BOARD</span>
+                  <span id="s4-board-seq">HEAD: #0</span>
+                </div>
+                <div class="board-msg" id="s4-m1">
+                  <span class="board-seq">#1</span><span class="board-author">Coordinator:</span>
+                  <span class="board-mention">@api</span> 负责后端接口（worktree-A）；<span class="board-mention">@ui</span> 负责前端页面（worktree-B）。完成后直接喊 @verifier。
+                </div>
+                <div class="board-msg" id="s4-m2">
+                  <span class="board-seq">#2</span><span class="board-author">@api:</span>
+                  接口已完成并 commit。<span class="board-mention">@verifier</span> 请按 #1 契约跑集成测试。
+                </div>
+                <div class="board-msg" id="s4-m3">
+                  <span class="board-seq">#3</span><span class="board-author">@verifier:</span>
+                  抓到边界 Bug！空分页会 500。<span class="board-mention">@api</span> 请修完再喊我（我只测不改代码）。
+                </div>
+                <div class="board-msg" id="s4-m4">
+                  <span class="board-seq">#4</span><span class="board-author">@api:</span>
+                  已修并补单测。<span class="board-mention">@verifier</span> 复测 #3。
+                </div>
+                <div class="board-msg" id="s4-m5">
+                  <span class="board-seq">#5</span><span class="board-author">@verifier:</span>
+                  前后端全绿！<span class="board-mention">@coordinator</span> 请合并两个 worktree 收工。
+                </div>
+              </div>
+
+              <svg viewBox="0 0 390 270" aria-label="Swarm 节点唤醒状态图">
+                <line id="s4-l-c-api" x1="195" y1="46" x2="88" y2="128" stroke="var(--rule)" stroke-width="1.5" />
+                <line id="s4-l-c-ui" x1="195" y1="46" x2="302" y2="128" stroke="var(--rule)" stroke-width="1.5" />
+                <line id="s4-l-api-ver" x1="88" y1="158" x2="195" y2="216" stroke="var(--rule)" stroke-width="1.5" />
+                <line id="s4-l-ui-ver" x1="302" y1="158" x2="195" y2="216" stroke="var(--rule)" stroke-width="1.5" />
+                <line id="s4-l-ver-c" x1="195" y1="198" x2="195" y2="74" stroke="var(--rule)" stroke-width="1.3" stroke-dasharray="4 4" />
+                <circle id="s4-signal" cx="195" cy="46" r="6" fill="var(--accent)" opacity="0" />
+
+                <g id="s4-n-coord">
+                  <rect x="125" y="14" width="140" height="44" rx="7" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.5" />
+                  <text x="195" y="34" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="700" fill="var(--ink)">Coordinator</text>
+                  <text id="s4-st-coord" x="195" y="49" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">idle · 裁判/派活</text>
+                </g>
+
+                <g id="s4-n-api">
+                  <rect x="18" y="114" width="140" height="52" rx="7" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.4" />
+                  <text x="88" y="135" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--ink)">@api</text>
+                  <text id="s4-st-api" x="88" y="153" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">waiting (0 token)</text>
+                </g>
+
+                <g id="s4-n-ui">
+                  <rect x="232" y="114" width="140" height="52" rx="7" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.4" />
+                  <text x="302" y="135" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--ink)">@ui</text>
+                  <text id="s4-st-ui" x="302" y="153" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">waiting (0 token)</text>
+                </g>
+
+                <g id="s4-n-ver">
+                  <rect x="115" y="204" width="160" height="50" rx="7" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.4" />
+                  <text x="195" y="225" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--ok)">@verifier</text>
+                  <text id="s4-st-ver" x="195" y="242" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">waiting (0 token)</text>
+                </g>
+
+                <rect x="292" y="16" width="84" height="36" rx="5" fill="var(--bg-card)" stroke="var(--rule)" stroke-dasharray="3 3" />
+                <text x="334" y="32" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">monitor</text>
+                <text x="334" y="45" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">防全员卡死</text>
+              </svg>
+            </div>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s4-prev" disabled>◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s4-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s4-auto">▶ 自动播放全流程</button>
+            <button type="button" class="btn-ctl" id="s4-reset">重置</button>
+          </div>
+          <div class="stage-caption" id="s4-cap">点击“下一步”观察：只有被 <code>@mention</code> 点名的节点才会从睡眠中唤醒，且 <code>@verifier</code> 直接与 <code>@api</code> 点对点交锋返工。</div>
+        </figure>
+
+        <!-- SECTION 6: SUMMARY MATRIX & INTERACTIVE COMPASS -->
+        <h2 id="compass">一张表看懂差异，以及平时怎么挑</h2>
+
+        <p>走到这一步再回头看，五种模式并不是层层覆盖、越往后越高级的替代关系。改个小样式也把 <code>/teamwork</code> 搬出来，不仅慢，纯属杀鸡用牛刀；反过来让单 Agent 硬扛整库迁移，大概率两小时后就开始在原地兜圈。</p>
+
+        <div class="matrix-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>协作模式</th>
+                <th>请出的关键角色</th>
+                <th>怎么沟通</th>
+                <th>帮你避开了什么坑</th>
+                <th>别拿它干什么</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Single Agent</td>
+                <td>Primary Agent</td>
+                <td>单线程 ReAct 循环</td>
+                <td>零沟通成本，快到飞起</td>
+                <td>别硬扛跨多文件、长日志的重活</td>
+              </tr>
+              <tr>
+                <td>Subagents</td>
+                <td>research / browser / self</td>
+                <td>星型单线，只对父节点交差</td>
+                <td>把搜库、点网页的噪声挡在主窗口外</td>
+                <td>别指望它硬解需要反复推理交锋的深水 Bug</td>
+              </tr>
+              <tr>
+                <td>/boost</td>
+                <td>Orchestrator · DeepInvestigator · DeepCoder</td>
+                <td>垂直三层（调度 → 查写分离 → 验收）</td>
+                <td>改掉了“边猜边改”和自己改弱测试的毛病</td>
+                <td>别用来做大量本来就能并行的普通页面</td>
+              </tr>
+              <tr>
+                <td>/teamwork</td>
+                <td>Milestone Orch · Critic · Challenger · Auditor</td>
+                <td>纵向立项契约 + 换棒接力 + 三道验收门</td>
+                <td>防住长周期健忘、走偏方向和写假测试</td>
+                <td>日常小修小补就别摆这套重装阵仗了</td>
+              </tr>
+              <tr>
+                <td>/swarm</td>
+                <td>Coordinator · Workers · Verifier · Monitor</td>
+                <td>拍平层级，改用共享黑板 + <code>@mention</code> 门铃</td>
+                <td>多模块并发推进，发现问题点对点打回</td>
+                <td>别动不动就 <code>@all</code>，不然全员一起烧额度</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>拿不准该用哪种时，直接按下面 5 个常见开发场景点一点，看看协作阵型会怎么切过去：</p>
+
+        <!-- STAGE 6: INTERACTIVE SCENARIO COMPASS -->
+        <figure class="stage-card" id="stage-compass">
+          <div class="stage-header">
+            <span class="stage-title">日常开发场景选型参考（点击切换）</span>
+            <span class="stage-meta-readout" id="s6-readout">RECOMMENDED: SINGLE AGENT</span>
+          </div>
+          <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
+            <button type="button" class="btn-ctl" id="s6-prev" disabled>◀</button>
+            <button type="button" class="btn-ctl is-active" data-s6="csv">1. 写脚本清洗 CSV</button>
+            <button type="button" class="btn-ctl" data-s6="ui">2. 改接口 + 浏览器实测</button>
+            <button type="button" class="btn-ctl" data-s6="race">3. 偶发并发死锁 Bug</button>
+            <button type="button" class="btn-ctl" data-s6="mig">4. 跨周全库迁移 + 压测</button>
+            <button type="button" class="btn-ctl" data-s6="feat">5. 并行开发前后端与单测</button>
+            <button type="button" class="btn-ctl" id="s6-next">▶</button>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 210" aria-label="场景协作拓扑动态图">
+              <g id="s6-scene"></g>
+            </svg>
+            <div class="compass-details">
+              <div class="compass-pill">
+                <span>顺手的模式</span>
+                <strong id="s6-mode">Single Agent（单智能体）</strong>
+              </div>
+              <div class="compass-pill">
+                <span>为什么不选别的</span>
+                <strong id="s6-why">目标清晰、五分钟内闭环，任何多余的调度反而是累赘。</strong>
+              </div>
+            </div>
+          </div>
+        </figure>
+
+        <p>回头看过去这一年的变化，觉得挺有意思的。</p>
+
+        <p>如果说我们在前两篇聊过的“微雕刻”和“立标尺”，还更多是在讲人与 AI 一对一打交道时的手艺；那么到了多智能体这一层，AI 几乎是在用几个月的时间，把人类软件工程花几十年攒下来的组织演进重新走了一遍——从单兵手工作坊，到外包打前站，到法医与主刀分开的专案组，到先签契约、换棒接力、三道门神守关的正规军（<code>/teamwork</code>），再到最后把金字塔拍平、靠共享黑板和 <code>@mention</code> 门铃点对点协同的敏捷工坊（<code>/swarm</code>）。</p>
+
+        <p>往后真正拉开差距的，恐怕不再是大家手里用的模型参数差了几个百分点，而是遇到棘手问题时，你一眼就能看清：此刻卡住我们的到底是<strong>桌子被弄乱了</strong>、<strong>查和写搅在一起</strong>、<strong>周期太长容易跑偏</strong>，还是<strong>多路推进没铺开</strong>——然后顺手替它选对了那张刚好合身的协作阵型。</p>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇导航">
+        <a href="02-the-next-flat-world.html">&larr; #02 下一个 Flat 时代</a>
+        <a href="index.html">返回目录 &uarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p>文中涉及的架构与命令设计参考自 Google Antigravity 官方文档：<a href="https://antigravity.google/docs" target="_blank" rel="noopener">Subagents</a>、<a href="https://antigravity.google/docs/boost/" target="_blank" rel="noopener">/boost</a>、<a href="https://antigravity.google/docs/teamwork" target="_blank" rel="noopener">/teamwork</a> 与 <a href="https://antigravity.google/docs/swarm/" target="_blank" rel="noopener">/swarm</a>；页面里的图解与交互动画基于 SVG 与 GSAP 驱动。</p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      /* 1. Theme Toggle & Reading Progress */
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      if (saved === "dark" || saved === "light") {
+        root.setAttribute("data-theme", saved);
+        label.textContent = saved.toUpperCase();
+      }
+
+      btn.addEventListener("click", function () {
+        var current = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", current);
+        label.textContent = current.toUpperCase();
+        try { localStorage.setItem("blog.theme", current); } catch (e) {}
+      });
+
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var sections = ["intro", "single-agent", "subagents", "boost", "teamwork", "swarm", "compass"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      var tocLinks = document.querySelectorAll("#toc-list a");
+
+      function onScroll() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+
+        if (scrollTop > 220) {
+          strip.classList.add("is-visible");
+        } else {
+          strip.classList.remove("is-visible");
+        }
+
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+
+        var currentSectionId = "intro";
+        for (var i = 0; i < sections.length; i++) {
+          var rect = sections[i].getBoundingClientRect();
+          if (rect.top <= 160) {
+            currentSectionId = sections[i].id;
+          }
+        }
+        tocLinks.forEach(function (link) {
+          if (link.getAttribute("href") === "#" + currentSectionId) {
+            link.classList.add("is-active");
+          } else {
+            link.classList.remove("is-active");
+          }
+        });
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+
+      function anim(target, props) {
+        if (window.gsap) {
+          return window.gsap.to(target, props);
+        }
+        var el = typeof target === "string" ? document.querySelector(target) : target;
+        if (!el) return null;
+        if (props.attr) {
+          Object.keys(props.attr).forEach(function (k) {
+            el.setAttribute(k, props.attr[k]);
+          });
+        }
+        if (props.opacity !== undefined) el.style.opacity = props.opacity;
+        if (props.onComplete) props.onComplete();
+        return null;
+      }
+
+      /* 2. Stage 1: Remotion-style 30fps Frame Player + Single-Step Keyframes */
+      (function initStage1() {
+        var totalFrames = 240;
+        var keyframes = [0, 85, 160, 235];
+        var frame = 0;
+        var playing = false;
+        var rafId = null;
+        var tween = null;
+        var lastTs = 0;
+
+        var scrub = document.getElementById("s1-scrub");
+        var playBtn = document.getElementById("s1-play");
+        var prevBtn = document.getElementById("s1-prev");
+        var nextBtn = document.getElementById("s1-next");
+        var jumpBtns = Array.prototype.slice.call(document.querySelectorAll("[data-s1-jump]"));
+        var readout = document.getElementById("s1-readout");
+        var packet = document.getElementById("s1-packet");
+        var stepText = document.getElementById("s1-step-text");
+        var fillGrep = document.getElementById("s1-fill-grep");
+        var lblGrep = document.getElementById("s1-lbl-grep");
+        var fillLogs = document.getElementById("s1-fill-logs");
+        var lblLogs = document.getElementById("s1-lbl-logs");
+        var fillRetry = document.getElementById("s1-fill-retry");
+        var lblRetry = document.getElementById("s1-lbl-retry");
+        var pctEl = document.getElementById("s1-pct");
+        var clarityEl = document.getElementById("s1-clarity");
+        var d1 = document.getElementById("s1-diag-1");
+        var d2 = document.getElementById("s1-diag-2");
+        var d3 = document.getElementById("s1-diag-3");
+
+        function lerp(a, b, t) {
+          return a + (b - a) * Math.max(0, Math.min(1, t));
+        }
+
+        function stopMotion() {
+          playing = false;
+          if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+          if (tween) { tween.kill(); tween = null; }
+          playBtn.textContent = frame >= totalFrames ? "↻ 重播" : "▶ 播放";
+        }
+
+        function syncStepButtons() {
+          prevBtn.disabled = frame <= 1;
+          nextBtn.disabled = frame >= 234;
+          var activeKf = 0;
+          if (frame >= 200) activeKf = 235;
+          else if (frame >= 125) activeKf = 160;
+          else if (frame >= 50) activeKf = 85;
+          jumpBtns.forEach(function (b) {
+            b.classList.toggle("is-active", Number(b.getAttribute("data-s1-jump")) === activeKf);
+          });
+        }
+
+        function renderFrame(f) {
+          frame = Math.max(0, Math.min(totalFrames, f));
+          scrub.value = Math.round(frame);
+
+          var loopT = ((frame % 80) / 80) * 3;
+          var px, py;
+          if (loopT < 1) {
+            px = lerp(222, 342, loopT);
+            py = lerp(86, 206, loopT);
+          } else if (loopT < 2) {
+            px = lerp(342, 102, loopT - 1);
+            py = 206;
+          } else {
+            px = lerp(102, 222, loopT - 2);
+            py = lerp(206, 86, loopT - 2);
+          }
+          packet.setAttribute("cx", px.toFixed(1));
+          packet.setAttribute("cy", py.toFixed(1));
+
+          var t1 = Math.min(1, Math.max(0, (frame - 20) / 70));
+          var hGrep = Math.round(lerp(0, 44, t1));
+          fillGrep.setAttribute("height", hGrep);
+          fillGrep.setAttribute("y", 245 - hGrep);
+          fillGrep.setAttribute("opacity", t1 > 0.05 ? 1 : 0);
+          lblGrep.setAttribute("y", 245 - hGrep / 2 + 4);
+          lblGrep.setAttribute("opacity", hGrep > 22 ? 1 : 0);
+
+          var t2 = Math.min(1, Math.max(0, (frame - 90) / 70));
+          var hLogs = Math.round(lerp(0, 66, t2));
+          fillLogs.setAttribute("height", hLogs);
+          fillLogs.setAttribute("y", 245 - hGrep - 3 - hLogs);
+          fillLogs.setAttribute("opacity", t2 > 0.05 ? 1 : 0);
+          lblLogs.setAttribute("y", 245 - hGrep - 3 - hLogs / 2 + 4);
+          lblLogs.setAttribute("opacity", hLogs > 24 ? 1 : 0);
+
+          var t3 = Math.min(1, Math.max(0, (frame - 160) / 75));
+          var hRetry = Math.round(lerp(0, 70, t3));
+          fillRetry.setAttribute("height", hRetry);
+          fillRetry.setAttribute("y", 245 - hGrep - hLogs - 6 - hRetry);
+          fillRetry.setAttribute("opacity", t3 > 0.05 ? 1 : 0);
+          lblRetry.setAttribute("y", 245 - hGrep - hLogs - 6 - hRetry / 2 + 4);
+          lblRetry.setAttribute("opacity", hRetry > 24 ? 1 : 0);
+
+          var ctxPct = Math.round(lerp(22, 96, frame / totalFrames));
+          var clarity = Math.round(lerp(98, 41, Math.pow(frame / totalFrames, 1.35)));
+          pctEl.textContent = ctxPct + "%";
+          clarityEl.textContent = clarity + "%";
+
+          var framePad = String(Math.round(frame)).padStart(3, "0");
+          readout.textContent = "FRAME " + framePad + " / 240 · " + ctxPct + "% CONTEXT";
+
+          var tone = ctxPct < 55 ? "var(--ok)" : (ctxPct < 80 ? "var(--warn)" : "var(--accent)");
+          pctEl.setAttribute("fill", tone);
+          clarityEl.setAttribute("fill", tone);
+          d1.setAttribute("fill", tone);
+
+          if (frame < 55) {
+            stepText.textContent = "[Round 1] 桌面干净：读取目标与核心接口";
+            d1.textContent = "游刃有余";
+            d2.textContent = "适合单文件";
+            d3.textContent = "明确任务";
+          } else if (frame < 130) {
+            stepText.textContent = "[Round 3] grep 吐回二十个文件，全堆进主窗口";
+            d1.textContent = "开始拥挤";
+            d2.textContent = "检索碎纸";
+            d3.textContent = "越堆越多";
+          } else if (frame < 195) {
+            stepText.textContent = "[Round 6] 四百行报错堆积，开头定下的规矩被挤远";
+            d1.textContent = "注意力散了";
+            d2.textContent = "容易漏改";
+            d3.textContent = "反复打补丁";
+          } else {
+            stepText.textContent = "[Round 9] 自己改弱断言求通过 —— 同源盲区出现";
+            d1.textContent = "桌面埋满";
+            d2.textContent = "原地绕圈";
+            d3.textContent = "该拆分了";
+          }
+          syncStepButtons();
+        }
+
+        function animateToFrame(target) {
+          stopMotion();
+          var obj = { f: frame };
+          if (window.gsap) {
+            tween = window.gsap.to(obj, {
+              f: target,
+              duration: 0.42,
+              ease: "power2.out",
+              onUpdate: function () { renderFrame(obj.f); },
+              onComplete: function () { renderFrame(target); tween = null; }
+            });
+          } else {
+            renderFrame(target);
+          }
+        }
+
+        function tick(ts) {
+          if (!playing) return;
+          if (!lastTs) lastTs = ts;
+          var dt = (ts - lastTs) / 1000;
+          lastTs = ts;
+          frame += dt * 30;
+          if (frame >= totalFrames) {
+            frame = totalFrames;
+            renderFrame(frame);
+            playing = false;
+            playBtn.textContent = "↻ 重播";
+            return;
+          }
+          renderFrame(frame);
+          rafId = requestAnimationFrame(tick);
+        }
+
+        playBtn.addEventListener("click", function () {
+          if (playing) {
+            stopMotion();
+          } else {
+            if (tween) { tween.kill(); tween = null; }
+            if (frame >= totalFrames) frame = 0;
+            playing = true;
+            lastTs = 0;
+            playBtn.textContent = "⏸ 暂停";
+            rafId = requestAnimationFrame(tick);
+          }
+        });
+
+        prevBtn.addEventListener("click", function () {
+          for (var i = keyframes.length - 1; i >= 0; i--) {
+            if (keyframes[i] < frame - 2) {
+              animateToFrame(keyframes[i]);
+              return;
+            }
+          }
+          animateToFrame(0);
+        });
+
+        nextBtn.addEventListener("click", function () {
+          for (var i = 0; i < keyframes.length; i++) {
+            if (keyframes[i] > frame + 2) {
+              animateToFrame(keyframes[i]);
+              return;
+            }
+          }
+          animateToFrame(keyframes[keyframes.length - 1]);
+        });
+
+        scrub.addEventListener("input", function () {
+          stopMotion();
+          renderFrame(Number(scrub.value));
+        });
+
+        jumpBtns.forEach(function (b) {
+          b.addEventListener("click", function () {
+            animateToFrame(Number(b.getAttribute("data-s1-jump")));
+          });
+        });
+
+        renderFrame(0);
+      })();
+
+      /* 3. Stage 2: Subagent Isolation (Single-Step + Auto-Play + Raw Comparison) */
+      (function initStage2() {
+        var readout = document.getElementById("s2-readout");
+        var mainBar = document.getElementById("s2-main-bar");
+        var mainPct = document.getElementById("s2-main-pct");
+        var sub1Stat = document.getElementById("s2-sub1-stat");
+        var sub2Stat = document.getElementById("s2-sub2-stat");
+        var sub1Noise = document.getElementById("s2-sub1-noise");
+        var sub2Noise = document.getElementById("s2-sub2-noise");
+        var pktTop = document.getElementById("s2-pkt-top");
+        var pktBot = document.getElementById("s2-pkt-bot");
+        var retTop = document.getElementById("s2-ret-top");
+        var retBot = document.getElementById("s2-ret-bot");
+        var cap = document.getElementById("s2-cap");
+        var prevBtn = document.getElementById("s2-prev");
+        var nextBtn = document.getElementById("s2-next");
+        var tl = null;
+        var autoTimer = null;
+        var step = 0;
+        var isRawMode = false;
+
+        function clearRunners() {
+          if (tl) { tl.kill(); tl = null; }
+          if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+        }
+
+        function syncButtons() {
+          prevBtn.disabled = isRawMode ? false : (step <= 0);
+          nextBtn.disabled = !isRawMode && step >= 3;
+        }
+
+        function applyStep(n, immediate) {
+          isRawMode = false;
+          step = Math.max(0, Math.min(3, n));
+          if (tl) { tl.kill(); tl = null; }
+
+          mainBar.setAttribute("fill", "var(--ok)");
+          mainPct.setAttribute("fill", "var(--ok)");
+          readout.textContent = "STEP " + step + " / 3 · WITH SUBAGENTS";
+
+          if (step === 0) {
+            mainBar.setAttribute("width", "42");
+            mainPct.textContent = "主窗口占用: 24%";
+            sub1Noise.setAttribute("width", "0");
+            sub2Noise.setAttribute("width", "0");
+            pktTop.setAttribute("cx", "238"); pktTop.setAttribute("cy", "128"); pktTop.setAttribute("opacity", "0");
+            pktBot.setAttribute("cx", "238"); pktBot.setAttribute("cy", "172"); pktBot.setAttribute("opacity", "0");
+            retTop.setAttribute("x", "420"); retTop.setAttribute("y", "58"); retTop.setAttribute("opacity", "0");
+            retBot.setAttribute("x", "420"); retBot.setAttribute("y", "226"); retBot.setAttribute("opacity", "0");
+            sub1Stat.textContent = "待命中：点击下方按钮派发代码库检索";
+            sub2Stat.textContent = "待命中：点击下方按钮启动浏览器实测";
+            cap.textContent = "Step 0 / 3 · 初始状态：主 Agent 的桌面很干净（24%），两个子智能体处于待命状态。";
+          } else if (step === 1) {
+            mainBar.setAttribute("width", "42");
+            mainPct.textContent = "主窗口占用: 24%";
+            sub1Noise.setAttribute("width", "0");
+            sub2Noise.setAttribute("width", "0");
+            retTop.setAttribute("opacity", "0");
+            retBot.setAttribute("opacity", "0");
+            sub1Stat.textContent = "收到派单：准备进入只读沙盒翻库...";
+            sub2Stat.textContent = "收到派单：准备启动隔离浏览器...";
+            cap.textContent = "Step 1 / 3 · 派发任务：主 Agent 通过 invoke_subagent 把“搜调用链”和“测页面”分别外包出去。";
+            if (!immediate && window.gsap) {
+              pktTop.setAttribute("cx", "238"); pktTop.setAttribute("cy", "128"); pktTop.setAttribute("opacity", "1");
+              pktBot.setAttribute("cx", "238"); pktBot.setAttribute("cy", "172"); pktBot.setAttribute("opacity", "1");
+              tl = window.gsap.timeline()
+                .to(pktTop, { duration: 0.45, attr: { cx: 430, cy: 66 }, ease: "power2.inOut" }, 0)
+                .to(pktBot, { duration: 0.45, attr: { cx: 430, cy: 234 }, ease: "power2.inOut" }, 0);
+            } else {
+              pktTop.setAttribute("cx", "430"); pktTop.setAttribute("cy", "66"); pktTop.setAttribute("opacity", "1");
+              pktBot.setAttribute("cx", "430"); pktBot.setAttribute("cy", "234"); pktBot.setAttribute("opacity", "1");
+            }
+          } else if (step === 2) {
+            pktTop.setAttribute("opacity", "0");
+            pktBot.setAttribute("opacity", "0");
+            retTop.setAttribute("x", "420"); retTop.setAttribute("y", "58"); retTop.setAttribute("opacity", "1");
+            retBot.setAttribute("x", "420"); retBot.setAttribute("y", "226"); retBot.setAttribute("opacity", "1");
+            mainBar.setAttribute("width", "42");
+            mainPct.textContent = "主窗口占用: 24%";
+            sub1Stat.textContent = "沙盒内已吞掉 48k 检索结果，提炼成 1 条摘要";
+            sub2Stat.textContent = "沙盒内已消化 32k DOM/Console，锁定 1 处报错";
+            cap.textContent = "Step 2 / 3 · 隔离消化：80k 原始日志全部留在子沙盒内存里，主窗口水位纹丝不动。";
+            if (!immediate && window.gsap) {
+              tl = window.gsap.timeline()
+                .to(sub1Noise, { duration: 0.55, attr: { width: 245 }, ease: "power1.out" }, 0)
+                .to(sub2Noise, { duration: 0.55, attr: { width: 215 }, ease: "power1.out" }, 0);
+            } else {
+              sub1Noise.setAttribute("width", "245");
+              sub2Noise.setAttribute("width", "215");
+            }
+          } else if (step === 3) {
+            pktTop.setAttribute("opacity", "0");
+            pktBot.setAttribute("opacity", "0");
+            sub1Noise.setAttribute("width", "245");
+            sub2Noise.setAttribute("width", "215");
+            sub1Stat.textContent = "已销毁沙盒 · 传回 400 字调用链摘要";
+            sub2Stat.textContent = "已销毁沙盒 · 传回 1 条 Console 定位";
+            cap.textContent = "Step 3 / 3 · 带回摘要：子智能体就地解散，主窗口仅增加到 31%（清爽），脑子依然清醒。";
+            if (!immediate && window.gsap) {
+              retTop.setAttribute("x", "420"); retTop.setAttribute("y", "58"); retTop.setAttribute("opacity", "1");
+              retBot.setAttribute("x", "420"); retBot.setAttribute("y", "226"); retBot.setAttribute("opacity", "1");
+              tl = window.gsap.timeline()
+                .to(retTop, { duration: 0.45, attr: { x: 230, y: 122 }, ease: "power2.inOut" }, 0)
+                .to(retBot, { duration: 0.45, attr: { x: 230, y: 166 }, ease: "power2.inOut" }, 0)
+                .set([retTop, retBot], { attr: { opacity: 0 } })
+                .to(mainBar, { duration: 0.35, attr: { width: 54 } })
+                .call(function () { mainPct.textContent = "主窗口占用: 31% (清爽)"; });
+            } else {
+              retTop.setAttribute("opacity", "0");
+              retBot.setAttribute("opacity", "0");
+              mainBar.setAttribute("width", "54");
+              mainPct.textContent = "主窗口占用: 31% (清爽)";
+            }
+          }
+          syncButtons();
+        }
+
+        prevBtn.addEventListener("click", function () {
+          clearRunners();
+          if (isRawMode) {
+            applyStep(0);
+          } else if (step > 0) {
+            applyStep(step - 1);
+          }
+        });
+
+        nextBtn.addEventListener("click", function () {
+          clearRunners();
+          if (isRawMode) {
+            applyStep(1);
+          } else if (step < 3) {
+            applyStep(step + 1);
+          }
+        });
+
+        document.getElementById("s2-run-sub").addEventListener("click", function () {
+          clearRunners();
+          applyStep(1);
+          autoTimer = setInterval(function () {
+            if (step >= 3) {
+              clearInterval(autoTimer);
+              autoTimer = null;
+              return;
+            }
+            applyStep(step + 1);
+          }, 950);
+        });
+
+        document.getElementById("s2-run-raw").addEventListener("click", function () {
+          clearRunners();
+          applyStep(0, true);
+          isRawMode = true;
+          readout.textContent = "MODE: NO SUBAGENTS (RAW)";
+          sub1Stat.textContent = "未启用：主 Agent 亲自读了所有文件";
+          sub2Stat.textContent = "未启用：主 Agent 亲自接收整页 DOM";
+          cap.textContent = "对比模式（硬塞进主 Agent）：没有 Subagent 隔离，80k 检索文本与控制台日志直接灌入主上下文，主窗口立刻飙到 96% 爆仓。";
+          anim(mainBar, {
+            duration: 0.65,
+            attr: { width: 168, fill: "var(--accent)" },
+            ease: "power2.out"
+          });
+          mainPct.setAttribute("fill", "var(--accent)");
+          mainPct.textContent = "主窗口占用: 96% (爆仓)";
+          syncButtons();
+        });
+
+        document.getElementById("s2-reset").addEventListener("click", function () {
+          clearRunners();
+          applyStep(0);
+        });
+
+        applyStep(0, true);
+      })();
+
+      /* 4. Stage 3: /boost 3-Tier Reasoning Pipeline (7-Step Bidirectional + Auto-Play) */
+      (function initStage3() {
+        var pulse = document.getElementById("s3-pulse");
+        var readout = document.getElementById("s3-readout");
+        var orchSub = document.getElementById("s3-orch-sub");
+        var runSub = document.getElementById("s3-run-sub");
+        var retryArc = document.getElementById("s3-retry-arc");
+        var cap = document.getElementById("s3-cap");
+        var prevBtn = document.getElementById("s3-prev");
+        var nextBtn = document.getElementById("s3-next");
+
+        var boxOrch = document.querySelector("#s3-orch rect");
+        var boxInv = document.querySelector("#s3-inv rect");
+        var boxCoder = document.querySelector("#s3-coder rect");
+        var boxRunner = document.querySelector("#s3-runner rect");
+
+        var tl = null;
+        var autoTimer = null;
+        var step = 0;
+
+        function clearRunners() {
+          if (tl) { tl.kill(); tl = null; }
+          if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+        }
+
+        function setHighlights(activeIdx) {
+          boxOrch.setAttribute("stroke-width", activeIdx === 1 ? "2.6" : "1.6");
+          boxInv.setAttribute("stroke-width", activeIdx === 2 ? "2.6" : "1.6");
+          boxCoder.setAttribute("stroke-width", activeIdx === 3 ? "2.6" : "1.6");
+          boxRunner.setAttribute("stroke-width", activeIdx === 4 ? "2.6" : "1.6");
+          boxRunner.setAttribute("stroke", activeIdx === 4 && step === 4 ? "var(--accent)" : "var(--ok)");
+        }
+
+        function movePulse(cx, cy, visible, immediate) {
+          if (!visible) {
+            pulse.setAttribute("opacity", "0");
+            return;
+          }
+          if (!immediate && window.gsap) {
+            window.gsap.to(pulse, { duration: 0.42, attr: { cx: cx, cy: cy, opacity: 1 }, ease: "power2.inOut" });
+          } else {
+            pulse.setAttribute("cx", cx);
+            pulse.setAttribute("cy", cy);
+            pulse.setAttribute("opacity", "1");
+          }
+        }
+
+        function applyStep(n, immediate) {
+          step = Math.max(0, Math.min(6, n));
+          prevBtn.disabled = step <= 0;
+          nextBtn.disabled = step >= 6;
+
+          if (step === 0) {
+            readout.textContent = "STEP 0 / 6 · READY";
+            orchSub.textContent = "分解可验证任务 · 掌控重试与验收闭环";
+            runSub.textContent = "脱离代码作者独立跑压测 · 不过即打回";
+            retryArc.setAttribute("opacity", "0.35");
+            setHighlights(0);
+            movePulse(380, 51, false, true);
+            cap.textContent = "点击“下一步”单步跟踪 /boost：看它如何先把写权限关掉查清根因，再由独立测试把漏改的边缘情况打回第 2 轮重修。";
+          } else if (step === 1) {
+            readout.textContent = "STEP 1 / 6 · ORCHESTRATOR";
+            orchSub.textContent = "拆解任务：先由只读侦探定位竞态根因";
+            runSub.textContent = "等待补丁完成后独立验收";
+            retryArc.setAttribute("opacity", "0.35");
+            setHighlights(1);
+            movePulse(380, 51, true, immediate);
+            cap.textContent = "Step 1 / 6 · Orchestrator 压住修改冲动，先定下可验证的验收标准，不让下面带着模糊猜测直接动代码。";
+          } else if (step === 2) {
+            readout.textContent = "STEP 2 / 6 · DEEPINVESTIGATOR";
+            orchSub.textContent = "等待只读侦探提交根因证据链";
+            runSub.textContent = "等待补丁完成后独立验收";
+            retryArc.setAttribute("opacity", "0.35");
+            setHighlights(2);
+            movePulse(216, 158, true, immediate);
+            cap.textContent = "Step 2 / 6 · DeepInvestigator（纯只读）被剥夺写权限，老老实实追出并发锁时序冲突的根因证据。";
+          } else if (step === 3) {
+            readout.textContent = "STEP 3 / 6 · DEEPCODER (PASS 1)";
+            orchSub.textContent = "已将根因证据移交 DeepCoder 动刀";
+            runSub.textContent = "等待 Pass 1 补丁提交验收";
+            retryArc.setAttribute("opacity", "0.35");
+            setHighlights(3);
+            movePulse(552, 158, true, immediate);
+            cap.textContent = "Step 3 / 6 · DeepCoder 拿到确凿证据后只写最小补丁，不做无关大改。";
+          } else if (step === 4) {
+            readout.textContent = "STEP 4 / 6 · TEST RUNNER FAIL -> RETRY";
+            orchSub.textContent = "收到独立测试打回：准备安排 Pass 2";
+            runSub.textContent = "第 312 轮并发仍偶发超时 —— 打回重算";
+            retryArc.setAttribute("opacity", "1");
+            setHighlights(4);
+            movePulse(380, 267, true, immediate);
+            cap.textContent = "Step 4 / 6 · 独立 Test Runner 跑 500 轮并发压测，第 312 轮暴露残留超时，拒绝放行并沿反馈环打回顶层。";
+          } else if (step === 5) {
+            readout.textContent = "STEP 5 / 6 · PASS 2 REFINING";
+            orchSub.textContent = "吸收第 312 轮报错，指派 DeepCoder 细化锁粒度";
+            runSub.textContent = "等待 Pass 2 补丁重新送检";
+            retryArc.setAttribute("opacity", "0.75");
+            setHighlights(3);
+            if (!immediate && window.gsap) {
+              if (tl) tl.kill();
+              tl = window.gsap.timeline()
+                .set(pulse, { attr: { opacity: 1 } })
+                .to(pulse, { duration: 0.28, attr: { cx: 660, cy: 158 }, ease: "power1.in" })
+                .to(pulse, { duration: 0.28, attr: { cx: 380, cy: 51 }, ease: "power1.out" })
+                .to(pulse, { duration: 0.3, attr: { cx: 552, cy: 158 }, ease: "power2.inOut" });
+            } else {
+              movePulse(552, 158, true, true);
+            }
+            cap.textContent = "Step 5 / 6 · 第 2 轮精准修补：Orchestrator 吸收真实堆栈，DeepCoder 补齐外层锁粒度边界。";
+          } else if (step === 6) {
+            readout.textContent = "STEP 6 / 6 · VERIFIED PASS 2 ✓";
+            orchSub.textContent = "验收通过，准备将干净修复交还用户";
+            runSub.textContent = "500/500 并发压测全部通过 ✓";
+            retryArc.setAttribute("opacity", "0.35");
+            setHighlights(4);
+            movePulse(380, 267, true, immediate);
+            cap.textContent = "Step 6 / 6 · 500 轮压测全绿！查写分离 + 独立门禁把“边猜边改”变成了可复现的闭环。";
+          }
+        }
+
+        prevBtn.addEventListener("click", function () {
+          clearRunners();
+          if (step > 0) applyStep(step - 1);
+        });
+
+        nextBtn.addEventListener("click", function () {
+          clearRunners();
+          if (step < 6) applyStep(step + 1);
+        });
+
+        document.getElementById("s3-play-retry").addEventListener("click", function () {
+          clearRunners();
+          applyStep(1);
+          autoTimer = setInterval(function () {
+            if (step >= 6) {
+              clearInterval(autoTimer);
+              autoTimer = null;
+              return;
+            }
+            applyStep(step + 1);
+          }, 950);
+        });
+
+        document.getElementById("s3-play-pass").addEventListener("click", function () {
+          clearRunners();
+          applyStep(1);
+          var seq = [2, 3, 6];
+          var idx = 0;
+          autoTimer = setInterval(function () {
+            if (idx >= seq.length) {
+              clearInterval(autoTimer);
+              autoTimer = null;
+              return;
+            }
+            var target = seq[idx++];
+            applyStep(target);
+            if (target === 6) {
+              readout.textContent = "VERIFIED ON PASS 1 ✓";
+              runSub.textContent = "全量测试 & 边界用例一次通过 ✓";
+              cap.textContent = "一次性命中根因时，Pass 1 直接过独立压测放行——绝不自己给自己签通过证。";
+            }
+          }, 900);
+        });
+
+        document.getElementById("s3-reset").addEventListener("click", function () {
+          clearRunners();
+          applyStep(0, true);
+        });
+
+        applyStep(0, true);
+      })();
+
+      /* 5. Stage 4: /swarm Shared Board & @mention Doorbell (Bidirectional Single-Step) */
+      (function initStage4() {
+        var step = 0;
+        var timer = null;
+        var readout = document.getElementById("s4-readout");
+        var boardSeq = document.getElementById("s4-board-seq");
+        var cap = document.getElementById("s4-cap");
+        var signal = document.getElementById("s4-signal");
+        var prevBtn = document.getElementById("s4-prev");
+        var nextBtn = document.getElementById("s4-next");
+
+        var stCoord = document.getElementById("s4-st-coord");
+        var stApi = document.getElementById("s4-st-api");
+        var stUi = document.getElementById("s4-st-ui");
+        var stVer = document.getElementById("s4-st-ver");
+
+        var msgs = [1, 2, 3, 4, 5].map(function (i) { return document.getElementById("s4-m" + i); });
+
+        function setNodeState(txtEl, text, active, baseStroke) {
+          txtEl.textContent = text;
+          txtEl.setAttribute("fill", active ? "var(--accent)" : "var(--ink-muted)");
+          var box = txtEl.parentNode.querySelector("rect");
+          if (box) {
+            box.setAttribute("stroke", active ? "var(--accent)" : (baseStroke || "var(--rule-strong)"));
+            box.setAttribute("stroke-width", active ? "2.4" : "1.4");
+          }
+        }
+
+        function applyStep(n) {
+          step = Math.max(0, Math.min(5, n));
+          prevBtn.disabled = step <= 0;
+          nextBtn.disabled = step >= 5;
+          boardSeq.textContent = "HEAD: #" + step;
+          msgs.forEach(function (m, idx) {
+            m.classList.toggle("is-live", idx < step);
+            m.classList.toggle("is-current", idx === step - 1);
+          });
+
+          if (step === 0) {
+            readout.textContent = "STEP 0 / 5 · 0 ACTIVE";
+            setNodeState(stCoord, "idle · 裁判/派活", false, "var(--ink)");
+            setNodeState(stApi, "waiting (0 token)", false, "var(--rule-strong)");
+            setNodeState(stUi, "waiting (0 token)", false, "var(--rule-strong)");
+            setNodeState(stVer, "waiting (0 token)", false, "var(--ok)");
+            signal.setAttribute("opacity", "0");
+            cap.textContent = "点击“下一步”观察：只有被 @mention 点名的节点才会从睡眠中唤醒，且 @verifier 直接与 @api 点对点交锋返工。";
+          } else if (step === 1) {
+            readout.textContent = "STEP 1 / 5 · 2 PARALLEL WORKTREES";
+            setNodeState(stCoord, "posted #1 · 退居观察", false, "var(--ink)");
+            setNodeState(stApi, "working · worktree-A", true);
+            setNodeState(stUi, "working · worktree-B", true);
+            setNodeState(stVer, "waiting (0 token)", false, "var(--ok)");
+            anim(signal, { duration: 0.4, attr: { cx: 88, cy: 140, opacity: 1 } });
+            cap.textContent = "#1：Coordinator 点名 @api 和 @ui 并行开工；两人各自拿着独立副本干活，@verifier 此时继续休眠。";
+          } else if (step === 2) {
+            readout.textContent = "STEP 2 / 5 · @VERIFIER WOKEN";
+            setNodeState(stCoord, "posted #1 · 退居观察", false, "var(--ink)");
+            setNodeState(stApi, "waiting (0 token)", false, "var(--rule-strong)");
+            setNodeState(stUi, "working · worktree-B", true);
+            setNodeState(stVer, "working · 跑 #1 契约测试", true);
+            anim(signal, { duration: 0.4, attr: { cx: 195, cy: 229, opacity: 1 } });
+            cap.textContent = "#2：@api 写完交棒 @verifier 后立刻回睡；门铃叫醒 @verifier，它直接对照 #1 核验，Coordinator 不用介入。";
+          } else if (step === 3) {
+            readout.textContent = "STEP 3 / 5 · P2P REJECTION";
+            setNodeState(stCoord, "watching #3 · 未唤醒", false, "var(--ink)");
+            setNodeState(stApi, "working · 修复空分页", true);
+            setNodeState(stUi, "waiting (已提交 UI)", false, "var(--rule-strong)");
+            setNodeState(stVer, "waiting (等复测)", false, "var(--ok)");
+            anim(signal, { duration: 0.4, attr: { cx: 88, cy: 140, opacity: 1 } });
+            cap.textContent = "#3：@verifier 抓到 Bug 直接喊 @api 返工（自己不越界改 @api 的文件），点对点打回，不撞车。";
+          } else if (step === 4) {
+            readout.textContent = "STEP 4 / 5 · RE-VERIFICATION";
+            setNodeState(stCoord, "watching #4 · 未唤醒", false, "var(--ink)");
+            setNodeState(stApi, "waiting (0 token)", false, "var(--rule-strong)");
+            setNodeState(stUi, "waiting (已提交 UI)", false, "var(--rule-strong)");
+            setNodeState(stVer, "working · 复测 #3 修复", true);
+            anim(signal, { duration: 0.4, attr: { cx: 195, cy: 229, opacity: 1 } });
+            cap.textContent = "#4：@api 修完只发一句“复测 #3”——不必把报错日志重复贴一遍，大家都在同一块黑板上看上下文。";
+          } else if (step === 5) {
+            readout.textContent = "STEP 5 / 5 · READY TO MERGE";
+            setNodeState(stCoord, "working · 合并交付", true);
+            setNodeState(stApi, "waiting (0 token)", false, "var(--rule-strong)");
+            setNodeState(stUi, "waiting (0 token)", false, "var(--rule-strong)");
+            setNodeState(stVer, "waiting (0 token)", false, "var(--ok)");
+            anim(signal, { duration: 0.4, attr: { cx: 195, cy: 36, opacity: 1 } });
+            cap.textContent = "#5：直到最终验收全绿，才喊 @coordinator 唤醒协调者合并两个 Worktree 收工。";
+          }
+        }
+
+        prevBtn.addEventListener("click", function () {
+          if (timer) { clearInterval(timer); timer = null; }
+          if (step > 0) applyStep(step - 1);
+        });
+
+        nextBtn.addEventListener("click", function () {
+          if (timer) { clearInterval(timer); timer = null; }
+          if (step < 5) applyStep(step + 1);
+        });
+
+        document.getElementById("s4-auto").addEventListener("click", function () {
+          if (timer) { clearInterval(timer); timer = null; }
+          applyStep(1);
+          timer = setInterval(function () {
+            if (step >= 5) {
+              clearInterval(timer);
+              timer = null;
+              return;
+            }
+            applyStep(step + 1);
+          }, 1250);
+        });
+
+        document.getElementById("s4-reset").addEventListener("click", function () {
+          if (timer) { clearInterval(timer); timer = null; }
+          applyStep(0);
+        });
+
+        applyStep(0);
+      })();
+
+      /* 6. Stage 5: /teamwork 5-Step Phases & Integrity Modes */
+      (function initStage5() {
+        var readout = document.getElementById("s5-readout");
+        var modeTxt = document.getElementById("s5-mode-txt");
+        var cap = document.getElementById("s5-cap");
+        var p1 = document.getElementById("s5-p1");
+        var p2 = document.getElementById("s5-p2");
+        var p3 = document.getElementById("s5-p3");
+        var g1 = document.querySelector("#s5-gate-1 rect");
+        var g2 = document.querySelector("#s5-gate-2 rect");
+        var g3 = document.querySelector("#s5-gate-3 rect");
+        var prevBtn = document.getElementById("s5-prev");
+        var nextBtn = document.getElementById("s5-next");
+        var curStep = 1;
+        var curMode = "development";
+        var autoTimer = null;
+
+        var stepMeta = {
+          1: {
+            phase: 1,
+            label: "PHASE 1",
+            caption: "Step 1 / 5 · Phase 1 需求面试：花几分钟签好“要什么、怎么验”的书面契约，再进隔离目录开工，省得跑两天发现理解错了。"
+          },
+          2: {
+            phase: 2,
+            label: "PHASE 2",
+            caption: "Step 2 / 5 · Phase 2 里程碑接力：每过一站主动换一任上下文全新的 Orchestrator，避开多日运行后的记忆疲劳。"
+          },
+          3: {
+            phase: 3,
+            label: "GATE 1: CRITIC",
+            caption: "Step 3 / 5 · 第一道门 Critic：单测绿了不代表能合并，先审接口契约、模块化边界与可维护性。"
+          },
+          4: {
+            phase: 3,
+            label: "GATE 2: CHALLENGER",
+            caption: "Step 4 / 5 · 第二道门 Challenger：专挑畸形边界、恶劣并发和内存/耗时极限来撞系统，打穿脆弱路径。"
+          },
+          5: {
+            phase: 3,
+            label: "GATE 3: AUDITOR",
+            caption: "Step 5 / 5 · 第三道门 Auditor：跳过口头汇报直接核查真实终端执行日志，并按右上或右下选择的 Integrity 模式签字放行。"
+          }
+        };
+
+        var modeNotes = {
+          development: ["mode: development (常规)", "<strong>development 模式</strong>：允许正常使用三方库，但 Auditor 会核对真实终端命令日志，拒绝任何 Mock 糊弄或口头声明“测试已过”。"],
+          demo: ["mode: demo (禁抄代码/评测)", "<strong>demo 模式</strong>：禁止直接照搬开源核心逻辑，也禁止偷看评测测试脚本逆向猜答案。"],
+          benchmark: ["mode: benchmark (零外援手写)", "<strong>benchmark 模式</strong>：最高严苛度——仅限语言标准库从零独立实现，Auditor 核验真实系统基准跑分。"]
+        };
+
+        function renderStage5(useModeText) {
+          var meta = stepMeta[curStep];
+          prevBtn.disabled = curStep <= 1;
+          nextBtn.disabled = curStep >= 5;
+
+          p1.setAttribute("opacity", meta.phase === 1 ? "1" : "0.38");
+          p2.setAttribute("opacity", meta.phase === 2 ? "1" : "0.38");
+          p3.setAttribute("opacity", meta.phase === 3 ? "1" : "0.38");
+
+          g1.setAttribute("stroke", curStep === 3 ? "var(--purple)" : "var(--rule)");
+          g1.setAttribute("stroke-width", curStep === 3 ? "2" : "1");
+          g2.setAttribute("stroke", curStep === 4 ? "var(--accent)" : "var(--rule)");
+          g2.setAttribute("stroke-width", curStep === 4 ? "2" : "1");
+          g3.setAttribute("stroke", "var(--ok)");
+          g3.setAttribute("stroke-width", curStep === 5 ? "2.2" : "1");
+
+          document.querySelectorAll("[data-s5-phase]").forEach(function (b) {
+            b.classList.toggle("is-active", Number(b.getAttribute("data-s5-phase")) === meta.phase);
+          });
+
+          readout.textContent = "STEP " + curStep + " / 5 · " + meta.label + " · " + curMode.toUpperCase();
+          cap.innerHTML = useModeText ? modeNotes[curMode][1] : meta.caption;
+        }
+
+        prevBtn.addEventListener("click", function () {
+          if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+          if (curStep > 1) { curStep--; renderStage5(false); }
+        });
+
+        nextBtn.addEventListener("click", function () {
+          if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+          if (curStep < 5) { curStep++; renderStage5(false); }
+        });
+
+        document.getElementById("s5-auto").addEventListener("click", function () {
+          if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+          curStep = 1;
+          renderStage5(false);
+          autoTimer = setInterval(function () {
+            if (curStep >= 5) {
+              clearInterval(autoTimer);
+              autoTimer = null;
+              return;
+            }
+            curStep++;
+            renderStage5(false);
+          }, 1150);
+        });
+
+        document.querySelectorAll("[data-s5-phase]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+            var p = Number(b.getAttribute("data-s5-phase"));
+            curStep = p === 1 ? 1 : (p === 2 ? 2 : (curStep >= 3 && curStep < 5 ? curStep + 1 : 3));
+            renderStage5(false);
+          });
+        });
+
+        document.querySelectorAll("[data-s5-mode]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            curMode = b.getAttribute("data-s5-mode");
+            document.querySelectorAll("[data-s5-mode]").forEach(function (x) { x.classList.remove("is-active"); });
+            b.classList.add("is-active");
+            modeTxt.textContent = modeNotes[curMode][0];
+            renderStage5(true);
+          });
+        });
+
+        renderStage5(false);
+      })();
+
+      /* 7. Stage 6: Interactive Scenario Compass (with Prev/Next Single-Step) */
+      (function initStage6() {
+        var scene = document.getElementById("s6-scene");
+        var readout = document.getElementById("s6-readout");
+        var modeEl = document.getElementById("s6-mode");
+        var whyEl = document.getElementById("s6-why");
+        var prevBtn = document.getElementById("s6-prev");
+        var nextBtn = document.getElementById("s6-next");
+        var order = ["csv", "ui", "race", "mig", "feat"];
+        var curKey = "csv";
+
+        var scenarios = {
+          csv: {
+            readout: "RECOMMENDED: SINGLE AGENT",
+            mode: "Single Agent（单智能体）",
+            why: "目标清晰、五分钟内闭环，任何多余的调度反而是累赘。",
+            svg: '<rect x="265" y="55" width="230" height="94" rx="10" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="2"/>' +
+                 '<text x="380" y="96" text-anchor="middle" font-family="var(--font-sans)" font-size="15" font-weight="700" fill="var(--ink)">Single Agent</text>' +
+                 '<text x="380" y="120" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ok)">1 个上下文 · 写脚本 → 跑一遍 → 交付</text>'
+          },
+          ui: {
+            readout: "RECOMMENDED: SUBAGENTS",
+            mode: "Primary + Subagents（research & browser）",
+            why: "把全库搜调用与浏览器 DOM 试错丢给只读/沙盒 Subagent，主 Agent 只用干净大脑改接口。",
+            svg: '<rect x="64" y="58" width="190" height="90" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.8"/>' +
+                 '<text x="159" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">Primary Agent</text>' +
+                 '<text x="159" y="120" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ok)">只留精炼摘要</text>' +
+                 '<line x1="254" y1="88" x2="450" y2="54" stroke="var(--blue)" stroke-width="1.8" stroke-dasharray="5 4"/>' +
+                 '<line x1="254" y1="118" x2="450" y2="154" stroke="var(--purple)" stroke-width="1.8" stroke-dasharray="5 4"/>' +
+                 '<rect x="454" y="22" width="240" height="62" rx="7" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5"/>' +
+                 '<text x="574" y="50" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--blue)">research (inherit)</text>' +
+                 '<text x="574" y="70" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">搜出全部下游调用方</text>' +
+                 '<rect x="454" y="122" width="240" height="62" rx="7" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5"/>' +
+                 '<text x="574" y="150" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--purple)">browser (sandbox)</text>' +
+                 '<text x="574" y="170" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">真浏览器点击 + 查 Console</text>'
+          },
+          race: {
+            readout: "RECOMMENDED: /boost",
+            mode: "/boost（三层深度推理管线）",
+            why: "偶发死锁不能靠人海战术并发写，让 DeepInvestigator 先锁清根因，再由 DeepCoder 改完过独立压测。",
+            svg: '<rect x="240" y="14" width="280" height="44" rx="7" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6"/>' +
+                 '<text x="380" y="41" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Orchestrator 调度与闭环</text>' +
+                 '<rect x="110" y="82" width="230" height="48" rx="7" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5"/>' +
+                 '<text x="225" y="111" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--blue)">DeepInvestigator (只读)</text>' +
+                 '<rect x="420" y="82" width="230" height="48" rx="7" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5"/>' +
+                 '<text x="535" y="111" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--purple)">DeepCoder (最小补丁)</text>' +
+                 '<line x1="340" y1="106" x2="416" y2="106" stroke="var(--ink)" stroke-width="1.6"/>' +
+                 '<rect x="240" y="152" width="280" height="44" rx="7" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6"/>' +
+                 '<text x="380" y="179" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ok)">Isolated Stress Test Runner</text>'
+          },
+          feat: {
+            readout: "RECOMMENDED: /swarm",
+            mode: "/swarm（共享黑板 + 并发 Worktree）",
+            why: "前后端与测试天然可横向切开，各自在独立副本并发开发，靠 @mention 门铃 + Verifier 对齐交付，不用白等。",
+            svg: '<rect x="34" y="28" width="180" height="154" rx="8" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.6"/>' +
+                 '<text x="124" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--accent)">SHARED BOARD</text>' +
+                 '<text x="124" y="86" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-secondary)">#1 @api @ui</text>' +
+                 '<text x="124" y="110" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-secondary)">#2 @verifier</text>' +
+                 '<text x="124" y="134" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-secondary)">#3 @coordinator</text>' +
+                 '<rect x="275" y="26" width="180" height="52" rx="7" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5"/>' +
+                 '<text x="365" y="57" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--blue)">@api (worktree-A)</text>' +
+                 '<rect x="275" y="130" width="180" height="52" rx="7" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5"/>' +
+                 '<text x="365" y="161" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--purple)">@ui (worktree-B)</text>' +
+                 '<rect x="520" y="76" width="200" height="58" rx="7" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6"/>' +
+                 '<text x="620" y="109" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" font-weight="600" fill="var(--ok)">@verifier (对抗验收)</text>'
+          },
+          mig: {
+            readout: "RECOMMENDED: /teamwork",
+            mode: "/teamwork（需求面试 + 里程碑接力 + 三权审计）",
+            why: "跨天全库迁移既要开工前签清需求契约，又得靠里程碑换棒防失忆，最后还有 Critic/Challenger/Auditor 守门。",
+            svg: '<rect x="30" y="54" width="190" height="98" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6"/>' +
+                 '<text x="125" y="96" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Phase 1 立项面试</text>' +
+                 '<text x="125" y="118" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">锁定迁移验收基准</text>' +
+                 '<rect x="285" y="54" width="190" height="98" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6"/>' +
+                 '<text x="380" y="96" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="700" fill="var(--blue)">M1 → M2 换棒接力</text>' +
+                 '<text x="380" y="118" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">清空污染 · 隔离沙盒</text>' +
+                 '<rect x="540" y="54" width="190" height="98" rx="8" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6"/>' +
+                 '<text x="635" y="94" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="700" fill="var(--ok)">三权分立审计门</text>' +
+                 '<text x="635" y="116" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ok)">Critic · Challenger · Auditor</text>' +
+                 '<line x1="220" y1="103" x2="285" y2="103" stroke="var(--ink)" stroke-width="1.6"/>' +
+                 '<line x1="475" y1="103" x2="540" y2="103" stroke="var(--ink)" stroke-width="1.6"/>'
+          }
+        };
+
+        function selectScenario(key) {
+          var item = scenarios[key];
+          if (!item) return;
+          curKey = key;
+          var idx = order.indexOf(key);
+          prevBtn.disabled = idx <= 0;
+          nextBtn.disabled = idx >= order.length - 1;
+          document.querySelectorAll("[data-s6]").forEach(function (b) {
+            b.classList.toggle("is-active", b.getAttribute("data-s6") === key);
+          });
+          readout.textContent = item.readout;
+          modeEl.textContent = item.mode;
+          whyEl.textContent = item.why;
+          scene.innerHTML = item.svg;
+          if (window.gsap) {
+            window.gsap.fromTo(scene.children, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.32, stagger: 0.04, ease: "power2.out" });
+          }
+        }
+
+        prevBtn.addEventListener("click", function () {
+          var idx = order.indexOf(curKey);
+          if (idx > 0) selectScenario(order[idx - 1]);
+        });
+
+        nextBtn.addEventListener("click", function () {
+          var idx = order.indexOf(curKey);
+          if (idx < order.length - 1) selectScenario(order[idx + 1]);
+        });
+
+        document.querySelectorAll("[data-s6]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            selectScenario(b.getAttribute("data-s6"));
+          });
+        });
+
+        selectScenario("csv");
+      })();
+    })();
+  </script>
+</body>
+</html>
