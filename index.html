@@ -222,6 +222,7 @@
   <header class="site-header">
     <a class="site-brand" href="index.html">Notes &amp; Essays</a>
     <nav class="site-nav" aria-label="导航">
+      <a href="04-anatomy-of-claude-code-loop.html">#04 Claude Code Loop</a>
       <a href="03-from-single-agent-to-swarm.html">#03 多 Agent 协作演进</a>
       <a href="02-the-next-flat-world.html">#02 下一个 Flat 时代</a>
       <a href="01-think-big-build-from-small.html">#01 Think Big &amp; Build from Small</a>
@@ -238,6 +239,50 @@
     </section>
 
     <div class="essay-list">
+      <article class="essay-card">
+        <div class="essay-meta">
+          <span class="essay-issue">ESSAY #04</span>
+          <span>·</span>
+          <time datetime="2026-11-17">2026-11-17</time>
+          <span>·</span>
+          <span>11 分钟阅读 · 含交互动画</span>
+        </div>
+        <h2><a href="04-anatomy-of-claude-code-loop.html">拆解 Claude Code 的 Loop</a></h2>
+        <a class="essay-thumb" href="04-anatomy-of-claude-code-loop.html" style="background: var(--bg-elevated); padding: 18px 20px;">
+          <svg viewBox="0 0 700 180" style="display:block; width:100%; height:auto;" aria-label="Claude Code 四层 Loop 架构图">
+            <line x1="92" y1="90" x2="612" y2="90" stroke="var(--rule)" stroke-width="2" stroke-dasharray="4 4" />
+            <g>
+              <rect x="20" y="50" width="144" height="80" rx="6" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.5" />
+              <text x="92" y="78" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--ink)">L1 · Turn Order</text>
+              <text x="92" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">五级漏斗 + 批次屏障</text>
+              <text x="92" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">来源隔离 · 事务对齐</text>
+            </g>
+            <g>
+              <rect x="192" y="50" width="144" height="80" rx="6" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.5" />
+              <text x="264" y="78" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--ink)">L2 · Prefix Cache</text>
+              <text x="264" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">前缀与工具池冻结</text>
+              <text x="264" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">共享静态 · 增量尾部</text>
+            </g>
+            <g>
+              <rect x="364" y="50" width="144" height="80" rx="6" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.5" />
+              <text x="436" y="78" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent)">L3 · Zero-Trust</text>
+              <text x="436" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">洋葱治理 + 预计算压缩</text>
+              <text x="436" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">越层穿透 · 停表预算</text>
+            </g>
+            <g>
+              <rect x="536" y="50" width="144" height="80" rx="6" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.8" />
+              <text x="608" y="78" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent)">L4 · Space &amp; Time</text>
+              <text x="608" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">分身树 + 跨 Turn 唤醒</text>
+              <text x="608" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">Stop · Cron · /loop</text>
+            </g>
+          </svg>
+        </a>
+        <p class="essay-excerpt">
+          每个写过 Agent 的人都写过那二十行 while。但在真实仓库里连跑几小时，它会在第 15 秒并发撕裂、第 20 分钟缓存失忆、第 1 小时插件抢权卡死、第 2 小时原地停机。拆解 Claude Code 如何被这四次崩塌一步步逼出今天的内核，以及它和 DAG 铁轨、黑板 Swarm 之间的取舍。
+        </p>
+        <a class="read-link" href="04-anatomy-of-claude-code-loop.html">阅读全文 &rarr;</a>
+      </article>
+
       <article class="essay-card">
         <div class="essay-meta">
           <span class="essay-issue">ESSAY #03</span>
