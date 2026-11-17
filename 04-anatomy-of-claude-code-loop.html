@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>拆解 Claude Code 的 Loop</title>
-  <meta name="description" content="从二十行 while 起步，沿着第 15 秒并发撕裂、第 20 分钟缓存失忆、第 1 小时插件抢权与 54 分钟预压缩，到第 2 小时以后的自调节 /loop 值守，完整拆解 Claude Code 循环的演化与取舍。">
+  <meta name="description" content="多 Agent 解决空间分工，Loop 解决时间连续性。从单轮问答为什么卡壳出发，讲清 Claude Code 的 Stop 门禁、/ralph-loop、固定 Cron 与自调节 /loop 是怎么工作的，有哪些实战大坑，以及平时怎么选。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
@@ -326,49 +326,6 @@
       color: var(--ink);
     }
 
-    /* Quiet Editorial Inline Role Plate */
-    figure.role-plate {
-      margin: 1.5em 0 1.7em;
-      padding: 14px 16px;
-      background: var(--bg-elevated);
-      border-left: 2px solid var(--rule-strong);
-      display: grid;
-      grid-template-columns: 230px minmax(0, 1fr);
-      gap: 18px;
-      align-items: center;
-    }
-    @media (max-width: 640px) {
-      figure.role-plate {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-    }
-    .role-plate-svg {
-      background: var(--bg-paper);
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 6px;
-    }
-    .role-plate-svg svg {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-    .role-plate-note {
-      font-family: var(--font-sans);
-      font-size: 14px;
-      line-height: 1.65;
-      color: var(--ink-secondary);
-    }
-    .role-plate-note .role-name {
-      display: block;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--ink);
-      margin-bottom: 4px;
-    }
-
     /* Interactive Stage Containers */
     .stage-card {
       margin: 2em -44px;
@@ -467,19 +424,6 @@
       font-weight: 600;
     }
 
-    .scrubber-wrap {
-      flex: 1 1 180px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 160px;
-    }
-    .scrubber {
-      width: 100%;
-      accent-color: var(--accent);
-      cursor: pointer;
-      height: 4px;
-    }
     .stage-caption {
       padding: 8px 16px 11px;
       font-family: var(--font-sans);
@@ -490,49 +434,129 @@
       background: var(--bg-card);
     }
 
-    /* Comparison Table */
+    /* Responsive Comparison Table (@container + sticky headers) */
     .matrix-wrap {
       margin: 1.8em -44px;
-      overflow-x: auto;
+      overflow: auto;
+      max-inline-size: calc(100% + 88px);
+      container-type: inline-size;
       border: 1px solid var(--rule);
       border-radius: 6px;
       background: var(--bg-card);
     }
+    .matrix-wrap:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
     @media (max-width: 820px) {
       .matrix-wrap {
         margin: 1.5em 0;
+        max-inline-size: 100%;
       }
     }
     table.compare-table {
       width: 100%;
-      min-width: 680px;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       font-family: var(--font-sans);
       font-size: 13.5px;
-      line-height: 1.5;
+      line-height: 1.55;
+      --label-2: "谁来触发下一轮";
+      --label-3: "核心解决什么问题";
+      --label-4: "典型场景";
+      --label-5: "避坑要点";
+    }
+    table.compare-table caption {
+      padding: 10px 14px;
+      text-align: start;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      background: var(--bg-elevated);
+      border-block-end: 1px solid var(--rule);
+    }
+    table.compare-table thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 2;
     }
     table.compare-table th,
     table.compare-table td {
       padding: 11px 13px;
-      text-align: left;
-      border-bottom: 1px solid var(--rule);
+      text-align: start;
+      border-block-end: 1px solid var(--rule);
       vertical-align: top;
     }
-    table.compare-table th {
+    table.compare-table thead th {
       background: var(--bg-elevated);
       font-weight: 600;
       color: var(--ink);
       font-size: 12.5px;
       white-space: nowrap;
     }
-    table.compare-table tr:last-child td {
-      border-bottom: none;
-    }
-    table.compare-table td:first-child {
+    table.compare-table tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 1;
+      background: var(--bg-card);
       font-family: var(--font-mono);
       font-weight: 600;
       color: var(--accent);
       white-space: nowrap;
+      border-inline-end: 1px solid var(--rule);
+    }
+    table.compare-table tbody tr:last-child th,
+    table.compare-table tbody tr:last-child td {
+      border-block-end: none;
+    }
+
+    @container (width < 600px) {
+      table.compare-table,
+      table.compare-table thead,
+      table.compare-table tbody,
+      table.compare-table tr,
+      table.compare-table th,
+      table.compare-table td {
+        display: block;
+      }
+      table.compare-table thead {
+        display: none;
+      }
+      table.compare-table tbody tr {
+        margin: 10px;
+        border: 1px solid var(--rule);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      table.compare-table tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        inset-inline-start: auto;
+        z-index: 2;
+        background: var(--bg-elevated);
+        border-inline-end: none;
+        white-space: normal;
+      }
+      table.compare-table td:nth-child(2)::before {
+        content: var(--label-2) "：";
+        font-weight: 600;
+        color: var(--ink);
+      }
+      table.compare-table td:nth-child(3)::before {
+        content: var(--label-3) "：";
+        font-weight: 600;
+        color: var(--ink);
+      }
+      table.compare-table td:nth-child(4)::before {
+        content: var(--label-4) "：";
+        font-weight: 600;
+        color: var(--ink);
+      }
+      table.compare-table td:nth-child(5)::before {
+        content: var(--label-5) "：";
+        font-weight: 600;
+        color: var(--ink);
+      }
     }
 
     /* Scenario Compass Output Panel */
@@ -565,6 +589,53 @@
     .compass-pill strong {
       color: var(--ink);
       font-weight: 600;
+    }
+
+    /* Pitfall Dual Cards inside Stage */
+    .pitfall-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 640px) {
+      .pitfall-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .pitfall-box {
+      padding: 13px 15px;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .pitfall-box.is-bad {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+    }
+    .pitfall-box.is-good {
+      background: var(--ok-soft);
+      border: 1px solid var(--ok);
+    }
+    .pitfall-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .pitfall-box.is-bad .pitfall-tag { color: var(--accent); }
+    .pitfall-box.is-good .pitfall-tag { color: var(--ok); }
+    .pitfall-box h4 {
+      margin: 0 0 6px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .pitfall-box p {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-size: 13px;
     }
 
     /* Post Series Nav */
@@ -626,12 +697,10 @@
     <a class="site-brand" href="index.html">Notes &amp; Essays</a>
     <nav class="site-nav" aria-label="导航">
       <a href="index.html">全部文章</a>
-      <a href="#intro">二十行蜜月期</a>
-      <a href="#single-turn">15秒·短事务</a>
-      <a href="#prompt-cache">20分·CPU缓存</a>
-      <a href="#onion-tiers">1小时·洋葱偷跑</a>
-      <a href="#cross-turn">2小时·/loop值守</a>
-      <a href="#landscape">铁轨还是内核</a>
+      <a href="#what-is-loop">什么是 Loop</a>
+      <a href="#how-it-works">Claude Code 怎么做</a>
+      <a href="#pitfalls">五个实战坑</a>
+      <a href="#how-to-choose">平时怎么选</a>
       <button type="button" class="theme-btn" id="theme-toggle" title="切换明暗主题">
         <span id="theme-label">LIGHT</span>
       </button>
@@ -641,20 +710,18 @@
   <main class="layout" id="post-top">
     <aside class="toc-rail" aria-label="目录">
       <ul class="toc-list" id="toc-list">
-        <li><a href="#intro" class="is-active">二十行循环的蜜月期</a></li>
-        <li><a href="#single-turn">第 15 秒：并发撕裂消息链</a></li>
-        <li><a href="#prompt-cache">第 20 分钟：当成 CPU 缓存来管</a></li>
-        <li><a href="#onion-tiers">第 1 小时：洋葱与 54 分钟偷跑</a></li>
-        <li><a href="#cross-turn">第 2 小时：/loop 与跨时值守</a></li>
-        <li><a href="#landscape">铁轨、黑板还是隐式内核</a></li>
-        <li><a href="#compass">落到平时怎么选</a></li>
+        <li><a href="#intro" class="is-active">引言：空间与时间</a></li>
+        <li><a href="#what-is-loop">Loop 模式在解什么问题</a></li>
+        <li><a href="#how-it-works">Claude Code 具体怎么做</a></li>
+        <li><a href="#pitfalls">用起来有哪些坑</a></li>
+        <li><a href="#how-to-choose">平时怎么选</a></li>
       </ul>
     </aside>
 
     <article class="post">
       <header class="post-header">
         <h1>拆解 Claude Code 的 Loop</h1>
-        <p class="post-subtitle">每个写过 Agent 的人都写过那二十行 <code>while</code>。但在真实仓库里连跑几小时之后，这套循环会在第 15 秒、第 20 分钟、第 1 小时和第 2 小时接连露馅。Claude Code 今天这套复杂内核，就是被这四次崩塌一步步逼出来的。</p>
+        <p class="post-subtitle">多 Agent 解决的是空间分工，Loop 解决的是时间连续性：怎样让一个习惯“答完一句就停笔”的模型，把没干完的硬活推进到底，或者自己守着外部状态直到事情落地。</p>
         <dl class="post-meta">
           <div>
             <dt>发布于</dt>
@@ -662,7 +729,7 @@
           </div>
           <div>
             <dt>阅读时间</dt>
-            <dd>11 分钟（含交互图解）</dd>
+            <dd>8 分钟（含交互图解）</dd>
           </div>
           <div>
             <dt>系列</dt>
@@ -673,718 +740,259 @@
 
       <div class="post-content">
         <div id="intro"></div>
-        <p>写一个能干活的 Agent 原型，核心只需要二十行 <code>while</code>：把对话发给模型，模型说要调工具就在本地执行，把结果塞回消息末尾再问一遍，直到模型不再调用工具为止。</p>
+        <p><a href="03-from-single-agent-to-swarm.html">上一篇聊多 Agent 协作</a>时，我们看的是怎么在空间上拆桌子：一个窗口装不下几十个文件的检索噪声，或者自己写代码自己审容易放水，就多请几个独立上下文的角色分头干。</p>
 
-        <p>用它修一个行号明明白白的报错，快得像一阵风。可如果你真的想让它独自进驻一个大仓库，连续改上几十分钟、甚至隔着几小时盯完一次发布，这二十行循环会立刻变成事故现场。问题不是一次性全砸过来的，而是随着任务时间越拉越长，顺着四个时间尺度一层一层露出来的。</p>
+        <p>但在日常重度使用编程 Agent 时，还有另一半痛点是靠“多请几个人”解决不了的。它出在时间维度上：<strong>默认情况下，Agent 说完一句话就下班了。</strong></p>
 
-        <h2>二十行循环的蜜月期，在真实工程里活不过一小时</h2>
+        <h2 id="what-is-loop">Loop 模式是什么，在解什么问题？</h2>
 
-        <p>最初的设计朴素得像教科书：人类敲回车、模型推演、工具执行、结果回填，一条单行道走到黑。但在真实终端里连续跑起来之后，四幕诡异的故障会准点找上门：</p>
+        <p>所有编程 Agent 的底座，都是单回合（Turn）里的工具循环：你敲下回车，模型想一步，决定调 <code>Read</code>、<code>Edit</code> 或 <code>Bash</code>，拿到输出再想下一步。只要模型还在调工具，这个小循环就会一直转下去。</p>
 
-        <ol>
-          <li><strong>第 15 秒就报错中断。</strong>模型为了提速一次并发读三个文件，其中两个还没返回，后台一个子任务恰好跑完插进来一条通知。下一秒接口直接拒绝请求，因为对话顺序被撕裂了。</li>
-          <li><strong>第 20 分钟突然变慢、账单翻倍。</strong>聊过二十几轮后，逻辑一点没变，响应却从两秒拖到二十秒，甚至前面刚约定好的修改约束也被抛在脑后。底层几万 Token 的 <strong>Prompt Cache</strong> 莫名其妙全盘作废了。</li>
-          <li><strong>第 1 小时卡死或被插件劫持。</strong>个人装的插件、公司下发的合规策略和内置功能挤在同一个进程里。一个写坏的扩展超时直接拖死主线，而对话撞上上下文窗口红线时，屏幕僵在那里干等几十秒生成摘要。</li>
-          <li><strong>第 2 小时发现它原地“偷懒”停机。</strong>前面三关全扛过去，结果模型改完代码随手回了一句“看起来没问题了”，循环咔哒一声停住。测试还没跑绿、灰度发布才推了 10%，它却退回原点等人类来敲下一次回车。</li>
-        </ol>
+        <p>问题在于，决定它什么时候停下来的，是<strong>模型自己的主观判断</strong>。一旦某一步它觉得这轮交代完了，不再返回工具调用，当前回合立刻结束，光标退回终端左下角等你敲下一次回车。</p>
 
-        <p>Claude Code 并没有在二十行 <code>while</code> 里越塞越多 <code>if-else</code>。每次撞穿一个时间尺度，它就在外面加筑一道新防线。先用下面这张演进地图看清全貌，再沿四个故障现场一步步往深处拆：</p>
+        <p>修一个报错明确的小 Bug，这种“问一句、跑一轮”的节奏刚刚好。可一旦任务拉长，它马上会在两类场景里卡壳：</p>
 
-        <!-- STAGE 0: EVOLUTION TIMELINE -->
-        <figure class="stage-card" id="stage-evolution">
+        <p>第一类是<strong>活没干透就早退</strong>。比如全库替换一套废弃接口、修掉三十几个连环类型错误，或者把单测补到全绿。模型干了七八步，上下文稍微变长就开始惜力，明明还有测试飘红，它却总结一句“核心逻辑已修改完成，其余文件可按相同方式处理”，然后直接停机。人只能坐在屏幕前当监工，一遍遍敲“继续”“测试还没过，接着修”。</p>
+
+        <p>第二类是<strong>事不在手边，得等时间走</strong>。代码推上去之后，远端 CI 构建要跑十五分钟；线上灰度刚切了 5% 流量，得盯一小时错误率才能决定要不要继续放量。此时本地没有能立刻执行的工具，单轮循环跨不过这段空白时间，总不能让模型在命令行里挂一个 <code>sleep 600</code> 占着连接等超时。</p>
+
+        <p>所谓 <strong>Loop 模式</strong>，就是把“什么时候继续、什么时候停下”的控制权从单次问答里抽出来。不再把模型某一次停笔当成终点，而是在外层套上跨回合的推进机制：要么用客观验证结果逼着它一轮接一轮返工，直到真正达标；要么让会话学会休眠与按时自唤醒，隔一段时间起来看一眼外部状态，直到事情办妥。</p>
+
+        <!-- STAGE 1: PROBLEM & LOOP CONCEPT -->
+        <figure class="stage-card" id="stage-problem">
           <div class="stage-header">
-            <span class="stage-title">故障演进地图：二十行循环是如何被四次崩塌一步步逼进深水区的</span>
-            <span class="stage-meta-readout" id="s0-readout">STAGE 1 / 5 · 解决第 15 秒并发撕裂</span>
+            <span class="stage-title">为什么单轮循环不够用：两种真实断档现场与 Loop 的补位方向</span>
+            <span class="stage-meta-readout" id="s1-readout">SCENE 1 / 3 · 默认单轮问答</span>
           </div>
           <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
-            <button type="button" class="btn-ctl" id="s0-prev" disabled>◀</button>
-            <button type="button" class="btn-ctl is-active" data-s0="0">第 15 秒 · 并发撕裂</button>
-            <button type="button" class="btn-ctl" data-s0="1">第 20 分钟 · 缓存击穿</button>
-            <button type="button" class="btn-ctl" data-s0="2">第 1 小时 · 洋葱偷跑</button>
-            <button type="button" class="btn-ctl" data-s0="3">第 2 小时 · 长时值守</button>
-            <button type="button" class="btn-ctl" data-s0="4">下一站 · 跨重启持久化</button>
-            <button type="button" class="btn-ctl" id="s0-next">▶</button>
+            <button type="button" class="btn-ctl is-active" data-s1="0">1. 默认单轮工具循环</button>
+            <button type="button" class="btn-ctl" data-s1="1">2. 卡壳一：活没干透就早退</button>
+            <button type="button" class="btn-ctl" data-s1="2">3. 卡壳二：等外部时间走</button>
           </div>
           <div class="stage-canvas">
-            <svg viewBox="0 0 760 228" aria-label="Claude Code Loop 五阶段时间尺度演进图">
-              <line x1="76" y1="54" x2="684" y2="54" stroke="var(--rule)" stroke-width="2" stroke-dasharray="4 4" />
-              <g id="s0-nodes"></g>
-              <rect x="20" y="102" width="232" height="108" rx="6" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.3" />
-              <text x="32" y="124" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--accent)">撞上的现场事故</text>
-              <text id="s0-pain-1" x="32" y="150" font-family="var(--font-sans)" font-size="11" fill="var(--ink)"></text>
-              <text id="s0-pain-2" x="32" y="172" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)"></text>
-
-              <rect x="264" y="102" width="232" height="108" rx="6" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.3" />
-              <text x="276" y="124" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--blue)">加筑的架构防线</text>
-              <text id="s0-shift-1" x="276" y="150" font-family="var(--font-sans)" font-size="11" fill="var(--ink)"></text>
-              <text id="s0-shift-2" x="276" y="172" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)"></text>
-
-              <rect x="508" y="102" width="232" height="108" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.5" />
-              <text x="520" y="124" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--ok)">扛住的时间与边界</text>
-              <text id="s0-inv-1" x="520" y="150" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--ink)"></text>
-              <text id="s0-inv-2" x="520" y="172" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)"></text>
+            <svg viewBox="0 0 760 205" aria-label="单轮循环与两类断档痛点示意图">
+              <g id="s1-svg"></g>
             </svg>
           </div>
-          <div class="stage-caption" id="s0-cap">点击各时间节点或使用左右箭头，先看清二十行核心循环是如何顺着时间尺度一路升级的。</div>
+          <div class="stage-caption" id="s1-cap">点击上方三个场景，对比单轮内部小循环为什么会在“长任务收敛”与“跨时间等待”上断档。</div>
         </figure>
 
-        <!-- SECTION 1: SINGLE TURN LOOP -->
-        <h2 id="single-turn">第 15 秒：并发与插话把消息链撕裂，先学会做“短事务”</h2>
+        <h2 id="how-it-works">Claude Code 具体是怎么做的？</h2>
 
-        <p>最先出事的地方在单次回合（Turn）内部。</p>
+        <p>围绕“本地死磕收敛”与“跨时间值守”这两件事，Claude Code 没有去搭复杂的图形化工作流，而是在终端会话里顺着实际需求长出了几层机制。</p>
 
-        <p>大模型 API 协议在消息顺序上有近乎洁癖的硬约束：模型吐出的每一个工具调用块，紧接着的下一条内容里必须严丝合缝跟着对应编号的结果块。只要中间夹进任何别的东西，哪怕只是插件顺手插了一句状态提示，整条请求都会被当场打回。</p>
+        <p><strong>最底层还是单轮循环配 <code>Subagent</code>。</strong>日常大部分短任务，单轮工具循环就能搞定；如果中途要翻几十个文件、怕把主窗口塞满废料，主循环会临时派生出带独立上下文的 <code>Subagent</code> 去查，最后只收几行结论。但这只解决了单轮内的上下文降噪，主模型一停笔，会话照样停。真正跨出单轮边界，靠的是后面三招。</p>
 
-        <p>更棘手的是多路来源混杂。驱动现代终端循环的早就不只人类键盘，后台子任务完成回调、定时触发器、手机端遥控指令、插件注入的上下文，全都要挤进同一扇门。如果全当成普通消息往数组末尾硬塞，不仅会撕裂调用链，还可能出现极端漏洞：外部代码仓库里一段恶意文本或后台提醒，混进人类输入通道后直接伪装成人工指令绕过权限审批。</p>
+        <h3>用出口门禁治早退：<code>Stop</code> Hook 与 <code>/ralph-loop</code></h3>
 
-        <h3>出身锁死与安全汇入点</h3>
-        <p>任何输入跨进内核边界时，引擎都会强制写入一条只读的来源属性，外层扩展只能查看、绝对改不了，机器触发的通知永远冒充不了人工键盘。要是上一轮还在等模型或跑工具，新消息不会半路腰斩当前执行，而是带着回合编号进队列排队，严格等到本轮彻底收尾，或者下一轮请求发出前的安全间隙才准汇入。</p>
+        <p>对付模型半途交差，社区最早流行过一种简单粗暴的做法，叫 <strong>Ralph Wiggum 模式</strong>：直接在终端外面套一层 Bash 死循环 <code>while true</code>，把同一份任务说明反复喂给 Claude，让它每轮看着磁盘上刚改过的代码和 Git 记录接着往下写。</p>
 
-        <figure class="role-plate">
-          <div class="role-plate-svg">
-            <svg viewBox="0 0 240 104" aria-label="多来源输入隔离与忙时安全汇入点">
-              <rect x="10" y="12" width="76" height="22" rx="4" fill="var(--bg-card)" stroke="var(--ok)" />
-              <text x="48" y="27" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ok)">用户键盘</text>
-              <rect x="10" y="41" width="76" height="22" rx="4" fill="var(--bg-card)" stroke="var(--blue)" />
-              <text x="48" y="56" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--blue)">后台任务通知</text>
-              <rect x="10" y="70" width="76" height="22" rx="4" fill="var(--bg-card)" stroke="var(--purple)" />
-              <text x="48" y="85" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--purple)">定时唤醒</text>
-              <line x1="86" y1="23" x2="122" y2="48" stroke="var(--rule-strong)" stroke-width="1.3" />
-              <line x1="86" y1="52" x2="122" y2="52" stroke="var(--rule-strong)" stroke-width="1.3" />
-              <line x1="86" y1="81" x2="122" y2="56" stroke="var(--rule-strong)" stroke-width="1.3" />
-              <rect x="124" y="22" width="106" height="60" rx="6" fill="var(--bg-card)" stroke="var(--ink)" stroke-width="1.5" />
-              <text x="177" y="44" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="var(--ink)">内核入口隔离</text>
-              <text x="177" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">只读来源边界</text>
-              <text x="177" y="75" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--accent)">忙时入队等安全点</text>
-            </svg>
-          </div>
-          <figcaption class="role-plate-note">
-            <span class="role-name">来源不可伪造与安全汇入点</span>
-            引擎锁死输入来源属性，防止机器消息冒充人类越过审批。上一轮 Turn 未结束时，新输入带着回合标识进入队列，只允许在轮次收尾后或下一轮模型请求前的安全点汇入，绝不在中途撕裂当前事务。
-          </figcaption>
-        </figure>
+        <p>Claude Code 把这个思路收进了会话内部，抓手是 <strong><code>Stop</code> Hook（退出钩子）</strong> 和官方的 <strong><code>ralph-loop</code> 插件</strong>。</p>
 
-        <h3>服务端直跑与五级权限漏斗</h3>
-        <p>模型进入流式推理后，并不是所有工具调用都会回到本地执行。像内置顾问这类纯推理辅助工具，由模型 API 服务端直接运行并当场把结果缝进同一步输出里，压根不穿过本地沙盒。</p>
+        <p>每当模型不再调工具、准备结束当前回合时，<code>Stop</code> 钩子会在出口先拦一道。你可以在这里挂一段真实的测试或编译脚本，也可以挂个轻量模型核对结果。只要验证没过，钩子直接拦下退出动作，把报错日志塞回对话，逼它在当前会话里接着改下一轮。</p>
 
-        <p>真正落在本地的工具调用，会依次经过一道五级递进的权限漏斗：</p>
+        <p><code>/ralph-loop</code> 则把它包成了一条现成命令：</p>
+
+<pre class="code-snippet">/ralph-loop "迁移全部旧版鉴权接口并跑通单测，完成后输出 &lt;promise&gt;DONE&lt;/promise&gt;" \
+  --completion-promise "DONE" --max-iterations 30</pre>
+
+        <p>只要模型还没吐出约定的完成标记，钩子就会在每次回合结束时自动把目标重新喂回去。因为全程留在同一条会话和工作区里，模型看得到上一轮改坏了哪行、哪条测试刚变绿，相当于把“模型觉得做完了”改成了“外部验证说过了才算完”。</p>
+
+        <h3>用固定时钟跨过等待：<code>/loop 5m</code>（Cron 模式）</h3>
+
+        <p><code>Stop</code> 钩子是不停歇地连轴转，适合手头一直有代码可改的任务。拿它去等远端 CI 或盯线上服务，只会每秒发请求空烧额度。</p>
+
+        <p>为了跨过等待期，Claude Code 加入了会话级定时唤醒，比如直接敲 <code>/loop 5m check the deploy</code>（底层对应周期性的 <code>CronCreate</code>）。这一轮查完发现构建还在跑，回合正常结束并进入休眠，等待期间零算力、零 Token 消耗；5 分钟到点，系统自动往会话里投递下一轮指令。</p>
+
+        <p>考虑到长时巡检容易刷屏，如果连续几轮醒来都没发现异常，终端会自动把多次无事可做的空转折叠成一行提示；就算中途对话变长触发了上下文压缩，挂着的定时任务也会保留下来。</p>
+
+        <h3>把闹钟交给模型自己拧：自调节 <code>/loop</code>（<code>/proactive</code>）</h3>
+
+        <p>固定间隔 Cron 用起来还是偏死板：刚发版最危险的前五分钟，5 分钟看一次嫌慢；等跑稳了半小时，每 5 分钟醒一次又纯属陪跑；而且机械闹钟自己不知道什么时候该停，非得人来手动关。</p>
+
+        <p>于是 <code>/loop</code> 又加了一档<strong>不写死间隔的自调节模式</strong>（别名 <code>/proactive</code>，底层由模型调用单次唤醒工具 <code>ScheduleWakeup</code>）。每一轮结束前，由模型根据现场风险自己决定下次睡多久再醒：</p>
 
         <ul>
-          <li><strong>前置拦截层。</strong>允许扩展在执行前重写参数、直接短路返回或登记追踪，用于识别还没过审批就试图抢跑的行为。</li>
-          <li><strong>用户规则钩子。</strong>运行项目或用户自定义的前置检查脚本。</li>
-          <li><strong>声明式策略裁决。</strong>结合静态允许列表、当前权限模式和组织策略上限，算出放行、询问或拒绝三种静态结论。</li>
-          <li><strong>动态裁决与审批兜底。</strong>落入询问分支时，自动模式下交给安全分类器判断，常规模式下暂停等待人工确认；即便被拒，也保留了一次钩子重试的机会。</li>
-          <li><strong>不可重入执行口。</strong>权限落定后的最后一道物理闸门，确保同一个工具调用标识绝对只执行一次，任何重复触发都会在内核层被直接拒绝。</li>
+          <li>刚切上灰度流量时风险高，看完首轮指标自己定 <strong>2 分钟</strong>后再看；</li>
+          <li>连看几轮指标平稳，主动把间隔拉长到 <strong>15 分钟</strong>、<strong>40 分钟</strong>；</li>
+          <li>等全量发布完成、指标彻底稳住，最后一轮汇报完<strong>不再调 <code>ScheduleWakeup</code> 预约新闹钟，整个 Loop 就自然结束收工</strong>。</li>
         </ul>
 
-        <h3>Fork-Join 屏障与消息配对原子性</h3>
-        <p>单步推理经常同时派发三五个工具调用。为了吞吐量，工具本身和工具完成后的单个通知可以并发执行，但引擎在循环折返处立了一道 <strong>Fork-Join 批次屏障</strong>：必须等这一步里的所有工具全部落定，才统一进入批次汇总，再发起下一次模型请求。</p>
-
-        <figure class="role-plate">
-          <div class="role-plate-svg">
-            <svg viewBox="0 0 240 104" aria-label="Fork-Join 批次屏障与消息配对原子性">
-              <rect x="12" y="16" width="60" height="28" rx="4" fill="var(--bg-card)" stroke="var(--blue)" />
-              <text x="42" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--blue)">tool_use</text>
-              <rect x="12" y="58" width="60" height="28" rx="4" fill="var(--bg-card)" stroke="var(--ok)" />
-              <text x="42" y="76" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ok)">tool_result</text>
-              <line x1="42" y1="44" x2="42" y2="58" stroke="var(--ok)" stroke-width="2" />
-              <rect x="86" y="38" width="66" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-dasharray="3 2" />
-              <text x="119" y="55" text-anchor="middle" font-family="var(--font-sans)" font-size="9" fill="var(--accent)">旁路禁止插队</text>
-              <path d="M 119 64 C 119 88, 178 88, 178 68" fill="none" stroke="var(--warn)" stroke-width="1.5" />
-              <polygon points="174,71 178,64 182,71" fill="var(--warn)" />
-              <rect x="158" y="20" width="72" height="44" rx="5" fill="var(--bg-card)" stroke="var(--warn)" />
-              <text x="194" y="39" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="600" fill="var(--warn)">批次落定后</text>
-              <text x="194" y="54" text-anchor="middle" font-family="var(--font-sans)" font-size="9" fill="var(--ink-secondary)">对齐挂载末尾</text>
-            </svg>
-          </div>
-          <figcaption class="role-plate-note">
-            <span class="role-name">工具配对原子性约束</span>
-            消息协议要求每个工具调用块后面必须紧跟结果块。工具执行中途如有异步提醒或旁路通知注入，引擎会把它暂存在屏障外，等整批工具全部落定并对齐写回后，再统一挂载到末尾。
-          </figcaption>
-        </figure>
-
-        <p>下面的交互图展示了一次单 Turn 事务是如何穿过来历校验、权限漏斗和批次屏障，最终在退出守门处决定停止或续跑的：</p>
-
-        <!-- STAGE 1: SINGLE TURN PIPELINE -->
-        <figure class="stage-card" id="stage-turn">
+        <!-- STAGE 2: THREE LOOP MECHANISMS SIMULATOR -->
+        <figure class="stage-card" id="stage-modes">
           <div class="stage-header">
-            <span class="stage-title">单 Turn 事务环：来源隔离、五级权限漏斗与 Fork-Join 屏障</span>
-            <span class="stage-meta-readout" id="s1-readout">STEP 0 / 6 · IDLE</span>
-          </div>
-          <div class="stage-canvas">
-            <svg viewBox="0 0 760 328" aria-label="Claude Code 单 Turn 事务流程图">
-              <!-- Row 1: Ingress -> Turn Start -> Turn Step -->
-              <g id="s1-n-submit">
-                <rect x="20" y="24" width="144" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.5" />
-                <text x="92" y="47" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--ink)">1. 入口边界</text>
-                <text x="92" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">只读来源 · 忙时入队</text>
-              </g>
-              <line x1="164" y1="53" x2="196" y2="53" stroke="var(--rule-strong)" stroke-width="1.5" />
-              <polygon points="193,49 200,53 193,57" fill="var(--rule-strong)" />
-
-              <g id="s1-n-start">
-                <rect x="200" y="24" width="136" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5" />
-                <text x="268" y="47" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--blue)">2. 回合初始化</text>
-                <text x="268" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">锁定回合标识与上下文</text>
-              </g>
-              <line x1="336" y1="53" x2="368" y2="53" stroke="var(--rule-strong)" stroke-width="1.5" />
-              <polygon points="365,49 372,53 365,57" fill="var(--rule-strong)" />
-
-              <g id="s1-n-step">
-                <rect x="372" y="24" width="194" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5" />
-                <text x="469" y="47" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--purple)">3. 模型流式推演 (Step 0..N)</text>
-                <text x="469" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">分片输出思考、文本与工具调用</text>
-              </g>
-
-              <!-- Server tool side box -->
-              <line x1="566" y1="53" x2="596" y2="53" stroke="var(--rule)" stroke-width="1.3" stroke-dasharray="3 3" />
-              <rect x="598" y="24" width="142" height="58" rx="6" fill="var(--bg-card)" stroke="var(--rule)" stroke-dasharray="4 3" />
-              <text x="669" y="46" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--ink-secondary)">服务端工具分叉</text>
-              <text x="669" y="64" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-muted)">不经过本地沙盒链</text>
-
-              <!-- Branch down to 5-Gate Tool Pipeline -->
-              <path d="M 469 82 L 469 114 L 92 114 L 92 132" fill="none" stroke="var(--warn)" stroke-width="1.6" />
-              <polygon points="88,129 92,136 96,129" fill="var(--warn)" />
-              <text x="278" y="108" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--warn)">需要本地执行工具时进入权限漏斗</text>
-
-              <!-- Row 2: 5 Gates -->
-              <g id="s1-n-gates">
-                <rect x="20" y="136" width="720" height="72" rx="8" fill="var(--bg-elevated)" stroke="var(--rule)" />
-                <text x="34" y="154" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">五级权限漏斗（并发派发的每个本地工具依次通过）</text>
-
-                <rect x="34" y="162" width="122" height="36" rx="4" fill="var(--bg-card)" stroke="var(--blue)" />
-                <text x="95" y="184" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--blue)">1. 前置拦截</text>
-
-                <text x="166" y="184" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink-muted)">→</text>
-                <rect x="176" y="162" width="126" height="36" rx="4" fill="var(--bg-card)" stroke="var(--blue)" />
-                <text x="239" y="184" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--blue)">2. 用户规则钩子</text>
-
-                <text x="312" y="184" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink-muted)">→</text>
-                <rect x="322" y="162" width="124" height="36" rx="4" fill="var(--bg-card)" stroke="var(--warn)" />
-                <text x="384" y="184" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--warn)">3. 静态策略裁决</text>
-
-                <text x="456" y="184" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink-muted)">→</text>
-                <rect x="466" y="162" width="128" height="36" rx="4" fill="var(--bg-card)" stroke="var(--warn)" />
-                <text x="530" y="184" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--warn)">4. 分类器 / 审批</text>
-
-                <text x="604" y="184" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink-muted)">→</text>
-                <rect x="614" y="162" width="112" height="36" rx="4" fill="var(--bg-card)" stroke="var(--accent)" />
-                <text x="670" y="184" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--accent)">5. 不可重入执行</text>
-              </g>
-
-              <!-- Row 3: Fork-Join Batch Barrier + Complete/Stop -->
-              <path d="M 670 208 L 670 226 L 230 226 L 230 242" fill="none" stroke="var(--ok)" stroke-width="1.6" />
-              <polygon points="226,239 230,246 234,239" fill="var(--ok)" />
-
-              <g id="s1-n-batch">
-                <rect x="20" y="246" width="350" height="60" rx="6" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.5" />
-                <text x="195" y="269" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ok)">并发回执 → Fork-Join 批次屏障</text>
-                <text x="195" y="289" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">全部落定才汇总 · 异步旁路在结果对齐后挂载</text>
-              </g>
-
-              <!-- Loop back arrow from Batch to Stream Inference -->
-              <path id="s1-loop-arc" d="M 20 276 L 8 276 L 8 118 L 415 118 L 415 86" fill="none" stroke="var(--purple)" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.45" />
-              <polygon points="411,89 415,82 419,89" fill="var(--purple)" opacity="0.6" />
-
-              <!-- End turn path -->
-              <path d="M 526 82 L 526 114 L 748 114 L 748 276 L 716 276" fill="none" stroke="var(--rule-strong)" stroke-width="1.4" stroke-dasharray="4 3" />
-
-              <g id="s1-n-stop">
-                <rect x="404" y="246" width="312" height="60" rx="6" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.5" />
-                <text x="560" y="269" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ink)">回合结束 → Stop 退出守门</text>
-                <text x="560" y="289" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">对照后台任务与定时表决定停止或续跑</text>
-              </g>
-
-              <circle id="s1-pulse" cx="92" cy="53" r="7" fill="var(--accent)" opacity="0" />
-            </svg>
-          </div>
-          <div class="stage-controls">
-            <button type="button" class="btn-ctl" id="s1-prev" disabled>◀ 上一步</button>
-            <button type="button" class="btn-ctl is-primary" id="s1-next">下一步 ▶</button>
-            <button type="button" class="btn-ctl" id="s1-auto">▶ 自动播放</button>
-            <button type="button" class="btn-ctl" id="s1-reset">重置</button>
-            <span style="margin-left:auto; font-size:12px; color:var(--ink-muted);" id="s1-badge">等待输入触发</span>
-          </div>
-          <div class="stage-caption" id="s1-cap">点击“下一步”单步追踪单 Turn 事务，看系统如何在异步并发下保住因果秩序与权限边界。</div>
-        </figure>
-
-        <!-- SECTION 2: PROMPT CACHE -->
-        <h2 id="prompt-cache">第 20 分钟：过二十轮就慢成蜗牛，把 Prompt Cache 当成 CPU 缓存来管</h2>
-
-        <p>单回合不再报错之后，开发团队很快撞上了第二堵墙：多轮复杂改造只要超过二十轮，延迟和成本就开始指数级恶化，甚至模型还会突然忘记前面定好的修改约束。</p>
-
-        <p>真相藏在 Prompt Caching 的工作方式里。和直觉里的键值对缓存不同，大模型上下文缓存遵循极其苛刻的<strong>字节级前缀匹配</strong>。它像一条只能从左往右核对的长磁带，从头到尾只要中间改动哪怕一个标点符号，断点之后积累的几万 Token 缓存瞬间全部作废，连带着前面算好的思考链上下文也要被迫丢弃重算。</p>
-
-        <p>最初的循环写法对此毫无防备。往系统提示词开头拼一个动态时间戳、进入深层目录顺手加载局部规则，或者中途新连上一个外部工具直接塞进列表，在短测试里风平浪静，放在二十分钟的长修改里就等于每过几轮亲手把缓存砸烂一次。更隐蔽的是，后台凭证每小时刷新、或者账号额度在恢复会话时切换，哪怕只重排了一下工具序列化顺序，长跑会话就会准点“失忆”。</p>
-
-        <p>Claude Code 干脆把 <strong>Prompt Cache 当成 CPU 的 L1/L2 缓存</strong> 来做硬隔离，用牺牲一点热插拔即时性，换取长会话稳定 90% 以上的缓存命中率：</p>
-
-        <ul>
-          <li><strong>宁可放弃微调，也要死守前缀分段墙。</strong>系统提示词被硬切分成“跨会话全局共享静态区”和“当前会话固定区”，并强行规定全局静态段排在前面、交界处打下缓存锚点。一旦外层扩展试图插队把静态顺序弄乱，内核直接丢弃该修改。</li>
-          <li><strong>在线程生命周期内冻结工具池。</strong>只要会话还在同一条线程里继续，哪怕中途挂上新外部工具或插件改写描述，默认全部冻结不进前缀，一直憋到下一次上下文压缩、清空或开启新会话时才放行切换。大量外部工具则通过延迟加载标记收进按需搜索后面，防止开场就把前缀撑爆。</li>
-          <li><strong>把一切变化全赶到消息流最尾巴。</strong>当前时间、工作模式切换提示、深层目录回溯发现的局部规则文件，一律禁止碰前面三个静态缓存段，全部做成独立附件单向追写到消息末尾。</li>
-        </ul>
-
-        <!-- STAGE 2: PROMPT CACHE BOUNDARY -->
-        <figure class="stage-card" id="stage-cache">
-          <div class="stage-header">
-            <span class="stage-title">前缀不变性对比：冻结边界架构 vs 动态修改前缀</span>
-            <span class="stage-meta-readout" id="s2-readout">FROZEN MODE · HIT RATE 96%</span>
-          </div>
-          <div class="stage-canvas">
-            <svg viewBox="0 0 760 286" aria-label="Prompt Cache 冻结边界对比图">
-              <!-- Wire Request Layout -->
-              <text x="20" y="28" font-family="var(--font-mono)" font-size="11" fill="var(--ink-muted)">API REQUEST WIRE PREFIX (从左到右严格字节前缀匹配)</text>
-
-              <g id="s2-blk-shared">
-                <rect x="20" y="42" width="160" height="96" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6" />
-                <text x="100" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--ok)">1. 全局共享区</text>
-                <text x="100" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">核心指令与基础规范</text>
-                <text x="100" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">跨组织静态复用</text>
-                <text id="s2-stat-1" x="100" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--ok)">HIT ✓</text>
-              </g>
-
-              <line x1="186" y1="36" x2="186" y2="146" stroke="var(--rule-strong)" stroke-width="1.5" stroke-dasharray="4 3" />
-
-              <g id="s2-blk-tools">
-                <rect x="192" y="42" width="176" height="96" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6" />
-                <text x="280" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--ok)">2. 冻结工具池</text>
-                <text x="280" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">常用工具 + 延迟按需召回</text>
-                <text x="280" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">线程周期内锁定</text>
-                <text id="s2-stat-2" x="280" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--ok)">HIT ✓</text>
-              </g>
-
-              <g id="s2-blk-session">
-                <rect x="376" y="42" width="166" height="96" rx="6" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.5" />
-                <text x="459" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--blue)">3. 会话固定上下文</text>
-                <text x="459" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">仓库规范与工程约定</text>
-                <text x="459" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--blue)">会话级稳定锚点</text>
-                <text id="s2-stat-3" x="459" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--ok)">HIT ✓</text>
-              </g>
-
-              <g id="s2-blk-dyn">
-                <rect x="550" y="42" width="190" height="96" rx="6" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5" />
-                <text x="645" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--purple)">4. 增量消息尾巴</text>
-                <text x="645" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">动态附件 · 回执 · 局部规则</text>
-                <text x="645" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">只从末尾单向追加</text>
-                <text id="s2-stat-4" x="645" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--purple)">APPEND</text>
-              </g>
-
-              <!-- Diagnostic Bar -->
-              <rect x="20" y="162" width="720" height="104" rx="8" fill="var(--bg-elevated)" stroke="var(--rule)" />
-              <text x="40" y="188" font-family="var(--font-sans)" font-size="12" fill="var(--ink-muted)">本轮发生的变化</text>
-              <text id="s2-event-lbl" x="40" y="216" font-family="var(--font-sans)" font-size="14" font-weight="600" fill="var(--ink)">进入深层目录，触发模式提醒与局部规则加载</text>
-              <text id="s2-event-desc" x="40" y="242" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink-secondary)">所有动态信息全部写进末尾第 4 段附件，前三段缓存前缀一字节未改。</text>
-
-              <line x1="510" y1="176" x2="510" y2="252" stroke="var(--rule)" />
-              <text x="526" y="190" font-family="var(--font-sans)" font-size="12" fill="var(--ink-muted)">Cache 命中率</text>
-              <text id="s2-hit-pct" x="526" y="222" font-family="var(--font-mono)" font-size="24" font-weight="600" fill="var(--ok)">96%</text>
-              <text x="632" y="190" font-family="var(--font-sans)" font-size="12" fill="var(--ink-muted)">Thinking 上下文</text>
-              <text id="s2-think-stat" x="632" y="220" font-family="var(--font-mono)" font-size="15" font-weight="600" fill="var(--ok)">完整保留 ✓</text>
-            </svg>
-          </div>
-          <div class="stage-controls">
-            <button type="button" class="btn-ctl is-active" data-s2-case="attach">1. 动态状态与局部规则</button>
-            <button type="button" class="btn-ctl" data-s2-case="tool">2. 中途新增外部工具</button>
-            <button type="button" class="btn-ctl" data-s2-case="oauth">3. 凭证刷新或恢复会话</button>
-            <button type="button" class="btn-ctl" id="s2-toggle-naive" style="margin-left:auto;">切换：朴素动态写法</button>
-          </div>
-          <div class="stage-caption" id="s2-cap">当前为 <strong>冻结边界架构</strong>：切换三类常见变化与右侧“朴素动态写法”，直观看到前缀变动如何波及整条缓存与思考链。</div>
-        </figure>
-
-        <!-- SECTION 3: ONION TIERS & COMPACTION -->
-        <h2 id="onion-tiers">第 1 小时：插件抢权与窗口撞线，套上零信任洋葱和“54 分钟偷跑压缩”</h2>
-
-        <p>当循环既能并发又不轻易击穿缓存之后，运行时间拉长到小时级，两类更深层的矛盾冒了出来。</p>
-
-        <p>第一类来自<strong>生态共处</strong>。开发者自己装社区插件，企业 IT 强推合规基线，产品自身还要跑内置功能。如果把三拨人挂在同一个平级 Hook 数组里按顺序执行，后加载的社区插件随时能把安全防线盖掉；一个写坏的扩展超时，更是直接拖垮整条开发主线。</p>
-
-        <h3>五层洋葱“夹心”与冷酷的故障分界</h3>
-        <p>Claude Code 把循环动作全收编进一条零信任洋葱链，从外向内依次穿过：</p>
-
-        <pre class="code-snippet">组织前置 → 用户扩展 → 组织后置 → 内置能力 → 引擎内核</pre>
-
-        <ul>
-          <li><strong>把不可信插件夹在中间。</strong>组织策略守住外层入口与内层兜底，遇到安全基线、上下文压缩和工具校验底线时，外层策略可以直接越层穿透到组织后置，彻底跳过中间的用户插件。</li>
-          <li><strong>等模型思考时停表，报错默认放行。</strong>每个插件自身代码只有短暂执行预算，一旦向下层交出控制权或发起模型等待就立刻停表，绝不因为模型想得久误杀插件。普通插件超时或报错一律 <code>fail-open</code> 放行跳过，只有安全门卫才执行 <code>fail-closed</code> 拦截。</li>
-        </ul>
-
-        <h3>把压缩计算藏进人类的空闲间隙（54 分钟窗口）</h3>
-        <p>第二类矛盾来自<strong>小时级上下文膨胀与过期悬崖</strong>。聊上一小时撞到窗口红线，当场停下来压缩摘要会让终端干等三十秒；如果开发者中间去开四五十分钟会回来，服务端 1 小时缓存马上过期，下一句晚到几分钟就得按无缓存价全量重算。</p>
-
-        <ul>
-          <li><strong>受控写入通道保底崩溃恢复。</strong>所有要重放的状态经由有限的十几个明确写入通道落盘，带清来源标签，崩溃重启也能还原现场。</li>
-          <li><strong>赶在第 54 分钟提前偷跑摘要。</strong>引擎在后台盯住无操作时长，赶在 1 小时缓存到期前的第 54 分钟窗口，趁缓存还热乎悄悄把摘要算好藏在后台先不动当前对话；等容量真撞线或用户开完会回来时，只要主干未偏离锚点，直接毫秒级切换上去，抹平三十秒卡顿也躲开重算悬崖。</li>
-        </ul>
-
-        <!-- STAGE 3: ONION TIERS & PRECOMPUTE -->
-        <figure class="stage-card" id="stage-onion">
-          <div class="stage-header">
-            <span class="stage-title">零信任洋葱治理（越层穿透）与后台预计算压缩</span>
-            <span class="stage-meta-readout" id="s3-readout">MODE: STANDARD · STEP 0 / 4</span>
-          </div>
-          <div class="stage-canvas">
-            <svg viewBox="0 0 760 292" aria-label="五层洋葱治理与越层穿透图">
-              <!-- 5 Tier Boxes left-to-right onion cross section -->
-              <g id="s3-t-prepend">
-                <rect x="20" y="38" width="122" height="120" rx="6" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6" />
-                <text x="81" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ink)">1. 组织前置</text>
-                <text x="81" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">全局策略入口</text>
-                <text x="81" y="102" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">最高权限层</text>
-                <text x="81" y="142" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">异步等待停表</text>
-              </g>
-
-              <g id="s3-t-user">
-                <rect x="166" y="38" width="122" height="120" rx="6" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5" />
-                <text x="227" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--blue)">2. 用户扩展层</text>
-                <text x="227" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">三方插件（被夹心）</text>
-                <text id="s3-user-stat" x="227" y="108" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">正常经过</text>
-                <text x="227" y="142" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--blue)">默认 fail-open</text>
-              </g>
-
-              <g id="s3-t-append">
-                <rect x="312" y="38" width="122" height="120" rx="6" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6" />
-                <text x="373" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ink)">3. 组织后置</text>
-                <text x="373" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">受信任策略兜底</text>
-                <text x="373" y="102" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">防下游篡改</text>
-                <text x="373" y="142" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ok)">显式 fail-closed</text>
-              </g>
-
-              <g id="s3-t-builtin">
-                <rect x="458" y="38" width="128" height="120" rx="6" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5" />
-                <text x="522" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--purple)">4. 内置能力层</text>
-                <text x="522" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">默认安全 · Diff</text>
-                <text x="522" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">规则加载 · 隐私</text>
-                <text x="522" y="142" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--purple)">随内核内置分发</text>
-              </g>
-
-              <g id="s3-t-core">
-                <rect x="610" y="38" width="130" height="120" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.8" />
-                <text x="675" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="700" fill="var(--ok)">5. 引擎内核</text>
-                <text x="675" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink)">真实调用与落盘</text>
-                <text x="675" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">模型请求 · 工具执行</text>
-                <text x="675" y="142" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ok)">受控通道持久化</text>
-              </g>
-
-              <!-- Normal Links & Bypass Arc -->
-              <line x1="142" y1="98" x2="166" y2="98" stroke="var(--rule-strong)" stroke-width="1.5" />
-              <line x1="288" y1="98" x2="312" y2="98" stroke="var(--rule-strong)" stroke-width="1.5" />
-              <line x1="434" y1="98" x2="458" y2="98" stroke="var(--rule-strong)" stroke-width="1.5" />
-              <line x1="586" y1="98" x2="610" y2="98" stroke="var(--rule-strong)" stroke-width="1.5" />
-
-              <path id="s3-bypass-arc" d="M 81 38 C 130 14, 324 14, 373 38" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 3" opacity="0.2" />
-              <text id="s3-bypass-lbl" x="227" y="18" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--accent)" opacity="0.25">安全合规事件越层跳过用户插件</text>
-
-              <circle id="s3-pkt" cx="81" cy="98" r="6" fill="var(--accent)" opacity="0" />
-
-              <!-- Bottom Strip: Compaction Precompute -->
-              <rect x="20" y="182" width="720" height="92" rx="8" fill="var(--bg-elevated)" stroke="var(--rule)" />
-              <text x="36" y="206" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--ink-muted)">延迟隐藏设计：长跑上下文压缩的后台预计算流水线</text>
-
-              <rect x="36" y="220" width="206" height="38" rx="4" fill="var(--bg-card)" stroke="var(--rule)" />
-              <text x="139" y="243" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">后台空闲 · 预生成摘要</text>
-
-              <text x="260" y="243" text-anchor="middle" font-family="var(--font-mono)" font-size="13" fill="var(--ink-muted)">→</text>
-              <rect x="278" y="220" width="210" height="38" rx="4" fill="var(--bg-card)" stroke="var(--warn)" />
-              <text id="s3-comp-mid" x="383" y="243" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--warn)">暂存待命 · 不改当前对话</text>
-
-              <text x="506" y="243" text-anchor="middle" font-family="var(--font-mono)" font-size="13" fill="var(--ink-muted)">→</text>
-              <rect x="524" y="220" width="200" height="38" rx="4" fill="var(--ok-soft)" stroke="var(--ok)" />
-              <text id="s3-comp-end" x="624" y="243" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ok)">触及上限 · 瞬时切换复用</text>
-            </svg>
-          </div>
-          <div class="stage-controls">
-            <button type="button" class="btn-ctl" id="s3-prev" disabled>◀ 上一步</button>
-            <button type="button" class="btn-ctl is-primary" id="s3-next">下一步 ▶</button>
-            <button type="button" class="btn-ctl" id="s3-toggle-bypass">模拟：安全策略越层穿透</button>
-            <button type="button" class="btn-ctl" id="s3-reset">重置</button>
-          </div>
-          <div class="stage-caption" id="s3-cap">点击“下一步”观察一次事件如何穿透五层权威链，或点击右侧模拟“安全基线如何绕开不可信插件层”。</div>
-        </figure>
-
-        <!-- SECTION 4: MULTI-LOOP & /LOOP -->
-        <h2 id="cross-turn">第 2 小时以后：模型说完就停机，<code>/loop</code> 如何打通长时值守</h2>
-
-        <p>前三关全部闯过，但只要退后一步看，这台精密机器本质上依然是个被动应答器：只要某一步模型自认完工、不再调用工具，循环就立刻停回原点等人类敲回车。全库翻五十个文件会把主窗口塞满废纸，盯灰度或跑完整套测试更是没法让人守在屏幕前当人肉触发器。</p>
-
-        <h3>空间分身：给探索噪声一张单独桌子</h3>
-        <p>面对全库大搜或可拆分的并行改造，主循环按受控并发数与深度上限拉出分身树（Subagent 与队友分身）。每个分身自带一张干净桌子，把翻代码踩坑的几十页日志全关在分支沙盒里，最后只递回几行结论，靠清晰的状态机流转生命周期。</p>
-
-        <h3>时间接力：为了打破“闭嘴就结束”试过三代写法</h3>
-        <ol>
-          <li><strong>第一代：拿退出门禁硬打回（<code>Stop</code> 拦截）。</strong>在出口挂接测试脚本做客观裁决，没绿就驳回退出并注入报错重改。一旦验证脚本写坏就会死磕到底，于是引擎赶紧加上<strong>连续打回次数硬熔断</strong>（默认连拦 8 次强制断开告警）。</li>
-          <li><strong>第二代：固定节拍时钟（固定 Cron）。</strong>把唤醒交给会话定时器，调度状态跨压缩保留，终端把连续“一切正常”的空转折叠成单行防止刷屏。但它太机械，既不知风险高低，也容易在后台跑着子任务时叠加无意义轮询。</li>
-          <li><strong>第三代：像真人值班一样的自调节 <code>/loop</code>。</strong>让模型自己估算下次醒来间隔，并打磨死三个时间耦合：单次睡眠上限卡在 <strong>1 小时缓存线前</strong>先醒一次保鲜；后台已有任务通知时绝不重复轮询；<strong>不再预约闹钟即默契收敛结束</strong>，且像 <code>tmux</code> 一样分清“暂时分离界面（detach）”和“彻底取消任务（cancel）”。</li>
-        </ol>
-
-        <figure class="role-plate">
-          <div class="role-plate-svg">
-            <svg viewBox="0 0 240 104" aria-label="自调节唤醒与 1 小时缓存窗口对齐">
-              <line x1="18" y1="62" x2="222" y2="62" stroke="var(--rule-strong)" stroke-width="1.5" />
-              <circle cx="32" cy="62" r="5" fill="var(--ok)" />
-              <text x="32" y="48" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ok)">T0</text>
-              <circle cx="72" cy="62" r="5" fill="var(--blue)" />
-              <text x="72" y="48" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--blue)">+2m</text>
-              <circle cx="132" cy="62" r="5" fill="var(--purple)" />
-              <text x="132" y="48" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--purple)">+15m</text>
-              <line x1="196" y1="20" x2="196" y2="86" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 2" />
-              <text x="196" y="15" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent)">1h Cache 过期线</text>
-              <circle cx="184" cy="62" r="5" fill="var(--ok)" />
-              <text x="172" y="84" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="600" fill="var(--ok)">卡在过期前醒来</text>
-            </svg>
-          </div>
-          <figcaption class="role-plate-note">
-            <span class="role-name">时间维度背后的三个隐蔽耦合</span>
-            ① <strong>休眠服从缓存寿命</strong>：最大睡眠刻意卡在 1 小时缓存过期前，避免醒来整段重算；② <strong>时间与事件去重</strong>：后台任务自带完成通知，绝不叠加多余的定时轮询；③ <strong>默认收敛且区分退场</strong>：不再预约即自动结束，离开后台（detach）不等同于取消定时任务。
-          </figcaption>
-        </figure>
-
-        <!-- STAGE 4: CROSS-TURN LOOP SIMULATOR -->
-        <figure class="stage-card" id="stage-crossturn">
-          <div class="stage-header">
-            <span class="stage-title">时间维度对比：门禁打回型 vs 固定节拍 Cron vs 自调节 /loop</span>
-            <span class="stage-meta-readout" id="s4-readout">MODE: SELF-PACED /loop · STEP 0 / 4</span>
+            <span class="stage-title">Claude Code 跨回合 Loop 运转演示：切换三种模式逐步观察</span>
+            <span class="stage-meta-readout" id="s2-readout">MODE: STOP / RALPH · STEP 1 / 4</span>
           </div>
           <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
-            <button type="button" class="btn-ctl is-active" data-s4-mode="selfpaced">模型自调节 (/loop)</button>
-            <button type="button" class="btn-ctl" data-s4-mode="cron">固定节拍 (Cron)</button>
-            <button type="button" class="btn-ctl" data-s4-mode="stophook">门禁打回 (Stop Hook)</button>
+            <button type="button" class="btn-ctl is-active" data-s2-mode="ralph">1. Stop 门禁 / /ralph-loop</button>
+            <button type="button" class="btn-ctl" data-s2-mode="cron">2. 固定间隔 /loop 5m</button>
+            <button type="button" class="btn-ctl" data-s2-mode="paced">3. 自调节 /loop (/proactive)</button>
           </div>
           <div class="stage-canvas">
-            <svg viewBox="0 0 760 236" aria-label="三种跨 Turn 架构演化时间线">
-              <line x1="48" y1="112" x2="712" y2="112" stroke="var(--rule)" stroke-width="2" />
-              <g id="s4-nodes"></g>
-              <rect x="20" y="170" width="720" height="52" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)" />
-              <text id="s4-line-1" x="36" y="192" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--ink)">准备就绪：点击“下一步”沿时间轴推进</text>
-              <text id="s4-line-2" x="36" y="211" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)">切换上方标签，对比三种跨 Turn 范式如何驱动、休眠与收敛。</text>
+            <svg viewBox="0 0 760 232" aria-label="三种跨回合 Loop 运转时间轴">
+              <line x1="48" y1="104" x2="712" y2="104" stroke="var(--rule)" stroke-width="2" />
+              <g id="s2-nodes"></g>
+              <rect x="20" y="164" width="720" height="54" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)" />
+              <text id="s2-line-1" x="36" y="186" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ink)"></text>
+              <text id="s2-line-2" x="36" y="206" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)"></text>
             </svg>
           </div>
           <div class="stage-controls">
-            <button type="button" class="btn-ctl" id="s4-prev" disabled>◀ 上一步</button>
-            <button type="button" class="btn-ctl is-primary" id="s4-next">下一步 ▶</button>
-            <button type="button" class="btn-ctl" id="s4-auto">▶ 自动播放</button>
-            <button type="button" class="btn-ctl" id="s4-reset">重置</button>
+            <button type="button" class="btn-ctl" id="s2-prev">◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s2-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s2-auto">▶ 自动播放</button>
+            <button type="button" class="btn-ctl" id="s2-reset">重置</button>
           </div>
-          <div class="stage-caption" id="s4-cap">点击“下一步”观察三种时间维度的控制节奏、缓存对齐约束与防死锁边界。</div>
+          <div class="stage-caption" id="s2-cap">切换上方三种模式并点击“下一步”，看清每次继续、休眠与收工分别由谁拍板。</div>
         </figure>
 
-        <div class="matrix-wrap">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th>演化步点</th>
-                <th>当初撞上的现实故障</th>
-                <th>逼出的架构关键设计</th>
-                <th>跨越的时间尺度难题</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>第一步：短事务化</td>
-                <td>并发读文件与后台插话撕裂协议链</td>
-                <td>只读来源锁死、安全汇入点、五级漏斗、Fork-Join 屏障</td>
-                <td><strong>第 15 秒级</strong>异步并发与越权漏洞</td>
-              </tr>
-              <tr>
-                <td>第二步：缓存纪律</td>
-                <td>过二十轮延迟暴涨、刷新即“失忆”</td>
-                <td>静态/会话前缀防火墙、线程冻结工具池、动态内容尾插</td>
-                <td><strong>第 20 分钟级</strong>长对话成本与连贯性</td>
-              </tr>
-              <tr>
-                <td>第三步：零信任与偷跑压缩</td>
-                <td>插件互盖策略、撞线干等三十秒</td>
-                <td>五层洋葱夹心、越层穿透、异步停表、54 分钟后台预压缩</td>
-                <td><strong>第 1 小时级</strong>生态治理与过期卡顿</td>
-              </tr>
-              <tr>
-                <td>第四步：分身与时间驻留</td>
-                <td>模型答完停机，长值守要么死锁要么丢缓存</td>
-                <td>隔离分身树 + 门禁熔断 / 折叠 Cron / 1h 缓存对齐 <code>/loop</code></td>
-                <td><strong>第 2 小时级</strong>跨时值守与自然收敛</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <h2 id="pitfalls">用起来有哪些坑？</h2>
 
-        <h3>还没到终点：下一站是脱离单机进程的持久化</h3>
-        <p>哪怕演进到自调节 <code>/loop</code>，只要唤醒闹钟还挂在单机进程或容器内存里，笔记本盖上休眠、客户端更新重启、系统低内存杀进程或者云端容器销毁，都能把一个跑了三小时的值守循环无声掐断。下一站的方向已经很清晰：让调度意图与现场状态可靠落盘，脱离单机线程，长成跨越进程重启与云容器生命周期的持久化后台运行时。</p>
+        <p>循环一旦自动跑起来，小毛病也会跟着循环次数放大。实际在 Claude Code 里用这些能力，有五个坑最常见：</p>
 
-        <!-- SECTION 5: HORIZONTAL LANDSCAPE -->
-        <h2 id="landscape">放到行业坐标系里看：铁轨、黑板作坊，还是隐式内核？</h2>
+        <p><strong>1. 目标没法客观判定，或者门禁脚本自身有 Bug，直接死循环烧额度。</strong><br>
+        跑 <code>/ralph-loop</code> 时最忌讳写“把代码重构得更优雅”这种主观要求：模型要么第一轮改两行就交差，要么永远停不下来。更常见的是 <code>Stop</code> 钩子里的脚本自己写坏了（比如路径含空格没加引号、测试库连不上，或者把接口报错当成未完成又塞回给模型），导致它在原地白白空转。所以用 <code>/ralph-loop</code> 一定要加 <code>--max-iterations</code> 封顶；Claude Code 后来也专门给 <code>Stop</code> 钩子加了<strong>连续拦截 8 次强制熔断</strong>，并在 <code>/usage</code> 里拆出了按每个 Loop 单独统计的运行次数与每次 Token 消耗，方便抓出异常空转。</p>
 
-        <p>把视线从纵向时间轴拉平，放到今天的整个行业里做个横向比较。大家都在解“怎样让二十行 <code>while</code> 扛住复杂真实工程”这道题，但业界主流押注了三条完全不同的路径：</p>
+        <p><strong>2. 休眠间隔跨过 1 小时，Prompt Cache 全废导致账单暴涨。</strong><br>
+        跑了十几轮的会话，上下文往往攒了几万到十几万 Token。平时每次唤醒又快又省钱，靠的是服务端默认 <strong>1 小时有效期的 Prompt Cache</strong>（命中缓存只算零头）。如果你把固定轮询设成 <code>65m</code>，每次醒来缓存恰好过期，十几万 Token 就得每小时按全价重读一遍。这也是为什么自调节 <code>/loop</code> 专门把单次最长睡眠卡死在 <strong>1 小时缓存过期线以内</strong>：就算模型想等两小时，也会在 1 小时到期前先醒一次把缓存续热。自己设固定间隔时，同样要避开略大于 1 小时的档位。</p>
 
-        <div class="matrix-wrap">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th>架构流派</th>
-                <th>控制权交给了谁</th>
-                <th>如何管住状态与成本</th>
-                <th>多方扩展与协同方式</th>
-                <th>最顺手的场景</th>
-                <th>绕不开的固有代价</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>朴素 ReAct 原型</td>
-                <td>全部交给单线 <code>while</code> 自由拼接</td>
-                <td>历史全量重传，前缀极易击穿</td>
-                <td>平级回调硬写，缺乏边界</td>
-                <td>一次性小脚本、快修单文件</td>
-                <td>跑长必乱序，账单和延迟失控</td>
-              </tr>
-              <tr>
-                <td>显式 Workflow 状态机（DAG 编排）</td>
-                <td>开发者预先把路修成<strong>铁轨</strong></td>
-                <td>按图节点变量显式流转状态</td>
-                <td>权限按图节点静态切死</td>
-                <td>强审计 SOP、步骤固定的企业流</td>
-                <td>模型遇到意外分支很僵硬，图大了极难维护</td>
-              </tr>
-              <tr>
-                <td>多角色黑板协作（如 Swarm 团队制）</td>
-                <td>平级角色围绕公共黑板与门铃分工</td>
-                <td>独立窗口隔离碎纸片，黑板对齐结论</td>
-                <td>组织学隔离（协调者不写代码、独立验收）</td>
-                <td>大型跨模块并发、破除自写自测偏见</td>
-                <td>小修小补太沉，跨角色沟通有信息损耗</td>
-              </tr>
-              <tr>
-                <td>Claude Code 隐式治理核 + 驻留 Loop</td>
-                <td>对话表面还是聊天，护栏全沉进<strong>随身内核</strong></td>
-                <td>分层前缀防火墙、工具冻结、54m 预压缩</td>
-                <td>五层洋葱夹心、越层穿透与停表预算</td>
-                <td>单开发者面对大仓库从秒级到跨天值守</td>
-                <td>运行时黑盒重，热插拔不即时生效，持久层债务重</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p><strong>3. 拿 <code>/loop</code> 去轮询本来就会主动回调的本地后台任务。</strong><br>
+        不少人在会话里起了个本地后台编译、长测试或后台 Subagent，顺手又敲一个 <code>/loop 1m 看看跑完没</code>。其实 Claude Code 内部拉起的后台任务跑完时，自带 <code>task-notification</code> 主动唤醒主会话，根本不用闹钟催；叠一层轮询只会每分钟往上下文里塞一句“还在跑”的废话。记住一条界线就行：<strong>会话内部派出去的慢活靠完成回调唤醒，不会主动通知你的外部系统（远端 CI、线上监控、外部工单）才用 <code>/loop</code>。</strong></p>
 
-        <figure class="role-plate">
-          <div class="role-plate-svg">
-            <svg viewBox="0 0 240 112" aria-label="系统复杂度在不同 Agent 架构中的转移位置">
-              <rect x="10" y="10" width="220" height="26" rx="4" fill="var(--bg-card)" stroke="var(--blue)" />
-              <text x="18" y="27" font-family="var(--font-sans)" font-size="9.5" font-weight="600" fill="var(--blue)">DAG 状态机</text>
-              <text x="222" y="27" text-anchor="end" font-family="var(--font-sans)" font-size="9" fill="var(--ink-secondary)">提前把路铺成铁轨</text>
+        <p><strong>4. 无人值守撞上权限确认卡死，以及搞混“脱离界面”和“取消闹钟”。</strong><br>
+        挂上 <code>/loop</code> 离开座位，结果跑到第 3 轮触发了一个未授权命令或声明了工具权限的 Skill，终端停在“是否允许执行”的弹窗上干等一夜。跑无人值守前，得先把要用的命令或 <code>Skill(name)</code> 配进 <code>permissions.allow</code> 白名单。另外要注意退场按键的区别：连进后台会话看进度时，连按两次 <code>Ctrl+C</code> 只是从当前界面<strong>脱离（detach）</strong>，<code>/loop</code> 还在后台接着跑；按 <strong><code>Esc</code></strong> 才是真正取消待触发的闹钟。</p>
 
-              <rect x="10" y="43" width="220" height="26" rx="4" fill="var(--bg-card)" stroke="var(--purple)" />
-              <text x="18" y="60" font-family="var(--font-sans)" font-size="9.5" font-weight="600" fill="var(--purple)">黑板 Swarm</text>
-              <text x="222" y="60" text-anchor="end" font-family="var(--font-sans)" font-size="9" fill="var(--ink-secondary)">搭一间敏捷作坊分权</text>
+        <p><strong>5. 以为关掉终端或合上电脑它还在跑。</strong><br>
+        目前的 <code>/loop</code> 归根结底是跟着当前会话进程或云端临时容器活的定时器。虽然客户端在热更新或低内存时会尽量保住等待唤醒的后台会话，但只要合上笔记本休眠、杀掉终端进程，或者云端会话容器到期回收，闹钟就会跟着停掉。盯几小时的开发发布很合适，跨天、关机也要跑的任务还是得交给独立的服务端调度。</p>
 
-              <rect x="10" y="76" width="220" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4" />
-              <text x="18" y="93" font-family="var(--font-sans)" font-size="9.5" font-weight="600" fill="var(--accent)">Claude Code</text>
-              <text x="222" y="93" text-anchor="end" font-family="var(--font-sans)" font-size="9" fill="var(--ink)">复杂度全沉入随身内核</text>
-            </svg>
+        <!-- STAGE 3: FIVE PITFALLS INSPECTOR -->
+        <figure class="stage-card" id="stage-pitfalls">
+          <div class="stage-header">
+            <span class="stage-title">实战避坑对照：点击查看五个高频踩坑现场与防护办法</span>
+            <span class="stage-meta-readout" id="s3-readout">PITFALL 1 / 5 · 门禁死循环</span>
           </div>
-          <figcaption class="role-plate-note">
-            <span class="role-name">复杂度的三处落点</span>
-            显式 DAG 把路铺成铁轨；多角色黑板协作（见<a href="03-from-single-agent-to-swarm.html">上一篇</a>）搭出敏捷作坊治住“碎纸片淹没脑子”和“偏心自测”；而 Claude Code 把几乎所有复杂护栏吞进隐式内核，拼命维持“只是在终端线性聊天”的表面假象。
-          </figcaption>
+          <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
+            <button type="button" class="btn-ctl" id="s3-prev" disabled>◀</button>
+            <button type="button" class="btn-ctl is-active" data-s3="0">1. 坏门禁死循环</button>
+            <button type="button" class="btn-ctl" data-s3="1">2. 睡超 1h 丢缓存</button>
+            <button type="button" class="btn-ctl" data-s3="2">3. 傻轮询后台任务</button>
+            <button type="button" class="btn-ctl" data-s3="3">4. 权限卡死与按键</button>
+            <button type="button" class="btn-ctl" data-s3="4">5. 进程退出丢闹钟</button>
+            <button type="button" class="btn-ctl" id="s3-next">▶</button>
+          </div>
+          <div class="stage-canvas">
+            <div class="pitfall-grid">
+              <div class="pitfall-box is-bad">
+                <span class="pitfall-tag" id="s3-bad-tag">踩坑写法</span>
+                <h4 id="s3-bad-title"></h4>
+                <p id="s3-bad-desc"></p>
+              </div>
+              <div class="pitfall-box is-good">
+                <span class="pitfall-tag" id="s3-good-tag">正确做法与内置护栏</span>
+                <h4 id="s3-good-title"></h4>
+                <p id="s3-good-desc"></p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-caption" id="s3-cap">点击各条目查看对应的踩坑原因与 Claude Code 里的防护手段。</div>
         </figure>
 
-        <p>选择做隐式内核，上手几乎零门槛，但你必须清楚它付出的三笔硬账：</p>
+        <h2 id="how-to-choose">平时怎么选？</h2>
 
-        <ul>
-          <li><strong>热插拔的即时感让位给了缓存稳定。</strong>因为前缀与工具清单被线程周期锁死，半路新连进来的能力不能指望立刻生效，必须忍耐到压缩或重启边界。</li>
-          <li><strong>黑盒越聪明，扩展作者越难排查。</strong>五级权限漏斗、安全越层跳过、停表计时与后台预计算都在幕后静默完成，一旦插件没按预期触发，排查链路远不如状态图透明。</li>
-          <li><strong>把长时值守揽进命令行，就得背上调度系统的持久层重担。</strong>一旦鼓励大家用 <code>/loop</code> 挂着盯半天，热更新、休眠唤醒与容器漂移就都变成了必须死磕的基础设施硬骨头。</li>
-        </ul>
+        <p>真落到日常干活，不用记内部细节，顺着三个问题就能选定：</p>
 
-        <!-- SECTION 6: MATRIX & COMPASS -->
-        <h2 id="compass">落到平时怎么选</h2>
+        <ol>
+          <li><strong>一轮之内能不能搞定？</strong> 改几个文件、马上能跑命令验证的需求，直接走默认<strong>单轮循环</strong>；嫌查代码太吵或想多路并行改，派几个 <strong>Subagent</strong> 隔开上下文就行，不用套跨回合 Loop。</li>
+          <li><strong>是在死磕本地确定性目标，还是在等外部世界？</strong> 代码和测试都在本地、只是怕模型半路偷懒早退，上 <strong><code>Stop</code> Hook 或 <code>/ralph-loop</code></strong>，绑好验证脚本和轮数上限一口气拱完；如果只是本地起了个十分钟的大编译，丢进<strong>后台任务</strong>等完成回调叫醒即可。</li>
+          <li><strong>等外部状态时，节奏要不要随风险变？</strong> 固定频率例行看一眼，用<strong>固定间隔 <code>/loop 10m</code></strong>；盯发版、看灰度、等慢流水线这种前期紧后期松、完事就下班的活，交给<strong>自调节 <code>/loop</code></strong>。</li>
+        </ol>
 
-        <p>看透了这四步演进和行业位置，回到日常写代码本身，Claude Code 内部的五种 Loop 形态各自该在什么时候掏出来也就一目了然：</p>
-
-        <div class="matrix-wrap">
+        <div class="matrix-wrap" tabindex="0" role="region" aria-labelledby="loop-matrix-caption">
           <table class="compare-table">
+            <caption id="loop-matrix-caption">Claude Code 五种运行与循环模式速查对照</caption>
             <thead>
               <tr>
-                <th>架构形态</th>
-                <th>核心驱动力</th>
-                <th>解决的主要矛盾</th>
-                <th>适合的场景</th>
-                <th>架构边界</th>
+                <th scope="col">模式</th>
+                <th scope="col">谁来触发下一轮</th>
+                <th scope="col">核心解决什么问题</th>
+                <th scope="col">典型场景</th>
+                <th scope="col">避坑要点</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>单 Turn 工具循环</td>
-                <td>模型推理与批次屏障</td>
-                <td>并发工具执行与消息配对乱序</td>
-                <td>目标明确、可立即验证的改码与修错</td>
-                <td>回复结束即停止，无法跨时间等待外部状态</td>
+                <th scope="row">单轮循环 + Subagent</th>
+                <td>模型当轮连续调工具</td>
+                <td>单次改动与检索降噪</td>
+                <td>常规改码、修报错、全库查引用</td>
+                <td>模型停止调工具即结束，跨不过等待期</td>
               </tr>
               <tr>
-                <td>树状多 Loop 分身</td>
-                <td>独立生命周期与状态机</td>
-                <td>单一上下文被探索噪声淹没</td>
-                <td>大规模代码检索、多路独立改动并行</td>
-                <td>需要控制树深度与并发上限，防分身碎片化</td>
+                <th scope="row">本地后台任务回调</th>
+                <td>任务结束发 <code>task-notification</code></td>
+                <td>本地慢命令阻塞主对话</td>
+                <td>本地长编译、全量测试、后台脚本</td>
+                <td>跑完会自动唤醒，别再叠一层 <code>/loop</code> 轮询</td>
               </tr>
               <tr>
-                <td>门禁打回循环</td>
-                <td><code>Stop</code> 拦截与外部验收器</td>
-                <td>模型过早宣布完成、主观放水</td>
-                <td>写完自动跑测试，不过即迭代返工</td>
-                <td>依赖客观可验证门禁，并受连续拦截熔断限制</td>
+                <th scope="row">Stop 门禁 / /ralph-loop</th>
+                <td>出口钩子验收失败打回重跑</td>
+                <td>模型半途早退、主观觉得做完了</td>
+                <td>全库接口迁移、清零报错、死磕测试全绿</td>
+                <td>必配客观验证命令与 <code>--max-iterations</code> 上限</td>
               </tr>
               <tr>
-                <td>固定周期 Cron 循环</td>
-                <td>固定节拍时钟触发</td>
-                <td>需要按固定频率机械值守</td>
-                <td>定时巡检构建状态、周期健康检查</td>
-                <td>不应拿短周期轮询自带完成通知的后台任务</td>
+                <th scope="row">固定间隔 /loop 5m</th>
+                <td>会话级固定时钟（Cron）</td>
+                <td>按固定频率跨时间看外部状态</td>
+                <td>定时巡检构建队列、周期健康检查</td>
+                <td>提前配好 <code>permissions.allow</code>；避开略超 1h 的丢缓存间隔</td>
               </tr>
               <tr>
-                <td>自调节 <code>/loop</code> 循环</td>
-                <td>模型自定间隔的单次唤醒</td>
-                <td>监控密度随风险动态变化、且怕丢缓存</td>
-                <td>盯灰度发布与长周期收敛，稳了自动收工</td>
-                <td>休眠上限对齐缓存窗口，分离与取消动作需区分</td>
+                <th scope="row">自调节 /loop (/proactive)</th>
+                <td>模型自定 <code>ScheduleWakeup</code> 闹钟</td>
+                <td>巡检密度随风险变化、达标自动收工</td>
+                <td>盯 CI 发版、灰度放量观察、阶段性跟进</td>
+                <td>不再预约即结束；<code>Ctrl+C</code> 是脱离界面，<code>Esc</code> 才是取消</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <p>结合具体工程场景，下面五个切面能快速对上各自该选哪一套架构：</p>
-
-        <!-- STAGE 5: SCENARIO COMPASS -->
+        <!-- STAGE 4: SCENARIO COMPASS -->
         <figure class="stage-card" id="stage-compass">
           <div class="stage-header">
-            <span class="stage-title">五种 Loop 架构选型（点击切换）</span>
-            <span class="stage-meta-readout" id="s5-readout">ARCHITECTURE: SINGLE TURN LOOP</span>
+            <span class="stage-title">日常场景快速对号入座（点击切换）</span>
+            <span class="stage-meta-readout" id="s4-readout">CHOICE 1 / 5 · 单轮 + Subagent</span>
           </div>
           <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
-            <button type="button" class="btn-ctl" id="s5-prev" disabled>◀</button>
-            <button type="button" class="btn-ctl is-active" data-s5="fix">1. 修一个跨文件 Bug</button>
-            <button type="button" class="btn-ctl" data-s5="sub">2. 全库搜引用 + 并行改造</button>
-            <button type="button" class="btn-ctl" data-s5="ralph">3. 迭代跑单测直到全绿</button>
-            <button type="button" class="btn-ctl" data-s5="cron">4. 每 10 分钟检查一次构建</button>
-            <button type="button" class="btn-ctl" data-s5="paced">5. 守着灰度发布直到指标稳</button>
-            <button type="button" class="btn-ctl" id="s5-next">▶</button>
+            <button type="button" class="btn-ctl" id="s4-prev" disabled>◀</button>
+            <button type="button" class="btn-ctl is-active" data-s4="single">1. 查引用修跨文件 Bug</button>
+            <button type="button" class="btn-ctl" data-s4="bg">2. 本地跑 10 分钟大编译</button>
+            <button type="button" class="btn-ctl" data-s4="ralph">3. 全库迁接口直到单测绿</button>
+            <button type="button" class="btn-ctl" data-s4="cron">4. 每 15 分钟例行看队列</button>
+            <button type="button" class="btn-ctl" data-s4="paced">5. 盯灰度发布稳了自动收工</button>
+            <button type="button" class="btn-ctl" id="s4-next">▶</button>
           </div>
           <div class="stage-canvas">
-            <svg viewBox="0 0 760 190" aria-label="Loop 架构选型拓扑图">
-              <g id="s5-scene"></g>
+            <svg viewBox="0 0 760 168" aria-label="日常任务选型拓扑图">
+              <g id="s4-scene"></g>
             </svg>
             <div class="compass-details">
               <div class="compass-pill">
-                <span>对应的架构形态</span>
-                <strong id="s5-mode">单 Turn 工具循环（权限漏斗 + Fork-Join 屏障）</strong>
+                <span>推荐用法</span>
+                <strong id="s4-mode"></strong>
               </div>
               <div class="compass-pill">
-                <span>背后的关键取舍</span>
-                <strong id="s5-why">本地即时可验证，靠前缀与工具池冻结保住高缓存命中率。</strong>
+                <span>关键避坑提醒</span>
+                <strong id="s4-tip"></strong>
               </div>
             </div>
           </div>
         </figure>
 
-        <p>回过头再看开头那二十行谁都能手写的 <code>while</code> 循环。决定一个系统能不能真正跨进生产级无人区的，从来不是循环体本身那几行代码有多巧妙，而是你愿不愿意为了第 15 秒的协议洁癖、第 20 分钟的一字节缓存、第 1 小时的零信任夹心，以及第 2 小时的默契停表，一层一层把护栏焊死在那个看似简单的圆圈外面。</p>
+        <p>把上一篇的多 Agent 和这一篇的 Loop 放在一起，刚好是眼下用好编程 Agent 的一横一纵：多 Agent 在空间上分桌子，防的是上下文被杂事塞乱；Loop 在时间上做接力，治的是模型“答完一句就停笔”的被动性。用法本身并不复杂，真正要守住的只有两条底线：凡是不让它停的循环，出口一定要栓上客观验证脚本和轮数上限；凡是睡过去再醒来的循环，心里一定要算清 1 小时缓存寿命和进程存活边界。</p>
       </div>
 
       <nav class="series-nav" aria-label="上下篇导航">
@@ -1394,7 +1002,7 @@
 
       <footer class="post-footer">
         <div class="end-mark">— END —</div>
-        <p>本文基于 <code>anthropics/claude-code</code> 公开仓库的运行时设计、<code>CHANGELOG</code> 演进脉络以及系列前作的架构视角提炼分析；页面交互图解由 SVG 与 GSAP 驱动。</p>
+        <p>本文基于 <code>anthropics/claude-code</code> 公开仓库插件契约、<code>ralph-loop</code> 官方实现与 <code>CHANGELOG</code> 演进记录整理；页面交互图解由 SVG 与 GSAP 驱动。</p>
       </footer>
     </article>
   </main>
@@ -1422,7 +1030,7 @@
       var strip = document.getElementById("reading-strip");
       var bar = document.getElementById("reading-bar");
       var progressLabel = document.getElementById("reading-progress-label");
-      var sections = ["intro", "single-turn", "prompt-cache", "onion-tiers", "cross-turn", "landscape", "compass"]
+      var sections = ["intro", "what-is-loop", "how-it-works", "pitfalls", "how-to-choose"]
         .map(function (id) { return document.getElementById(id); })
         .filter(Boolean);
       var tocLinks = document.querySelectorAll("#toc-list a");
@@ -1449,468 +1057,158 @@
       window.addEventListener("scroll", onScroll, { passive: true });
       onScroll();
 
-      /* 1b. Stage 0: Evolution Timeline */
-      (function initStage0() {
-        var idx = 0;
-        var readout = document.getElementById("s0-readout");
-        var nodesG = document.getElementById("s0-nodes");
-        var pain1 = document.getElementById("s0-pain-1");
-        var pain2 = document.getElementById("s0-pain-2");
-        var shift1 = document.getElementById("s0-shift-1");
-        var shift2 = document.getElementById("s0-shift-2");
-        var inv1 = document.getElementById("s0-inv-1");
-        var inv2 = document.getElementById("s0-inv-2");
-        var cap = document.getElementById("s0-cap");
-        var prevBtn = document.getElementById("s0-prev");
-        var nextBtn = document.getElementById("s0-next");
-
-        var gens = [
-          {
-            short: "第15秒 · 并发撕裂",
-            readout: "STAGE 1 / 5 · 解决第 15 秒并发撕裂",
-            color: "var(--ink)",
-            pain1: "并发读文件撞上后台插话，API 直接报错",
-            pain2: "多源通知混进人类通道绕过审批",
-            shift1: "入口锁死只读来源 + 忙时排队安全点",
-            shift2: "五级漏斗 + Fork-Join 批次屏障",
-            inv1: "秒级单回合严格因果秩序",
-            inv2: "同次调用绝不重入执行",
-            cap: "第 15 秒关卡：先把单回合做成严格短事务，不让并发和异步插话撕碎消息配对。"
-          },
-          {
-            short: "第20分 · 缓存击穿",
-            readout: "STAGE 2 / 5 · 解决第 20 分钟缓存失忆",
-            color: "var(--blue)",
-            pain1: "过二十轮延迟暴涨，前面定好的规矩丢了",
-            pain2: "顺手拼时间戳或刷新重排击穿整段缓存",
-            shift1: "静态/会话前缀墙 + 线程冻结工具池",
-            shift2: "变化全部赶进消息流末尾增量附件",
-            inv1: "把 Prompt Cache 当 CPU 缓存管",
-            inv2: "让渡即时热插拔保 90%+ 命中率",
-            cap: "第 20 分钟关卡：死守字节级前缀不变性，宁可冻结新增工具也不击穿几万 Token 缓存。"
-          },
-          {
-            short: "第1小时 · 洋葱偷跑",
-            readout: "STAGE 3 / 5 · 解决第 1 小时抢权与卡顿",
-            color: "var(--purple)",
-            pain1: "后装插件盖掉安全策略、超时拖垮主线",
-            pain2: "撞上下文红线干等 30 秒，停久丢缓存",
-            shift1: "五层洋葱夹心 + 越层穿透 + 停表预算",
-            shift2: "54 分钟空闲窗赶在过期前偷跑摘要",
-            inv1: "普通 fail-open vs 安全 fail-closed",
-            inv2: "撞线与休眠归来毫秒级无缝切换",
-            cap: "第 1 小时关卡：用零信任洋葱管住多方生态，并把 30 秒压缩等待偷渡进人类空闲期。"
-          },
-          {
-            short: "第2小时 · /loop值守",
-            readout: "STAGE 4 / 5 · 解决第 2 小时停机与值守",
-            color: "var(--ok)",
-            pain1: "模型说完就原地停机，等人类敲回车",
-            pain2: "死磕坏测试、固定轮询撞车后台通知",
-            shift1: "分身树隔离噪声 + 8 次熔断 / 折叠 Cron",
-            shift2: "自调节 /loop 对齐 1h 缓存且不约即收工",
-            inv1: "跨小时自主值守与默契收敛",
-            inv2: "像 tmux 一样分清 detach 与 cancel",
-            cap: "第 2 小时关卡：从硬打回、机械 Cron 走到自调节 /loop，打通长周期自动收工。"
-          },
-          {
-            short: "下一站 · 持久化",
-            readout: "NEXT · 走向跨重启与云容器持久化",
-            color: "var(--accent)",
-            pain1: "热更新、低内存或容器销毁掐断睡眠循环",
-            pain2: "跨天长任务不能脆弱挂在内存定时器上",
-            shift1: "唤醒意图可靠落盘 + 跨容器接续",
-            shift2: "目标、缓存寿命与预算联合裁决收敛",
-            inv1: "脱离单机进程的后台持久化运行",
-            inv2: "跨故障的确定性恢复能力",
-            cap: "下一站：Loop 正从单机线程演进为跨更新重启与云容器生命周期的持久化运行时。"
-          }
-        ];
-
-        function selectGen(n) {
-          idx = Math.max(0, Math.min(gens.length - 1, n));
-          var g = gens[idx];
-          prevBtn.disabled = idx <= 0;
-          nextBtn.disabled = idx >= gens.length - 1;
-          readout.textContent = g.readout;
-          pain1.textContent = g.pain1;
-          pain2.textContent = g.pain2;
-          shift1.textContent = g.shift1;
-          shift2.textContent = g.shift2;
-          inv1.textContent = g.inv1;
-          inv2.textContent = g.inv2;
-          cap.textContent = g.cap;
-
-          document.querySelectorAll("[data-s0]").forEach(function (b) {
-            b.classList.toggle("is-active", parseInt(b.getAttribute("data-s0"), 10) === idx);
-          });
-
-          var xs = [84, 232, 380, 528, 676];
-          var html = "";
-          gens.forEach(function (item, i) {
-            var active = i === idx;
-            var past = i < idx;
-            var op = active ? "1" : (past ? "0.78" : "0.42");
-            var sw = active ? "2.4" : "1.3";
-            html += '<g opacity="' + op + '" style="cursor:pointer" data-s0-node="' + i + '">';
-            html += '<rect x="' + (xs[i] - 64) + '" y="26" width="128" height="54" rx="6" fill="' + (active ? "var(--bg-card)" : "var(--bg-elevated)") + '" stroke="' + (active ? item.color : "var(--rule-strong)") + '" stroke-width="' + sw + '" />';
-            html += '<text x="' + xs[i] + '" y="50" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="' + (active ? "700" : "500") + '" fill="' + (active ? item.color : "var(--ink)") + '">' + item.short + '</text>';
-            html += '<text x="' + xs[i] + '" y="68" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">' + (i < 4 ? "STEP " + (i + 1) : "NEXT") + '</text>';
-            html += '</g>';
-          });
-          nodesG.innerHTML = html;
-          nodesG.querySelectorAll("[data-s0-node]").forEach(function (el) {
-            el.addEventListener("click", function () {
-              selectGen(parseInt(el.getAttribute("data-s0-node"), 10));
-            });
-          });
-        }
-
-        prevBtn.addEventListener("click", function () { if (idx > 0) selectGen(idx - 1); });
-        nextBtn.addEventListener("click", function () { if (idx < gens.length - 1) selectGen(idx + 1); });
-        document.querySelectorAll("[data-s0]").forEach(function (b) {
-          b.addEventListener("click", function () {
-            selectGen(parseInt(b.getAttribute("data-s0"), 10));
-          });
-        });
-        selectGen(0);
-      })();
-
-      /* 2. Stage 1: Single Turn Pipeline (0..6) */
+      /* 2. Stage 1: Why Single-Turn Breaks */
       (function initStage1() {
-        var step = 0;
-        var timer = null;
-        var pulse = document.getElementById("s1-pulse");
+        var svgG = document.getElementById("s1-svg");
         var readout = document.getElementById("s1-readout");
-        var badge = document.getElementById("s1-badge");
         var cap = document.getElementById("s1-cap");
-        var prevBtn = document.getElementById("s1-prev");
-        var nextBtn = document.getElementById("s1-next");
-        var loopArc = document.getElementById("s1-loop-arc");
 
-        var nSubmit = document.querySelector("#s1-n-submit rect");
-        var nStart = document.querySelector("#s1-n-start rect");
-        var nStep = document.querySelector("#s1-n-step rect");
-        var nGates = document.querySelector("#s1-n-gates > rect");
-        var nBatch = document.querySelector("#s1-n-batch rect");
-        var nStop = document.querySelector("#s1-n-stop rect");
-
-        var meta = [
-          { r: "STEP 0 / 6 · IDLE", b: "等待输入触发", px: 92, py: 53, vis: 0, hi: 0, cap: "点击“下一步”单步跟踪单 Turn 事务，观察输入如何经过来源隔离、五级权限漏斗与 Fork-Join 屏障。" },
-          { r: "STEP 1 / 6 · 入口边界", b: "锁死只读来源", px: 92, py: 53, vis: 1, hi: 1, cap: "Step 1 / 6 · 入口边界：内核写入只读来源属性，防止机器通知冒充人类越权；上一轮未结束时新输入进队列等安全汇入点。" },
-          { r: "STEP 2 / 6 · 回合推演", b: "流式输出工具请求", px: 469, py: 53, vis: 1, hi: 3, cap: "Step 2 / 6 · 回合初始化并流式推演：纯推理辅助工具在服务端直接运行返回，不穿过本地沙盒链。" },
-          { r: "STEP 3 / 6 · 五级漏斗", b: "并发工具依次过关", px: 384, py: 180, vis: 1, hi: 4, cap: "Step 3 / 6 · 进入五级权限漏斗：每个本地工具依次穿过前置拦截、用户钩子、静态策略、动态裁决与不可重入执行口。" },
-          { r: "STEP 4 / 6 · FORK-JOIN", b: "等待全批落定 + 挂载旁路", px: 195, py: 276, vis: 1, hi: 5, cap: "Step 4 / 6 · Fork-Join 批次屏障：并发工具全员落定并写回结果后才汇入下一轮；异步旁路通知严禁插在调用与结果之间。" },
-          { r: "STEP 5 / 6 · 折返推理", b: "带着完整回执续跑", px: 469, py: 53, vis: 1, hi: 3, cap: "Step 5 / 6 · 折返模型流式推演：把对齐后的工具结果与旁路上下文发给模型，模型输出完整答复并准备收尾。" },
-          { r: "STEP 6 / 6 · STOP 守门", b: "对照后台任务后回 IDLE", px: 560, py: 276, vis: 1, hi: 6, cap: "Step 6 / 6 · Stop 退出守门：对照后台任务列表与会话定时表，确认没有待续工作后才允许循环停下。" }
+        var scenes = [
+          {
+            readout: "SCENE 1 / 3 · 默认单轮问答",
+            cap: "短任务顺手：模型在单轮内连续调工具，一旦主观判断“答完了”便立即结束回合等人类输入。",
+            svg:
+              '<rect x="28" y="54" width="136" height="84" rx="7" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.5"/>' +
+              '<text x="96" y="88" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ink)">1. 人类敲回车</text>' +
+              '<text x="96" y="112" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">发起单次 Turn</text>' +
+              '<line x1="164" y1="96" x2="218" y2="96" stroke="var(--rule-strong)" stroke-width="1.6"/>' +
+              '<rect x="218" y="40" width="300" height="112" rx="8" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.6"/>' +
+              '<text x="368" y="72" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--blue)">2. 单轮内工具小循环</text>' +
+              '<text x="368" y="98" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">推理 → Read / Edit / Bash → 结果回填</text>' +
+              '<text x="368" y="124" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">只要还在调工具就继续转</text>' +
+              '<line x1="518" y1="96" x2="572" y2="96" stroke="var(--rule-strong)" stroke-width="1.6"/>' +
+              '<rect x="572" y="54" width="160" height="84" rx="7" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6"/>' +
+              '<text x="652" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ok)">3. 模型停笔即下班</text>' +
+              '<text x="652" y="112" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">主观觉得说完 → 回合终止</text>'
+          },
+          {
+            readout: "SCENE 2 / 3 · 卡壳一：半途早退",
+            cap: "收敛型痛点：任务繁琐时模型容易惜力早退，需要 Stop 钩子或 /ralph-loop 在出口拿客观测试拦回去重修。",
+            svg:
+              '<rect x="28" y="48" width="210" height="96" rx="7" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5"/>' +
+              '<text x="133" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ink)">全库迁移 30 个文件</text>' +
+              '<text x="133" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">刚改了 12 个 · 还有单测飘红</text>' +
+              '<text x="133" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">18 tests still failing</text>' +
+              '<line x1="238" y1="96" x2="290" y2="96" stroke="var(--accent)" stroke-width="1.6"/>' +
+              '<rect x="290" y="48" width="214" height="96" rx="7" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>' +
+              '<text x="397" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--accent)">模型提前收尾停机</text>' +
+              '<text x="397" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink)">“其余文件可按相同思路修改”</text>' +
+              '<text x="397" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">人被迫坐守屏幕反复敲“继续”</text>' +
+              '<line x1="504" y1="96" x2="554" y2="96" stroke="var(--ok)" stroke-width="1.6" stroke-dasharray="4 3"/>' +
+              '<rect x="554" y="48" width="178" height="96" rx="7" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6"/>' +
+              '<text x="643" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ok)">解法：出口门禁打回</text>' +
+              '<text x="643" y="104" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">Stop Hook / ralph-loop</text>' +
+              '<text x="643" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">测试没绿就驳回继续改</text>'
+          },
+          {
+            readout: "SCENE 3 / 3 · 卡壳二：跨时等待",
+            cap: "值守型痛点：面对远端 CI 或灰度观察期，不能靠 sleep 占线，需要会话级休眠与定时 / 自调节唤醒。",
+            svg:
+              '<rect x="28" y="48" width="196" height="96" rx="7" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5"/>' +
+              '<text x="126" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ink)">推送代码 / 切 5% 灰度</text>' +
+              '<text x="126" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">远端构建与观察需 45 分钟</text>' +
+              '<text x="126" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--purple)">External state pending</text>' +
+              '<line x1="224" y1="96" x2="278" y2="96" stroke="var(--warn)" stroke-width="1.6"/>' +
+              '<rect x="278" y="48" width="220" height="96" rx="7" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.6"/>' +
+              '<text x="388" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--warn)">单轮问答跨不过空白期</text>' +
+              '<text x="388" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink)">本地无工具可调 · sleep 傻占连接</text>' +
+              '<text x="388" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">停机后没人问就永远不看结果</text>' +
+              '<line x1="498" y1="96" x2="550" y2="96" stroke="var(--ok)" stroke-width="1.6" stroke-dasharray="4 3"/>' +
+              '<rect x="550" y="48" width="182" height="96" rx="7" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6"/>' +
+              '<text x="641" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ok)">解法：休眠 + 定时唤醒</text>' +
+              '<text x="641" y="104" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">/loop 5m · 自调节 /loop</text>' +
+              '<text x="641" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">平时零消耗休眠 · 到点自查</text>'
+          }
         ];
 
-        function applyStep(n, immediate) {
-          step = Math.max(0, Math.min(6, n));
-          var m = meta[step];
-          prevBtn.disabled = step <= 0;
-          nextBtn.disabled = step >= 6;
-          readout.textContent = m.r;
-          badge.textContent = m.b;
-          cap.textContent = m.cap;
-          loopArc.setAttribute("opacity", step === 5 ? "1" : "0.45");
-
-          nSubmit.setAttribute("stroke-width", m.hi === 1 ? "2.6" : "1.5");
-          nStart.setAttribute("stroke-width", m.hi === 2 ? "2.6" : "1.5");
-          nStep.setAttribute("stroke-width", m.hi === 3 ? "2.6" : "1.5");
-          nGates.setAttribute("stroke-width", m.hi === 4 ? "2.4" : "1");
-          nGates.setAttribute("stroke", m.hi === 4 ? "var(--accent)" : "var(--rule)");
-          nBatch.setAttribute("stroke-width", m.hi === 5 ? "2.6" : "1.5");
-          nStop.setAttribute("stroke-width", m.hi === 6 ? "2.6" : "1.5");
-
-          if (!immediate && window.gsap) {
-            window.gsap.to(pulse, { duration: 0.4, attr: { cx: m.px, cy: m.py, opacity: m.vis }, ease: "power2.inOut" });
-          } else {
-            pulse.setAttribute("cx", m.px);
-            pulse.setAttribute("cy", m.py);
-            pulse.setAttribute("opacity", m.vis);
+        function render(idx) {
+          var s = scenes[idx];
+          readout.textContent = s.readout;
+          cap.textContent = s.cap;
+          svgG.innerHTML = s.svg;
+          document.querySelectorAll("[data-s1]").forEach(function (b) {
+            b.classList.toggle("is-active", parseInt(b.getAttribute("data-s1"), 10) === idx);
+          });
+          if (window.gsap) {
+            window.gsap.fromTo(svgG.children, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.03, ease: "power2.out" });
           }
         }
 
-        prevBtn.addEventListener("click", function () {
-          if (timer) { clearInterval(timer); timer = null; }
-          if (step > 0) applyStep(step - 1);
-        });
-        nextBtn.addEventListener("click", function () {
-          if (timer) { clearInterval(timer); timer = null; }
-          if (step < 6) applyStep(step + 1);
-        });
-        document.getElementById("s1-auto").addEventListener("click", function () {
-          if (timer) { clearInterval(timer); timer = null; }
-          applyStep(1);
-          timer = setInterval(function () {
-            if (step >= 6) { clearInterval(timer); timer = null; return; }
-            applyStep(step + 1);
-          }, 1150);
-        });
-        document.getElementById("s1-reset").addEventListener("click", function () {
-          if (timer) { clearInterval(timer); timer = null; }
-          applyStep(0, true);
-        });
-        applyStep(0, true);
-      })();
-
-      /* 3. Stage 2: Prompt Cache Freeze vs Naive */
-      (function initStage2() {
-        var curCase = "attach";
-        var isNaive = false;
-        var readout = document.getElementById("s2-readout");
-        var toggleBtn = document.getElementById("s2-toggle-naive");
-        var evtLbl = document.getElementById("s2-event-lbl");
-        var evtDesc = document.getElementById("s2-event-desc");
-        var hitPct = document.getElementById("s2-hit-pct");
-        var thinkStat = document.getElementById("s2-think-stat");
-        var cap = document.getElementById("s2-cap");
-        var s1 = document.getElementById("s2-stat-1");
-        var s2 = document.getElementById("s2-stat-2");
-        var s3 = document.getElementById("s2-stat-3");
-        var bTools = document.querySelector("#s2-blk-tools rect");
-
-        var data = {
-          attach: {
-            frozen: {
-              lbl: "第 3 轮 · 进入深层目录，触发模式提醒与局部规则加载",
-              desc: "动态上下文全部外移进末尾第 4 段附件，前 3 段前缀保持一字节不变。",
-              hit: "96%", think: "完整保留 ✓", s1: "HIT ✓", s2: "HIT ✓", s3: "HIT ✓", toolMiss: false,
-              cap: "冻结策略：动态状态和局部规则只允许从消息流末尾追加，不污染共享或固定前缀。"
-            },
-            naive: {
-              lbl: "朴素写法 · 把日期与工作模式直接拼进系统前缀",
-              desc: "第 1 段前缀改动后，后续的工具定义与全部历史对话缓存连带失效。",
-              hit: "0%", think: "被迫丢弃 ✗", s1: "MISS ✗", s2: "MISS ✗", s3: "MISS ✗", toolMiss: true,
-              cap: "朴素写法代价：哪怕第 1 段只改十几个字符，也会击穿整条请求缓存，账单与延迟同步飙升。"
-            }
-          },
-          tool: {
-            frozen: {
-              lbl: "第 7 轮 · 中途挂载新外部工具或扩展修改工具描述",
-              desc: "工具池在线程生命周期内保持冻结，新增外部工具先收进延迟按需召回，等到压缩或新会话再切换。",
-              hit: "95%", think: "完整保留 ✓", s1: "HIT ✓", s2: "HIT ✓", s3: "HIT ✓", toolMiss: false,
-              cap: "工具池冻结：推迟到下次压缩边界再统一切换工具定义，保住正在进行的推演缓存。"
-            },
-            naive: {
-              lbl: "朴素写法 · 第 7 轮直接往工具清单插入新定义",
-              desc: "第 1 段虽命中，但第 2 段工具定义断裂导致之后的所有消息缓存作废。",
-              hit: "18%", think: "被迫丢弃 ✗", s1: "HIT ✓", s2: "MISS ✗", s3: "MISS ✗", toolMiss: true,
-              cap: "朴素写法代价：中途改工具定义会从断点往后全量重算，顺带打断先前的思考链连续性。"
-            }
-          },
-          oauth: {
-            frozen: {
-              lbl: "长跑 1 小时后 · 凭证自动刷新或断点恢复会话",
-              desc: "引擎强对齐刷新与恢复边界的工具序列化顺序，确保跨小时请求保持字节级一致。",
-              hit: "94%", think: "完整保留 ✓", s1: "HIT ✓", s2: "HIT ✓", s3: "HIT ✓", toolMiss: false,
-              cap: "隐蔽抖动治理：消灭凭证刷新或会话恢复时导致的细微序列化漂移，长跑缓存不再每小时清零。"
-            },
-            naive: {
-              lbl: "未治理前 · 刷新凭证顺手重排工具定义顺序",
-              desc: "哪怕语义完全没变，工具字段或顺序微调依然会导致长会话每小时丢一次缓存。",
-              hit: "0%", think: "被迫丢弃 ✗", s1: "HIT ✓", s2: "MISS ✗", s3: "MISS ✗", toolMiss: true,
-              cap: "历史教训：字节前缀不认“语义等价”，任何顺手的重排或开关切换都会破坏缓存连续性。"
-            }
-          }
-        };
-
-        function render() {
-          var item = data[curCase][isNaive ? "naive" : "frozen"];
-          readout.textContent = (isNaive ? "NAIVE LOOP · CACHE MISS" : "FROZEN MODE · HIT RATE " + item.hit);
-          evtLbl.textContent = item.lbl;
-          evtDesc.textContent = item.desc;
-          hitPct.textContent = item.hit;
-          hitPct.setAttribute("fill", isNaive ? "var(--accent)" : "var(--ok)");
-          thinkStat.textContent = item.think;
-          thinkStat.setAttribute("fill", isNaive ? "var(--accent)" : "var(--ok)");
-          s1.textContent = item.s1;
-          s1.setAttribute("fill", item.s1.indexOf("MISS") >= 0 ? "var(--accent)" : "var(--ok)");
-          s2.textContent = item.s2;
-          s2.setAttribute("fill", item.s2.indexOf("MISS") >= 0 ? "var(--accent)" : "var(--ok)");
-          s3.textContent = item.s3;
-          s3.setAttribute("fill", item.s3.indexOf("MISS") >= 0 ? "var(--accent)" : "var(--ok)");
-          bTools.setAttribute("stroke", item.toolMiss ? "var(--accent)" : "var(--ok)");
-          bTools.setAttribute("fill", item.toolMiss ? "var(--accent-soft)" : "var(--ok-soft)");
-          cap.textContent = item.cap;
-          toggleBtn.classList.toggle("is-active", isNaive);
-          toggleBtn.textContent = isNaive ? "切回：Claude Code 冻结策略" : "切换：朴素动态写法";
-        }
-
-        document.querySelectorAll("[data-s2-case]").forEach(function (b) {
+        document.querySelectorAll("[data-s1]").forEach(function (b) {
           b.addEventListener("click", function () {
-            curCase = b.getAttribute("data-s2-case");
-            document.querySelectorAll("[data-s2-case]").forEach(function (x) { x.classList.remove("is-active"); });
-            b.classList.add("is-active");
-            render();
+            render(parseInt(b.getAttribute("data-s1"), 10));
           });
         });
-
-        toggleBtn.addEventListener("click", function () {
-          isNaive = !isNaive;
-          render();
-        });
-
-        render();
+        render(0);
       })();
 
-      /* 4. Stage 3: 5-Tier Onion & Precompute */
-      (function initStage3() {
-        var step = 0;
-        var bypass = false;
-        var readout = document.getElementById("s3-readout");
-        var pkt = document.getElementById("s3-pkt");
-        var arc = document.getElementById("s3-bypass-arc");
-        var arcLbl = document.getElementById("s3-bypass-lbl");
-        var userStat = document.getElementById("s3-user-stat");
-        var compMid = document.getElementById("s3-comp-mid");
-        var compEnd = document.getElementById("s3-comp-end");
-        var cap = document.getElementById("s3-cap");
-        var prevBtn = document.getElementById("s3-prev");
-        var nextBtn = document.getElementById("s3-next");
-        var bypassBtn = document.getElementById("s3-toggle-bypass");
-
-        var xs = [81, 81, 227, 373, 675];
-
-        function render(immediate) {
-          if (bypass && step === 2) step = 3;
-          prevBtn.disabled = step <= 0;
-          nextBtn.disabled = step >= 4;
-          readout.textContent = (bypass ? "MODE: POLICY BYPASS" : "MODE: STANDARD") + " · STEP " + step + " / 4";
-          arc.setAttribute("opacity", bypass ? "1" : "0.2");
-          arcLbl.setAttribute("opacity", bypass ? "1" : "0.25");
-          userStat.textContent = bypass ? "已被安全越层跳过!" : "正常经过 (等异步停表)";
-          userStat.setAttribute("fill", bypass ? "var(--accent)" : "var(--ink-muted)");
-          bypassBtn.classList.toggle("is-active", bypass);
-
-          var targetX = xs[step];
-          var targetY = 98;
-
-          if (step === 0) {
-            pkt.setAttribute("opacity", "0");
-            compMid.textContent = "暂存待命 · 不改当前对话";
-            compEnd.textContent = "触及上限 · 瞬时切换复用";
-            cap.textContent = "点击“下一步”观察事件穿过五层洋葱的顺序，或点击右侧模拟“安全基线如何绕开不可信插件层”。";
-          } else {
-            if (!immediate && window.gsap) {
-              window.gsap.to(pkt, { duration: 0.36, attr: { cx: targetX, cy: targetY, opacity: 1 }, ease: "power2.out" });
-            } else {
-              pkt.setAttribute("cx", targetX);
-              pkt.setAttribute("cy", targetY);
-              pkt.setAttribute("opacity", "1");
-            }
-            if (step === 1) {
-              cap.textContent = "Step 1 / 4 · 进入组织前置层：权限最高，可在最外层先做审计，或直接触发越层保护。";
-            } else if (step === 2) {
-              cap.textContent = "Step 2 / 4 · 进入用户扩展层：自身代码拥有有限执行预算，传递控制权或等模型时自动停表；超时或异常默认 fail-open 跳过。";
-            } else if (step === 3) {
-              cap.textContent = bypass
-                ? "Step 3 / 4 · 越层直达组织后置层：安全与合规事件跳过中间的用户扩展层，防止下游插件篡改策略或工具清单。"
-                : "Step 3 / 4 · 穿过组织后置层与内置能力层：关键策略兜底（可显式 fail-closed 拦截）并与内核默认能力协同。";
-            } else if (step === 4) {
-              compMid.textContent = "校验主干未偏离 ✓";
-              compEnd.textContent = "直接切入预计算摘要 ✓";
-              cap.textContent = "Step 4 / 4 · 抵达引擎内核：执行真实请求并通过受控写入通道落盘；若对话撞到上下文阈值，直接切换早已算好的压缩摘要。";
-            }
-          }
-        }
-
-        prevBtn.addEventListener("click", function () {
-          if (step > 0) {
-            step = (bypass && step === 3) ? 1 : step - 1;
-            render(false);
-          }
-        });
-        nextBtn.addEventListener("click", function () {
-          if (step < 4) {
-            step = (bypass && step === 1) ? 3 : step + 1;
-            render(false);
-          }
-        });
-        bypassBtn.addEventListener("click", function () {
-          bypass = !bypass;
-          step = bypass ? 1 : 0;
-          render(true);
-        });
-        document.getElementById("s3-reset").addEventListener("click", function () {
-          bypass = false;
-          step = 0;
-          render(true);
-        });
-        render(true);
-      })();
-
-      /* 5. Stage 4: Cross-Turn Loop Timeline */
-      (function initStage4() {
-        var mode = "selfpaced";
-        var step = 0;
+      /* 3. Stage 2: Three Loop Modes Simulator */
+      (function initStage2() {
+        var mode = "ralph";
+        var step = 1;
         var timer = null;
-        var readout = document.getElementById("s4-readout");
-        var nodesG = document.getElementById("s4-nodes");
-        var line1 = document.getElementById("s4-line-1");
-        var line2 = document.getElementById("s4-line-2");
-        var cap = document.getElementById("s4-cap");
-        var prevBtn = document.getElementById("s4-prev");
-        var nextBtn = document.getElementById("s4-next");
+        var readout = document.getElementById("s2-readout");
+        var nodesG = document.getElementById("s2-nodes");
+        var line1 = document.getElementById("s2-line-1");
+        var line2 = document.getElementById("s2-line-2");
+        var cap = document.getElementById("s2-cap");
+        var prevBtn = document.getElementById("s2-prev");
+        var nextBtn = document.getElementById("s2-next");
 
         var specs = {
-          selfpaced: {
-            label: "SELF-PACED /loop",
+          ralph: {
+            label: "STOP / RALPH",
             nodes: [
-              { x: 90, title: "Turn 1 (0m)", sub: "发版首次巡检", tag: "自定 2 分钟后醒", color: "var(--blue)" },
-              { x: 255, title: "Turn 2 (+2m)", sub: "波动收窄·拉长节奏", tag: "自定 15 分钟后醒", color: "var(--purple)" },
-              { x: 430, title: "Turn 3 (+17m)", sub: "长尾持续观察", tag: "卡在 1h 缓存线内", color: "var(--warn)" },
-              { x: 615, title: "Turn 4 (+72m)", sub: "指标稳·未设闹钟", tag: "默认自动收敛 ✓", color: "var(--ok)" }
+              { x: 95, title: "Turn 1", sub: "改完一批准备停笔", tag: "触发 Stop 钩子", color: "var(--blue)" },
+              { x: 265, title: "出口门禁拦截", sub: "跑单测仍有 4 处红", tag: "驳回退出 · 塞回报错", color: "var(--accent)" },
+              { x: 440, title: "Turn 2..N", sub: "读工作区改动继续修", tag: "同一会话闭环迭代", color: "var(--purple)" },
+              { x: 615, title: "验收通过", sub: "单测全绿 + 输出暗号", tag: "放行结束 ✓", color: "var(--ok)" }
             ],
             steps: [
-              { l1: "待命中：输入 /loop 持续监控发布（未写死固定周期）", l2: "由模型根据现场状态，自主决定下次醒来间隔与何时结束。", cap: "点击“下一步”观察自调节 /loop 如何动态调整节奏，并服从 1 小时缓存生命线。" },
-              { l1: "Step 1 / 4 · Turn 1 首轮巡检，预约 2 分钟后单次唤醒", l2: "刚上线风险高，先短周期盯紧；休眠等待期间零 Token 消耗。", cap: "Step 1 / 4 · 模型判断风险尚未解除，注册一次单次延时唤醒。" },
-              { l1: "Step 2 / 4 · +2m 唤醒 Turn 2，指标渐稳后拉长到 15 分钟", l2: "已有后台任务在跑时绝不发多余轮询，直接等任务完成通知唤醒。", cap: "Step 2 / 4 · 时间与事件去重：避免用短周期轮询去盯自带回调的后台任务。" },
-              { l1: "Step 3 / 4 · Turn 3 的睡眠上限被锁在 1 小时缓存线内", l2: "最长休眠刻意卡在缓存过期前醒来保鲜，省掉醒来后整段前缀重算。", cap: "Step 3 / 4 · 休眠服从缓存寿命：即便需要长等，也抢在缓存过期前唤醒续命。" },
-              { l1: "Step 4 / 4 · Turn 4 确认稳定，不再预约下一次唤醒", l2: "不续设闹钟即自动收敛结束；中断退场时也清晰区分“后台分离”与“彻底取消”。", cap: "Step 4 / 4 · 默契收工：不再预约闹钟即结束循环，无需用户手动介入。" }
+              { l1: "Step 1 / 4 · 模型完成首轮修改，不再调工具准备结束回合", l2: "换作普通会话此时已经停机，但出口处挂着 Stop Hook 或 /ralph-loop。", cap: "Stop 门禁在模型每次打算停笔时介入检查。" },
+              { l1: "Step 2 / 4 · Stop 钩子执行测试脚本失败，当场驳回退出请求", l2: "真实报错日志或原任务目标被重新注入对话，逼模型继续下一轮。", cap: "把“模型自己觉得做完了”替换成“外部脚本验过了才算完”。" },
+              { l1: "Step 3 / 4 · 模型看着磁盘上已改好的代码与 Git 记录继续修补", l2: "无需外部 Bash 脚本重开新进程，上下文与文件现场连续保留。", cap: "配合 --max-iterations 与连续 8 次拦截硬熔断，防止死磕坏脚本。" },
+              { l1: "Step 4 / 4 · 测试全部跑绿且输出完成标记，门禁放行收工", l2: "确定性收敛任务宣告完成，终端回到空闲等待状态。", cap: "适合全库接口迁移、清零编译错误、死磕单测覆盖率等本地硬活。" }
             ]
           },
           cron: {
-            label: "FIXED CRON /loop 5m",
+            label: "CRON /loop 5m",
             nodes: [
-              { x: 90, title: "T = 0m", sub: "注册固定节拍", tag: "会话周期表", color: "var(--blue)" },
-              { x: 255, title: "T = 5m", sub: "定时信号唤醒", tag: "发现异常·汇报", color: "var(--warn)" },
-              { x: 430, title: "T = 10m", sub: "状态正常无事", tag: "空转折叠为 1 行", color: "var(--ink-muted)" },
-              { x: 615, title: "T = 15m / Esc", sub: "跨压缩保持调度", tag: "分离 vs 取消区分", color: "var(--ok)" }
+              { x: 95, title: "T = 0m", sub: "敲 /loop 5m 巡检", tag: "注册周期 Cron", color: "var(--blue)" },
+              { x: 265, title: "休眠等待", sub: "回合结束释放连接", tag: "等待期 0 Token", color: "var(--ink-muted)" },
+              { x: 440, title: "T = 5m / 10m", sub: "准点唤醒查状态", tag: "无异常折叠为 1 行", color: "var(--purple)" },
+              { x: 615, title: "异常汇报 / Esc", sub: "有变化才展开告警", tag: "按 Esc 取消闹钟", color: "var(--ok)" }
             ],
             steps: [
-              { l1: "待命中：设定固定频率 /loop 5m 巡检构建状态", l2: "把“何时查看”交给机械时钟，而不是交给模型每轮估算。", cap: "点击“下一步”观察固定节拍模式，适合机械巡检且需要稳定频率的场景。" },
-              { l1: "Step 1 / 4 · 写入会话周期调度规则（需预先授权工具权限）", l2: "调度状态可以跨越上下文压缩保留，不会因为历史变长把定时器丢掉。", cap: "Step 1 / 4 · 调度规则持久化到会话状态，受压缩边界保护。" },
-              { l1: "Step 2 / 4 · 第 5 分钟准点唤醒执行一轮检查", l2: "以明确的“定时唤醒”来源进入内核，权限策略和人工输入严格区分。", cap: "Step 2 / 4 · 定时信号触发完整 Turn 事务并核算独立消耗。" },
-              { l1: "Step 3 / 4 · 第 10 分钟醒来无异常可报（空转）", l2: "表现层把连续多次无变化的空转输出自动折叠成单行，防止刷新屏幕。", cap: "Step 3 / 4 · 噪声折叠设计：长值守时保住终端信息信噪比。" },
-              { l1: "Step 4 / 4 · 持续运行直到用户取消或会话销毁", l2: "退场操作严格分离：后台分离只是人走开，定时器继续跑；明确取消才拆除循环。", cap: "Step 4 / 4 · 清晰区分“后台分离 (detach)”与“彻底取消 (cancel)”。" }
+              { l1: "Step 1 / 4 · 输入 /loop 5m check the deploy 注册固定间隔巡检", l2: "首轮查看发现 CI 仍在构建，当前回合正常收尾。", cap: "固定间隔模式把“什么时候再看一眼”交给会话时钟。" },
+              { l1: "Step 2 / 4 · 两次唤醒之间会话完全休眠，不占连接也不烧 Token", l2: "即便中途对话变长触发上下文压缩，定时规则也会跨压缩保留。", cap: "彻底告别在命令行里跑 sleep 傻等。" },
+              { l1: "Step 3 / 4 · 每隔 5 分钟准点唤醒；若连续无事可做自动折叠成单行", l2: "避免长时间例行巡检把终端刷满“一切正常”的废话。", cap: "注意：间隔别设成略大于 1 小时（如 65m），否则每次醒来都会丢缓存。" },
+              { l1: "Step 4 / 4 · 抓到构建失败立即展开汇报；不再需要时按 Esc 取消", l2: "注意连按 Ctrl+C 只是脱离后台视图，按 Esc 才是真正拆掉定时器。", cap: "适合需要固定节拍例行检查外部队列或健康状态的场景。" }
             ]
           },
-          stophook: {
-            label: "STOP HOOK GATE",
+          paced: {
+            label: "SELF-PACED /loop",
             nodes: [
-              { x: 90, title: "Turn 1", sub: "改码完准备退出", tag: "验收未过 · 打回 #1", color: "var(--blue)" },
-              { x: 255, title: "Turn 2", sub: "修掉一处仍报错", tag: "验收未过 · 打回 #2", color: "var(--purple)" },
-              { x: 430, title: "Turn 3", sub: "测试套件全绿", tag: "验收通过 · 放行 ✓", color: "var(--ok)" },
-              { x: 615, title: "安全熔断", sub: "连续打回达上限", tag: "硬切断并告警", color: "var(--accent)" }
+              { x: 95, title: "Turn 1 (0m)", sub: "刚切 5% 灰度风险高", tag: "自定 +2m 唤醒", color: "var(--blue)" },
+              { x: 265, title: "Turn 2 (+2m)", sub: "错误率稳·拉长间隔", tag: "自定 +15m 唤醒", color: "var(--purple)" },
+              { x: 440, title: "Turn 3 (+17m)", sub: "长尾观察保热缓存", tag: "上限卡在 <1h 醒", color: "var(--warn)" },
+              { x: 615, title: "Turn 4 (+70m)", sub: "全量平稳·不设闹钟", tag: "自动终止收工 ✓", color: "var(--ok)" }
             ],
             steps: [
-              { l1: "待命中：在 Stop 出口挂接外部客观验收门禁", l2: "模型以为做完了准备退出时，由测试或构建脚本做最终裁决。", cap: "点击“下一步”观察门禁打回型循环如何用外部客观标准替代模型主观放水。" },
-              { l1: "Step 1 / 4 · Turn 1 改完代码走到退出门，测试失败被拦截", l2: "门禁截断结束信号并把真实报错注入下一轮，强迫循环继续。", cap: "Step 1 / 4 · Stop 门禁驳回退出并注入新指令，触发迭代修复。" },
-              { l1: "Step 2 / 4 · Turn 2 基于真实磁盘改动和最新报错继续修复", l2: "验证仍未全部通过，门禁再次拦截并记录连续打回计数。", cap: "Step 2 / 4 · 每一轮都在真实工作区与客观反馈上推进。" },
-              { l1: "Step 3 / 4 · Turn 3 全部检查通过，门禁放行退出", l2: "循环安全结束，主干回到待命状态。", cap: "Step 3 / 4 · 达成客观退出条件后，门禁放行。" },
-              { l1: "Step 4 / 4 · 防死锁保护：连续打回超限触发硬熔断", l2: "遇到写坏的验收脚本时，连续拦截达默认上限即强制放行并警告，防止空转失控。", cap: "Step 4 / 4 · 连续拦截次数熔断是自指循环必不可少的安全阀。" }
+              { l1: "Step 1 / 4 · 开启无固定间隔的 /loop，首轮看完自定 2 分钟后醒", l2: "刚上线最容易出事，模型调用 ScheduleWakeup 先按短间隔紧盯。", cap: "自调节模式把拧闹钟的权力交还给模型按现场风险判断。" },
+              { l1: "Step 2 / 4 · 2 分钟后醒来确认指标平稳，主动把下次间隔拉长到 15 分钟", l2: "前期密、后期疏，既不漏掉早期故障，也不在平稳期频繁空转。", cap: "比固定 Cron 更贴合真实值班护航的节奏。" },
+              { l1: "Step 3 / 4 · 需要长等时，单次最大休眠被硬卡在 1 小时缓存过期线内", l2: "趁 1 小时 Prompt Cache 失效前先醒一次续热，躲开十几万 Token 全价重读。", cap: "这是自调节 /loop 兼顾长时值守与低成本的关键细节。" },
+              { l1: "Step 4 / 4 · 全量放量完成且指标稳定，本轮结束不再调 ScheduleWakeup", l2: "不预约新闹钟即自然结束整个 Loop，无需人工守着关定时器。", cap: "适合盯发版流水线、灰度放量等风险随时间收敛、完事即下班的任务。" }
             ]
           }
         };
 
         function draw() {
           var sp = specs[mode];
-          prevBtn.disabled = step <= 0;
+          prevBtn.disabled = step <= 1;
           nextBtn.disabled = step >= 4;
           readout.textContent = "MODE: " + sp.label + " · STEP " + step + " / 4";
-          var st = sp.steps[step];
+          var st = sp.steps[step - 1];
           line1.textContent = st.l1;
           line2.textContent = st.l2;
           cap.textContent = st.cap;
@@ -1919,24 +1217,31 @@
           sp.nodes.forEach(function (nd, i) {
             var active = i < step;
             var cur = i === step - 1;
-            var op = active ? "1" : "0.28";
-            var sw = cur ? "2.4" : "1.4";
-            html += '<g opacity="' + op + '">';
-            html += '<rect x="' + (nd.x - 62) + '" y="46" width="144" height="86" rx="7" fill="var(--bg-elevated)" stroke="' + (cur ? "var(--accent)" : nd.color) + '" stroke-width="' + sw + '" />';
-            html += '<text x="' + (nd.x + 10) + '" y="70" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="' + nd.color + '">' + nd.title + '</text>';
-            html += '<text x="' + (nd.x + 10) + '" y="92" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">' + nd.sub + '</text>';
-            html += '<text x="' + (nd.x + 10) + '" y="116" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">' + nd.tag + '</text>';
+            var op = active ? "1" : "0.3";
+            var sw = cur ? "2.3" : "1.4";
+            html += '<g opacity="' + op + '" style="cursor:pointer" data-s2-node="' + (i + 1) + '">';
+            html += '<rect x="' + (nd.x - 66) + '" y="40" width="148" height="88" rx="7" fill="var(--bg-elevated)" stroke="' + (cur ? "var(--accent)" : nd.color) + '" stroke-width="' + sw + '" />';
+            html += '<text x="' + (nd.x + 8) + '" y="64" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="' + nd.color + '">' + nd.title + '</text>';
+            html += '<text x="' + (nd.x + 8) + '" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">' + nd.sub + '</text>';
+            html += '<text x="' + (nd.x + 8) + '" y="110" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">' + nd.tag + '</text>';
             html += '</g>';
           });
           nodesG.innerHTML = html;
+          nodesG.querySelectorAll("[data-s2-node]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              if (timer) { clearInterval(timer); timer = null; }
+              step = parseInt(el.getAttribute("data-s2-node"), 10);
+              draw();
+            });
+          });
         }
 
-        document.querySelectorAll("[data-s4-mode]").forEach(function (b) {
+        document.querySelectorAll("[data-s2-mode]").forEach(function (b) {
           b.addEventListener("click", function () {
             if (timer) { clearInterval(timer); timer = null; }
-            mode = b.getAttribute("data-s4-mode");
+            mode = b.getAttribute("data-s2-mode");
             step = 1;
-            document.querySelectorAll("[data-s4-mode]").forEach(function (x) { x.classList.remove("is-active"); });
+            document.querySelectorAll("[data-s2-mode]").forEach(function (x) { x.classList.remove("is-active"); });
             b.classList.add("is-active");
             draw();
           });
@@ -1944,13 +1249,13 @@
 
         prevBtn.addEventListener("click", function () {
           if (timer) { clearInterval(timer); timer = null; }
-          if (step > 0) { step--; draw(); }
+          if (step > 1) { step--; draw(); }
         });
         nextBtn.addEventListener("click", function () {
           if (timer) { clearInterval(timer); timer = null; }
           if (step < 4) { step++; draw(); }
         });
-        document.getElementById("s4-auto").addEventListener("click", function () {
+        document.getElementById("s2-auto").addEventListener("click", function () {
           if (timer) { clearInterval(timer); timer = null; }
           step = 1;
           draw();
@@ -1958,79 +1263,166 @@
             if (step >= 4) { clearInterval(timer); timer = null; return; }
             step++;
             draw();
-          }, 1150);
+          }, 1200);
         });
-        document.getElementById("s4-reset").addEventListener("click", function () {
+        document.getElementById("s2-reset").addEventListener("click", function () {
           if (timer) { clearInterval(timer); timer = null; }
-          step = 0;
+          step = 1;
           draw();
         });
         draw();
       })();
 
-      /* 6. Stage 5: Scenario Compass */
-      (function initStage5() {
-        var scene = document.getElementById("s5-scene");
-        var readout = document.getElementById("s5-readout");
-        var modeEl = document.getElementById("s5-mode");
-        var whyEl = document.getElementById("s5-why");
-        var prevBtn = document.getElementById("s5-prev");
-        var nextBtn = document.getElementById("s5-next");
-        var order = ["fix", "sub", "ralph", "cron", "paced"];
-        var curKey = "fix";
+      /* 4. Stage 3: Five Pitfalls Inspector */
+      (function initStage3() {
+        var idx = 0;
+        var readout = document.getElementById("s3-readout");
+        var badTitle = document.getElementById("s3-bad-title");
+        var badDesc = document.getElementById("s3-bad-desc");
+        var goodTitle = document.getElementById("s3-good-title");
+        var goodDesc = document.getElementById("s3-good-desc");
+        var cap = document.getElementById("s3-cap");
+        var prevBtn = document.getElementById("s3-prev");
+        var nextBtn = document.getElementById("s3-next");
+
+        var items = [
+          {
+            r: "PITFALL 1 / 5 · 门禁死循环",
+            bt: "提示词只写“改得更优雅”，或 Stop 测试脚本自身报错",
+            bd: "没有客观终点时模型要么改两行早退，要么停不下来；若钩子脚本路径带空格未转义或环境挂掉，模型会跟坏门禁原地死磕。",
+            gt: "客观验收命令 + --max-iterations + 8 次硬熔断",
+            gd: "务必绑定可跑通的真实测试并设最大轮数；引擎对连续拦截满 8 次的 Stop 钩子强制熔断告警，并在 /usage 列出单 Loop 消耗。",
+            cap: "避坑一：凡是不让停的循环，出口必须同时具备“客观真伪标准”和“最大次数封顶”。"
+          },
+          {
+            r: "PITFALL 2 / 5 · 睡超 1 小时丢缓存",
+            bt: "长会话里设 /loop 65m 轮询，每次醒来刚好跨过 1 小时",
+            bd: "服务端 Prompt Cache 默认有效期 1 小时。65 分钟醒一次会让十几万 Token 历史缓存次次作废，每次唤醒都按全价重读。",
+            gt: "唤醒间隔对齐 1 小时缓存寿命以内",
+            gd: "自调节 /loop 会自动把单次最长休眠卡在 1 小时过期前先醒一次续热；手写固定间隔时同样避开略超 1 小时的档位。",
+            cap: "避坑二：定时唤醒的成本高低，取决于醒来那一刻上一轮的 Prompt Cache 还热不热。"
+          },
+          {
+            r: "PITFALL 3 / 5 · 傻轮询本地后台任务",
+            bt: "起了本地后台构建或后台 Subagent，又敲 /loop 1m 追问进度",
+            bd: "每分钟强行插话唤醒一次，往上下文里堆满“仍在运行中”的空转废话，既费额度又挤占有效记忆。",
+            gt: "内部慢活等 task-notification，外部世界才用 /loop",
+            gd: "Claude Code 内部拉起的后台任务跑完会自动发通知叫醒主会话；只有远端 CI、线上监控等不会主动敲门的系统才需要 /loop。",
+            cap: "避坑三：能靠完成事件主动回调的活，绝不叠一层定时轮询。"
+          },
+          {
+            r: "PITFALL 4 / 5 · 权限弹窗卡死与按错退出键",
+            bt: "没配白名单就挂无人值守，或按 Ctrl+C 以为关掉了闹钟",
+            bd: "半夜触发未授权工具或带权限声明的 Skill 会直接停在确认弹窗干等；在后台会话连按两次 Ctrl+C 也只是脱离视图，闹钟仍在跑。",
+            gt: "提前配好 permissions.allow · 分清 Ctrl+C 与 Esc",
+            gd: "无人值守前把命令或 Skill(name) 放进允许列表；记住 Ctrl+C 只是 detach 离开屏幕，按 Esc 才是真正取消挂起的唤醒。",
+            cap: "避坑四：跑长时值守前先锁好权限白名单，撤掉任务认准 Esc。"
+          },
+          {
+            r: "PITFALL 5 / 5 · 把终端会话当成永久云守护进程",
+            bt: "挂着 /loop 直接合上笔记本休眠，或指望临时云容器跨天存活",
+            bd: "会话级定时器跟着当前进程与容器生命周期走，机器休眠、终端被杀或临时容器回收都会让挂着的唤醒停摆。",
+            gt: "几小时护航用 /loop，跨天关机任务交远端调度",
+            gd: "在终端开着盯两三小时的发版和回归最趁手；需要脱离本机开关机长期执行的周期任务，应使用独立的服务端定时基础设施。",
+            cap: "避坑五：认清会话级定时器的物理存活边界，别把跨周批处理压在单个终端窗口上。"
+          }
+        ];
+
+        function select(n) {
+          idx = Math.max(0, Math.min(items.length - 1, n));
+          var it = items[idx];
+          prevBtn.disabled = idx <= 0;
+          nextBtn.disabled = idx >= items.length - 1;
+          readout.textContent = it.r;
+          badTitle.textContent = it.bt;
+          badDesc.textContent = it.bd;
+          goodTitle.textContent = it.gt;
+          goodDesc.textContent = it.gd;
+          cap.textContent = it.cap;
+          document.querySelectorAll("[data-s3]").forEach(function (b) {
+            b.classList.toggle("is-active", parseInt(b.getAttribute("data-s3"), 10) === idx);
+          });
+        }
+
+        prevBtn.addEventListener("click", function () { if (idx > 0) select(idx - 1); });
+        nextBtn.addEventListener("click", function () { if (idx < items.length - 1) select(idx + 1); });
+        document.querySelectorAll("[data-s3]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            select(parseInt(b.getAttribute("data-s3"), 10));
+          });
+        });
+        select(0);
+      })();
+
+      /* 5. Stage 4: Scenario Compass */
+      (function initStage4() {
+        var scene = document.getElementById("s4-scene");
+        var readout = document.getElementById("s4-readout");
+        var modeEl = document.getElementById("s4-mode");
+        var tipEl = document.getElementById("s4-tip");
+        var prevBtn = document.getElementById("s4-prev");
+        var nextBtn = document.getElementById("s4-next");
+        var order = ["single", "bg", "ralph", "cron", "paced"];
+        var curKey = "single";
 
         var scenarios = {
-          fix: {
-            readout: "ARCHITECTURE: SINGLE TURN LOOP",
-            mode: "单 Turn 工具循环（权限漏斗 + Fork-Join 屏障）",
-            why: "本地即时可验证，靠前缀与工具池冻结保住高缓存命中率。",
-            svg: '<rect x="190" y="42" width="380" height="106" rx="10" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="2"/>' +
-                 '<text x="380" y="84" text-anchor="middle" font-family="var(--font-sans)" font-size="15" font-weight="700" fill="var(--ink)">单 Turn 事务循环</text>' +
-                 '<text x="380" y="112" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ok)">来源隔离 · 五级权限漏斗 · Fork-Join 批次屏障</text>'
+          single: {
+            readout: "CHOICE 1 / 5 · 单轮 + Subagent",
+            mode: "默认单轮循环 + 派 Subagent 搜代码",
+            tip: "几步就能跑命令验证的活别套外层 Loop；把几十个文件的检索丢给 Subagent 保主窗口干净即可。",
+            svg:
+              '<rect x="76" y="42" width="230" height="84" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.7"/>' +
+              '<text x="191" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">主会话单轮循环</text>' +
+              '<text x="191" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ok)">专注核心修改与即时验证</text>' +
+              '<line x1="306" y1="84" x2="438" y2="84" stroke="var(--blue)" stroke-width="1.7" stroke-dasharray="5 4"/>' +
+              '<rect x="438" y="42" width="246" height="84" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6"/>' +
+              '<text x="561" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--blue)">Subagent 独立窗口</text>' +
+              '<text x="561" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-muted)">翻完几十个文件只递回摘要</text>'
           },
-          sub: {
-            readout: "ARCHITECTURE: TREE OF LOOPS",
-            mode: "树状多 Loop 分身（上下文沙盒隔离）",
-            why: "把全库搜引用的检索噪声锁在子分支内，主干只收干净结论且受并发深度上限约束。",
-            svg: '<rect x="64" y="48" width="190" height="90" rx="8" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.8"/>' +
-                 '<text x="159" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">主干 Loop</text>' +
-                 '<text x="159" y="110" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ok)">保留汇总决策上下文</text>' +
-                 '<line x1="254" y1="80" x2="450" y2="48" stroke="var(--blue)" stroke-width="1.8" stroke-dasharray="5 4"/>' +
-                 '<line x1="254" y1="110" x2="450" y2="142" stroke="var(--purple)" stroke-width="1.8" stroke-dasharray="5 4"/>' +
-                 '<rect x="454" y="18" width="242" height="58" rx="7" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.5"/>' +
-                 '<text x="575" y="44" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--blue)">只读检索子 Loop</text>' +
-                 '<text x="575" y="64" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">吸收海量文件读取噪声</text>' +
-                 '<rect x="454" y="112" width="242" height="58" rx="7" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5"/>' +
-                 '<text x="575" y="138" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--purple)">并行改码队友 Loop</text>' +
-                 '<text x="575" y="158" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">独立状态机 · 回合间休眠</text>'
+          bg: {
+            readout: "CHOICE 2 / 5 · 后台任务回调",
+            mode: "放进本地后台任务，等 task-notification 自动唤醒",
+            tip: "千万别再敲一个 /loop 1m 去轮询它；内部后台任务跑完本来就会自己叫醒主会话。",
+            svg:
+              '<rect x="90" y="42" width="236" height="84" rx="8" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.6"/>' +
+              '<text x="208" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--purple)">后台编译 / 全量测试</text>' +
+              '<text x="208" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">独立子进程异步运行 10 分钟</text>' +
+              '<line x1="326" y1="84" x2="444" y2="84" stroke="var(--ok)" stroke-width="1.8"/>' +
+              '<text x="385" y="74" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ok)">跑完主动回调</text>' +
+              '<rect x="444" y="42" width="226" height="84" rx="8" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.7"/>' +
+              '<text x="557" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="700" fill="var(--ok)">自动唤醒主会话下一步</text>' +
+              '<text x="557" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">零轮询废话 · 零多余消耗</text>'
           },
           ralph: {
-            readout: "ARCHITECTURE: STOP GATE LOOP",
-            mode: "门禁打回循环（Stop 退出守门 + 连续熔断）",
-            why: "每次准备收工时由客观测试门禁拦截返工，配合连续打回次数硬熔断兜底。",
-            svg: '<rect x="130" y="48" width="210" height="90" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6"/>' +
-                 '<text x="235" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">Turn 改码执行</text>' +
-                 '<text x="235" y="110" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--blue)">产出真实工作区改动</text>' +
-                 '<line x1="340" y1="93" x2="420" y2="93" stroke="var(--ink)" stroke-width="1.6"/>' +
-                 '<rect x="420" y="48" width="220" height="90" rx="8" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.6"/>' +
-                 '<text x="530" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--accent)">Stop 客观验收门</text>' +
-                 '<text x="530" y="110" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">未过即驳回 · 连续超限熔断</text>'
+            readout: "CHOICE 3 / 5 · Stop 门禁 / /ralph-loop",
+            mode: "Stop Hook 跑测试脚本，或 /ralph-loop --max-iterations 30",
+            tip: "适合本地随时能验对错的硬骨头；验收条件必须客观可跑，且务必带上轮数上限。",
+            svg:
+              '<rect x="100" y="42" width="240" height="84" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6"/>' +
+              '<text x="220" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ink)">同一会话连续修改</text>' +
+              '<text x="220" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--blue)">每轮看见上轮留下的真实改动</text>' +
+              '<line x1="340" y1="84" x2="424" y2="84" stroke="var(--accent)" stroke-width="1.7"/>' +
+              '<rect x="424" y="42" width="236" height="84" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.7"/>' +
+              '<text x="542" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--accent)">Stop 出口跑单测门禁</text>' +
+              '<text x="542" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">红灯打回继续修 · 全绿才放行</text>'
           },
           cron: {
-            readout: "ARCHITECTURE: FIXED CRON LOOP",
-            mode: "固定节拍 Cron 循环（跨压缩持久 + 空转折叠）",
-            why: "机械频率外包给时钟，连续无异常空转自动折叠成单行，避免轮询刷屏。",
-            svg: '<rect x="90" y="48" width="580" height="90" rx="8" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.6"/>' +
-                 '<text x="380" y="84" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--purple)">固定节拍周期巡检</text>' +
-                 '<text x="380" y="112" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)">准点唤醒 · 跨压缩保调度 · 空转折叠 · 分离与取消解耦</text>'
+            readout: "CHOICE 4 / 5 · 固定间隔 /loop 15m",
+            mode: "/loop 15m 巡检外部队列或构建状态",
+            tip: "无人值守前配好 permissions.allow 白名单；长会话避开 65m 这类刚过 1 小时缓存有效期的间隔。",
+            svg:
+              '<rect x="90" y="42" width="580" height="84" rx="8" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.6"/>' +
+              '<text x="380" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--purple)">固定时钟周期唤醒 (/loop 15m)</text>' +
+              '<text x="380" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)">间隔期零消耗休眠 · 连续无事折叠成 1 行 · 按 Esc 取消</text>'
           },
           paced: {
-            readout: "ARCHITECTURE: SELF-PACED /loop",
-            mode: "模型自调节 /loop（缓存线对齐 + 默认收敛）",
-            why: "按风险动态拉长唤醒间隔（上限卡在 1 小时缓存过期前），指标稳即不再设闹钟收工。",
-            svg: '<rect x="70" y="46" width="620" height="94" rx="8" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.8"/>' +
-                 '<text x="380" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ok)">自适应长程值守 (/loop)</text>' +
-                 '<text x="380" y="112" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)">近密远疏调度 · 上限保 1h 缓存 · 不再预约即自然收敛</text>'
+            readout: "CHOICE 5 / 5 · 自调节 /loop",
+            mode: "不写死间隔的 /loop（/proactive），由模型调用 ScheduleWakeup",
+            tip: "上线初期 2m 紧盯、平稳后拉长但卡在 1h 缓存期内，全量稳住后不设新闹钟即自动收工。",
+            svg:
+              '<rect x="76" y="42" width="608" height="84" rx="8" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.8"/>' +
+              '<text x="380" y="78" text-anchor="middle" font-family="var(--font-sans)" font-size="14" font-weight="700" fill="var(--ok)">风险自适应值守 (/loop 自调节模式)</text>' +
+              '<text x="380" y="104" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--ink)">近密远疏自己拧闹钟 · 单次睡眠不超 1h 保缓存 · 达标自动下班</text>'
           }
         };
 
@@ -2041,15 +1433,15 @@
           var idx = order.indexOf(key);
           prevBtn.disabled = idx <= 0;
           nextBtn.disabled = idx >= order.length - 1;
-          document.querySelectorAll("[data-s5]").forEach(function (b) {
-            b.classList.toggle("is-active", b.getAttribute("data-s5") === key);
+          document.querySelectorAll("[data-s4]").forEach(function (b) {
+            b.classList.toggle("is-active", b.getAttribute("data-s4") === key);
           });
           readout.textContent = item.readout;
           modeEl.textContent = item.mode;
-          whyEl.textContent = item.why;
+          tipEl.textContent = item.tip;
           scene.innerHTML = item.svg;
           if (window.gsap) {
-            window.gsap.fromTo(scene.children, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.04, ease: "power2.out" });
+            window.gsap.fromTo(scene.children, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.26, stagger: 0.03, ease: "power2.out" });
           }
         }
 
@@ -2061,13 +1453,12 @@
           var idx = order.indexOf(curKey);
           if (idx < order.length - 1) selectScenario(order[idx + 1]);
         });
-        document.querySelectorAll("[data-s5]").forEach(function (b) {
+        document.querySelectorAll("[data-s4]").forEach(function (b) {
           b.addEventListener("click", function () {
-            selectScenario(b.getAttribute("data-s5"));
+            selectScenario(b.getAttribute("data-s4"));
           });
         });
-
-        selectScenario("fix");
+        selectScenario("single");
       })();
     })();
   </script>
