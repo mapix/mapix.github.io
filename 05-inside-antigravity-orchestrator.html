@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>同会话双模交接：拆解 Antigravity Orchestrator</title>
+  <meta name="description" content="从单模型一条道走到黑、hack 式 Model Router、Subagent 边界切模，到 Antigravity Orchestrator 的同轨迹双向协作：架构分层、状态机与硬门禁、7 轮 Prompt Cache 实测账本与自研迁移清单。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --bg-card: #fbf8f2;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+      --accent-soft: rgba(158, 51, 33, 0.11);
+      --ok: #256b45;
+      --ok-soft: rgba(37, 107, 69, 0.12);
+      --warn: #b36b16;
+      --warn-soft: rgba(179, 107, 22, 0.12);
+      --blue: #235884;
+      --blue-soft: rgba(35, 88, 132, 0.11);
+      --purple: #5c3d82;
+      --purple-soft: rgba(92, 61, 130, 0.11);
+
+      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+
+      --measure: 660px;
+      --wrap: 1080px;
+      accent-color: var(--accent);
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-paper: #141311;
+      --bg-elevated: #1d1b18;
+      --bg-card: #191714;
+      --ink: #ece6dc;
+      --ink-secondary: #b8b0a4;
+      --ink-muted: #857d72;
+      --rule: #2e2a25;
+      --rule-strong: #ece6dc;
+      --accent: #e06d53;
+      --accent-soft: rgba(224, 109, 83, 0.15);
+      --ok: #52b780;
+      --ok-soft: rgba(82, 183, 128, 0.14);
+      --warn: #e09f3e;
+      --warn-soft: rgba(224, 159, 62, 0.14);
+      --blue: #63a4d8;
+      --blue-soft: rgba(99, 164, 216, 0.14);
+      --purple: #a584d6;
+      --purple-soft: rgba(165, 132, 214, 0.14);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.85;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: clip;
+    }
+
+    /* Reading progress strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--bg-paper);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+      transition: transform 0.2s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reading-strip {
+        transition: none;
+      }
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      height: 2px;
+      background: var(--ink);
+      width: 0%;
+    }
+
+    /* Top Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 22px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .site-nav a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+    .theme-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Main Layout Grid */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 200px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Left Rail TOC */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 10px;
+      border-left: 1.5px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a.is-active {
+      color: var(--ink);
+      font-weight: 600;
+      border-left-color: var(--ink);
+    }
+
+    /* Article Header */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(27px, 3.6vw, 38px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+    .post-subtitle {
+      margin: 0 0 20px;
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.65;
+      color: var(--ink-secondary);
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 32px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt {
+      color: var(--ink-muted);
+    }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose Content */
+    .post-content p {
+      margin: 0 0 1.32em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.8vw, 27px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.3em 0 0.75em;
+      color: var(--ink);
+      scroll-margin-top: 64px;
+    }
+    .post-content h3 {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      margin: 1.8em 0 0.5em;
+      color: var(--ink);
+    }
+    .post-content a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
+      transition: color 0.15s ease;
+    }
+    .post-content a:hover {
+      color: var(--accent);
+    }
+    .post-content ul, .post-content ol {
+      margin: 0 0 1.4em;
+      padding-left: 1.35em;
+    }
+    .post-content li {
+      margin-bottom: 0.55em;
+    }
+    .post-content code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+    }
+
+    pre.code-snippet {
+      margin: 1.3em 0 1.6em;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-left: 2.5px solid var(--ink);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.65;
+      overflow-x: auto;
+      color: var(--ink);
+    }
+
+    .formula-box {
+      margin: 1.4em 0;
+      padding: 16px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .formula-main {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .formula-note {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-secondary);
+    }
+
+    /* Interactive Stage Containers */
+    .stage-card {
+      margin: 2em -44px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    @media (max-width: 820px) {
+      .stage-card {
+        margin: 1.6em 0;
+      }
+    }
+
+    .stage-header {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .stage-meta-readout {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+    }
+
+    .stage-canvas {
+      padding: 14px 16px 12px;
+      background: var(--bg-card);
+    }
+    .stage-canvas svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+
+    .stage-controls {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .btn-ctl {
+      appearance: none;
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 4px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-ctl:hover:not(:disabled) {
+      border-color: var(--ink);
+    }
+    .btn-ctl:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .btn-ctl:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-ctl.is-primary {
+      background: var(--ink);
+      color: var(--bg-paper);
+      border-color: var(--ink);
+    }
+    .btn-ctl.is-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-ctl.is-active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .stage-caption {
+      padding: 9px 16px 11px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+      border-top: 1px dashed var(--rule);
+      background: var(--bg-card);
+    }
+
+    /* Cache Ledger Details & Econ Calculator */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+    @media (max-width: 640px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .detail-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 8px 11px;
+    }
+    .detail-pill span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      margin-bottom: 2px;
+    }
+    .detail-pill strong {
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 13.5px;
+    }
+
+    .econ-sliders {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+      font-family: var(--font-sans);
+    }
+    @media (max-width: 680px) {
+      .econ-sliders {
+        grid-template-columns: 1fr;
+      }
+    }
+    .slider-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      padding: 10px 12px;
+    }
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 12.5px;
+    }
+    .slider-head label {
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .slider-val {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .slider-item input[type="range"] {
+      width: 100%;
+      margin: 2px 0 4px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    .slider-hint {
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+
+    .econ-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      font-family: var(--font-sans);
+    }
+    .econ-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 70px;
+      align-items: center;
+      gap: 12px;
+      font-size: 12.5px;
+    }
+    @media (max-width: 560px) {
+      .econ-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+    .econ-track {
+      height: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+    }
+    .econ-seg {
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .econ-seg {
+        transition: none;
+      }
+    }
+    .econ-verdict {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 5px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.55;
+      border: 1px solid var(--rule);
+    }
+    .econ-verdict.is-win {
+      background: var(--ok-soft);
+      border-color: var(--ok);
+      color: var(--ink);
+    }
+    .econ-verdict.is-loss {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--ink);
+    }
+
+    /* Responsive Comparison Table (@container + sticky headers) */
+    .matrix-wrap {
+      margin: 1.8em -44px;
+      overflow: auto;
+      max-inline-size: calc(100% + 88px);
+      container-type: inline-size;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--bg-card);
+    }
+    .matrix-wrap:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    @media (max-width: 820px) {
+      .matrix-wrap {
+        margin: 1.5em 0;
+        max-inline-size: 100%;
+      }
+    }
+    table.compare-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.55;
+    }
+    table.compare-table.tbl-cache {
+      --label-2: "执棒模型";
+      --label-3: "普通输入";
+      --label-4: "缓存读取";
+      --label-5: "总输入";
+      --label-6: "命中率";
+      --label-7: "缓存状态";
+    }
+    table.compare-table.tbl-modes {
+      --label-2: "切模粒度";
+      --label-3: "上下文与缓存";
+      --label-4: "适用场景";
+      --label-5: "主要代价";
+    }
+
+    table.compare-table caption {
+      padding: 10px 14px;
+      text-align: start;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      background: var(--bg-elevated);
+      border-block-end: 1px solid var(--rule);
+    }
+    table.compare-table thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 2;
+    }
+    table.compare-table th,
+    table.compare-table td {
+      padding: 11px 13px;
+      text-align: start;
+      border-block-end: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    table.compare-table thead th {
+      background: var(--bg-elevated);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    table.compare-table tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 1;
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+      border-inline-end: 1px solid var(--rule);
+    }
+    table.compare-table tbody tr:last-child th,
+    table.compare-table tbody tr:last-child td {
+      border-block-end: none;
+    }
+    table.compare-table td.num {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+
+    @container (width < 600px) {
+      table.compare-table,
+      table.compare-table thead,
+      table.compare-table tbody,
+      table.compare-table tr,
+      table.compare-table th,
+      table.compare-table td {
+        display: block;
+      }
+      table.compare-table thead {
+        display: none;
+      }
+      table.compare-table tbody tr {
+        margin: 10px;
+        border: 1px solid var(--rule);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      table.compare-table tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        inset-inline-start: auto;
+        z-index: 2;
+        background: var(--bg-elevated);
+        border-inline-end: none;
+        white-space: normal;
+      }
+      table.compare-table td:nth-child(2)::before { content: var(--label-2) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(3)::before { content: var(--label-3) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(4)::before { content: var(--label-4) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(5)::before { content: var(--label-5) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(6)::before { content: var(--label-6) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(7)::before { content: var(--label-7) "："; font-weight: 600; color: var(--ink); }
+    }
+
+    /* Post Series Nav */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--ink-muted);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">同会话双模交接：拆解 Antigravity Orchestrator</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="导航">
+      <a href="index.html">全部文章</a>
+      <a href="#prerequisites">前提与边界</a>
+      <a href="#state-machine">三态状态机</a>
+      <a href="#prompt-cache">缓存账本</a>
+      <a href="#economics">成本边界</a>
+      <a href="#implementation">自研与选型</a>
+      <button type="button" class="theme-btn" id="theme-toggle" title="切换明暗主题">
+        <span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="目录">
+      <ul class="toc-list" id="toc-list">
+        <li><a href="#intro" class="is-active">四条技术路线对比</a></li>
+        <li><a href="#prerequisites">前提与职责切分</a></li>
+        <li><a href="#state-machine">三态状态机与显式交接</a></li>
+        <li><a href="#prompt-cache">Prompt Cache 账本</a></li>
+        <li><a href="#economics">成本算式与三条边界</a></li>
+        <li><a href="#implementation">自研落地与选型对照</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1>同会话双模交接：拆解 Antigravity Orchestrator</h1>
+        <p class="post-subtitle">单模型跑到底太烧额度，按请求硬切的 Model Router 脆而不可控，按 Subagent 切模型又隔着一层有损摘要。Antigravity Orchestrator 的做法是保留同一条会话轨迹，在宿主 Harness 层用三态状态机、显式计划与工具门禁，让高推理规划模型和轻量执行模型在同一个现场接力。</p>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-18">2026 年 11 月 18 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>6 分钟（含交互图解）</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#05</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <div id="intro"></div>
+        <p>一段几十步的单会话编码任务，算力需求分布极不均匀：开头理清依赖、敲定接口，以及收尾核查边界，需要重推理模型；中间占大头的改文件、修局部类型错误、跑单测，主要吃响应速度。</p>
+
+        <p>把快慢模型配合起来用，常见有三条老路，各有明显短板：</p>
+
+        <ol>
+          <li><strong>单模型单 Session 一条道走到黑</strong>。上下文完整，Prompt Cache 也能一路命中，但没有算力区分。全程挂 <code>Gemini 4 Carbon</code> 每次调工具都要等长推理，前沿额度消耗极快；全程挂轻量模型写常规代码很快，遇到跨多文件的状态耦合则容易反复试错打转。</li>
+          <li><strong>请求级 Model Router</strong>。要么根据首句 Prompt 猜难度锁死模型，要么在网关层按长度、关键字逐请求切换。问题在于编码任务的真实复杂度往往写到中途才暴露；外部路由器看不出当前处在排查、改码还是验收阶段，硬切会打断推理链与签名状态（Thought Signatures）。既没有交接契约也没有工具限制，小模型改偏了没有通道退回大模型，来回跳模型还会把双边的缓存前缀打碎。</li>
+          <li><strong>以 Subagent（或独立多 Agent）为边界切模型</strong>。任务天然解耦时这条路很顺——例如官方博客展示的 <code>Antigravity SDK</code> 仓库分流：前置一群 <code>Gemini 4 Hydrogen</code> Agent 处理高频 Issue 分流、代码检索、追问提单者和简单 PR 修改，独立的 <code>Carbon</code> Agent 负责跨模块重构与安全审查。但放回紧耦合的单次编码会话，模型边界被迫绑在上下文边界上：子会话看不到主会话前面读过的原始源码，主会话看不到子会话改码中途踩过的真实报错，靠摘要传话一旦撞上设计冲突，同步损耗很大。</li>
+        </ol>
+
+        <p>Antigravity 的 <strong>Orchestrator</strong> 给出了第四种方案：<strong>不拆子会话，也不按单次请求盲切，而是在同一条持久化轨迹（Trajectory）和工作区上，固定配对高推理规划模型（<code>Carbon</code> 或 <code>Argon</code>）与高速蒸馏执行模型（<code>Hydrogen</code>），由宿主 Harness 在粗粒度的阶段边界调度切换。</strong></p>
+
+        <!-- STAGE 1: FOUR ARCHITECTURES COMPARISON -->
+        <figure class="stage-card" id="stage-arch">
+          <div class="stage-header">
+            <span class="stage-title">四条技术路线对比：为什么前三条路都有硬伤</span>
+            <span class="stage-meta-readout" id="s1-readout">ROUTE 1 / 4 · 单模型一条道走到黑</span>
+          </div>
+          <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
+            <button type="button" class="btn-ctl is-active" data-s1="0">1. 单模型走到黑</button>
+            <button type="button" class="btn-ctl" data-s1="1">2. 请求级 Router</button>
+            <button type="button" class="btn-ctl" data-s1="2">3. Subagent 边界切模</button>
+            <button type="button" class="btn-ctl" data-s1="3">4. Orchestrator 同轨迹</button>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 212" aria-label="四种多模型协作架构路线对比图">
+              <g id="s1-svg"></g>
+            </svg>
+          </div>
+          <div class="stage-caption" id="s1-cap">点击上方四条路线，逐一对比上下文连续性、模型切换粒度、遇阻能否升档以及缓存表现。</div>
+        </figure>
+
+        <h2 id="prerequisites">前提与职责切分：执行端够稳，控制权归 Harness</h2>
+
+        <p>早年同会话双模很难跑通，卡在轻量模型的多步工具调用和精确编辑太脆，接手几步改乱现场，规划模型反复救火反而更慢。</p>
+
+        <p>同步发布的 <code>Gemini 4 Hydrogen</code> 先补上了执行底座：官方基准中，它在 Artificial Analysis Intelligence Index 拿到 <strong>51 分</strong>（开 <code>xhigh</code> 档达 <strong>54 分</strong>），<strong>Terminal-Bench 4.1 单跑达到 57%</strong>（前代 <code>3.8 Flash</code> 为 <code>18.2%</code>）。直选 <code>Hydrogen</code> 时开放 <code>low</code>、<code>medium</code>、<code>high</code>、<code>xhigh</code> 四档思考深度；进入 <code>Orchestrator</code> 后则锁定为固定配对（<code>Carbon + Hydrogen</code> 或 <code>Argon + Hydrogen</code>），不再开放 <code>/effort</code> 微调，以此换取稳定的能力预期。</p>
+
+        <p>系统在运行时把职责切开：会话轨迹与本地工作区归宿主 Harness 持久化，不属于任一模型的私有状态。每次调用模型前，Harness 根据当前阶段替换模型 ID、系统提示词和可用工具列表；模型返回工具调用后，真正落盘前还要经过前置 <strong><code>Tool Gate</code></strong> 做权限拦截。模型只能调用交接工具提议切换，状态翻转和换模完全由 Harness 执行。</p>
+
+        <p>这也划清了它与 Subagents、<code>/swarm</code> 的边界：后两者拆开多个独立上下文和 Git worktree 做<strong>空间并行</strong>；Orchestrator 留在单个 Agent 实例内做<strong>阶段算力调度</strong>。</p>
+
+        <h2 id="state-machine">三态状态机与显式交接</h2>
+
+        <p>Orchestrator 的双向切换围绕 <code>Planning</code>、<code>Executing</code>、<code>ReviewPending</code> 三个状态运转，正常流转走工具协议，异常与防漂移走 Harness 硬钩子：</p>
+
+        <!-- STAGE 2: HARNESS FSM SIMULATOR -->
+        <figure class="stage-card" id="stage-fsm">
+          <div class="stage-header">
+            <span class="stage-title">Harness 三态交接与硬门禁推演器：观察控制权如何来回易手</span>
+            <span class="stage-meta-readout" id="s2-readout">CASE: 标准往返 · STEP 1 / 5</span>
+          </div>
+          <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
+            <button type="button" class="btn-ctl is-active" data-s2-case="standard">1. 标准往返收工</button>
+            <button type="button" class="btn-ctl" data-s2-case="friction">2. 两次验证失败交回</button>
+            <button type="button" class="btn-ctl" data-s2-case="hook">3. 硬门禁强拦（插话 / 30步）</button>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 250" aria-label="Orchestrator 状态机与工具门禁演示">
+              <defs>
+                <marker id="fsm-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ink-muted)" />
+                </marker>
+              </defs>
+              <g id="s2-graph"></g>
+              <rect x="20" y="182" width="720" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)" />
+              <text id="s2-line-1" x="36" y="204" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ink)"></text>
+              <text id="s2-line-2" x="36" y="225" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)"></text>
+            </svg>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s2-prev">◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s2-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s2-auto">▶ 自动演示</button>
+            <button type="button" class="btn-ctl" id="s2-reset">重置</button>
+          </div>
+          <div class="stage-caption" id="s2-cap">切换三条典型轨迹并单步推演，注意看右侧 Tool Gate 如何随阶段收紧或放行工具。</div>
+        </figure>
+
+        <ul>
+          <li><strong>去程（<code>Planning &rarr; Executing</code>）</strong>：空闲态收到用户请求一律先进 <code>Planning</code>，运行 <code>Carbon</code> 或 <code>Argon</code>。<code>Tool Gate</code> 封禁写操作，只放行读文件、搜索及编译测试等只读观察命令。纯提问或代码评审直接回复收工，全程不调 <code>Hydrogen</code>；需要改工作区时，规划模型必须调用 <strong><code>exit_plan_mode</code></strong> 提交完整计划，Harness 随后切入 <code>Executing</code>、换上 <code>Hydrogen</code> 并解开写权限。</li>
+          <li><strong>为什么共享了完整历史还要写显式计划？</strong> <code>Hydrogen</code> 能看到前序所有文件读取与工具输出，但看不到 <code>Carbon</code> 内部推理（Thinking）里排除备选方案的过程。只丢几万 Token 原始检索流水，等于让轻量模型重做一遍全局归纳。因此 <code>exit_plan_mode</code> 的计划必须写明目标文件与函数符号、修改顺序、验证命令及预期输出，外加当前任务的 <code>Re-plan if</code> 清单。</li>
+          <li><strong>回程一：执行端按协议熔断（<code>Executing &rarr; Planning</code>）</strong>：补漏掉的 <code>import</code>、微调路径、重跑一次偶发抖动的单测，由 <code>Hydrogen</code> 自行消化；一旦撞上四类边界——<strong>同一验证连续两次失败、代码现状与计划前提冲突、出现未拍板的设计分叉、需修改计划外文件</strong>——必须停手调 <strong><code>enter_plan_mode</code></strong> 退回规划态。</li>
+          <li><strong>回程二：Harness 硬门禁强拦（<code>ReviewPending</code>）</strong>：防止快模型失控硬冲，Harness 外挂了两条确定性 <code>Review Hook</code>。一旦命中，状态立即置为 <code>ReviewPending</code>，<strong><code>Tool Gate</code> 锁死除 <code>enter_plan_mode</code> 外的一切工具</strong>，逼 <code>Hydrogen</code> 汇总现状交棒：
+            <ol>
+              <li><strong>执行期用户插话</strong>：<code>Hydrogen</code> 连续调工具途中用户发来新消息，禁止执行模型临场改方案，强制退回 <code>Carbon</code> 统一重排计划。</li>
+              <li><strong>满 30 次模型响应定频复核</strong>：逆向扫描上次交接、复核或已完成用户输入以来的轨迹，执行模型每累计产出 <strong>30 次模型响应</strong>强制触发一次。注意计数单位是模型响应步数——单轮并发读 8 个文件算 1 步，等待 10 分钟构建算 0 步。</li>
+            </ol>
+          </li>
+        </ul>
+
+        <p>切回 <code>Planning</code> 后，<code>Carbon</code> 借只读工具查验真实 diff 与测试输出：达标则交付；属 30 步常规体检且方向正确则下发剩余步骤；跑偏则在修订计划里指明回滚范围与新改法。</p>
+
+        <h2 id="prompt-cache">Prompt Cache 账本：冷启动付在哪，缓存怎么保住</h2>
+
+        <p>异构模型权重不同，底层 KV Cache 无法跨模共享；服务端隐式 Prompt Cache 按模型各自建池、按前缀独立匹配。下面是一次 <code>Carbon &rarr; Hydrogen &rarr; Carbon</code> 往返任务（建文件、断言验证、回程复核）的 7 轮实测 Usage 账本：</p>
+
+        <!-- STAGE 3: 7-TURN PROMPT CACHE LEDGER -->
+        <figure class="stage-card" id="stage-cache">
+          <div class="stage-header">
+            <span class="stage-title">7 轮双向交接 Prompt Cache 实测账本（点击任意一轮查看明细）</span>
+            <span class="stage-meta-readout" id="s3-readout">REQ #3 / 7 · Hydrogen 冷启动预热</span>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 236" aria-label="7 轮双向交接普通输入与缓存读取分布图">
+              <g id="s3-svg"></g>
+            </svg>
+            <div class="detail-grid">
+              <div class="detail-pill">
+                <span>执棒模型与阶段</span>
+                <strong id="s3-model"></strong>
+              </div>
+              <div class="detail-pill">
+                <span>普通输入 / 缓存读取</span>
+                <strong id="s3-tokens"></strong>
+              </div>
+              <div class="detail-pill">
+                <span>命中率与归因</span>
+                <strong id="s3-rate"></strong>
+              </div>
+            </div>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s3-prev">◀ 上一轮</button>
+            <button type="button" class="btn-ctl" data-s3="0">#1</button>
+            <button type="button" class="btn-ctl" data-s3="1">#2</button>
+            <button type="button" class="btn-ctl is-active" data-s3="2">#3 切入</button>
+            <button type="button" class="btn-ctl" data-s3="3">#4</button>
+            <button type="button" class="btn-ctl" data-s3="4">#5</button>
+            <button type="button" class="btn-ctl" data-s3="5">#6 切回</button>
+            <button type="button" class="btn-ctl" data-s3="6">#7 尾窗</button>
+            <button type="button" class="btn-ctl" id="s3-next">下一轮 ▶</button>
+          </div>
+          <div class="stage-caption" id="s3-cap">点击图中的任意请求横条或下方编号，对比切模瞬间的冷启动预热与切回后的缓存续命。</div>
+        </figure>
+
+        <div class="matrix-wrap" tabindex="0" role="region" aria-labelledby="cache-table-caption">
+          <table class="compare-table tbl-cache">
+            <caption id="cache-table-caption">Carbon &rarr; Hydrogen &rarr; Carbon 往返 7 轮 Token 实测数据</caption>
+            <thead>
+              <tr>
+                <th scope="col">轮次</th>
+                <th scope="col">执棒模型</th>
+                <th scope="col">普通输入 (<code>inputTokens</code>)</th>
+                <th scope="col">缓存读取 (<code>cacheReadTokens</code>)</th>
+                <th scope="col">总输入</th>
+                <th scope="col">命中率</th>
+                <th scope="col">缓存状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">#1</th>
+                <td><code>Gemini 4 Carbon</code></td>
+                <td class="num">11,313</td>
+                <td class="num">0</td>
+                <td class="num">11,313</td>
+                <td class="num">0.0%</td>
+                <td>Planner 首次冷启动</td>
+              </tr>
+              <tr>
+                <th scope="row">#2</th>
+                <td><code>Gemini 4 Carbon</code></td>
+                <td class="num">2,335</td>
+                <td class="num">9,259</td>
+                <td class="num">11,594</td>
+                <td class="num">79.9%</td>
+                <td>Planner 暖命中</td>
+              </tr>
+              <tr>
+                <th scope="row">#3</th>
+                <td><code>Gemini 4 Hydrogen</code></td>
+                <td class="num">12,566</td>
+                <td class="num">0</td>
+                <td class="num">12,566</td>
+                <td class="num">0.0%</td>
+                <td>切入 Executor，冷启动预热</td>
+              </tr>
+              <tr>
+                <th scope="row">#4</th>
+                <td><code>Gemini 4 Hydrogen</code></td>
+                <td class="num">2,389</td>
+                <td class="num">10,517</td>
+                <td class="num">12,906</td>
+                <td class="num">81.5%</td>
+                <td>Executor 暖命中</td>
+              </tr>
+              <tr>
+                <th scope="row">#5</th>
+                <td><code>Gemini 4 Hydrogen</code></td>
+                <td class="num">2,121</td>
+                <td class="num">10,951</td>
+                <td class="num">13,072</td>
+                <td class="num">83.8%</td>
+                <td>Executor 暖命中</td>
+              </tr>
+              <tr>
+                <th scope="row">#6</th>
+                <td><code>Gemini 4 Carbon</code></td>
+                <td class="num">2,714</td>
+                <td class="num">11,595</td>
+                <td class="num">14,309</td>
+                <td class="num">81.0%</td>
+                <td>切回 Planner，旧缓存仍命中</td>
+              </tr>
+              <tr>
+                <th scope="row">#7</th>
+                <td><code>Gemini 4 Carbon</code></td>
+                <td class="num">2,691</td>
+                <td class="num">12,260</td>
+                <td class="num">14,951</td>
+                <td class="num">82.0%</td>
+                <td>Planner 持续暖命中</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>7 轮累计总输入 <code>90,711</code> Token，缓存读取 <code>54,582</code> Token（总复用率 <strong><code>60.2%</code></strong>；剔除 <code>#1</code>、<code>#3</code> 两次冷启动后，5 次暖调用平均命中 <strong><code>81.7%</code></strong>）。账本里有两个关键事实：</p>
+
+        <ol>
+          <li><strong>牺牲的是第二模型进场的首轮预热，切回时原模型缓存不丢</strong>。<code>#3</code> 切给 <code>Hydrogen</code> 付了 <code>12,566</code> 全价输入预热，随后在 <code>#4</code>、<code>#5</code> 连续吃满 80%+ 缓存；<code>#6</code> 交回 <code>Carbon</code> 时直接读出 <code>11,595</code> 缓存 Token（<code>81.0%</code>），只为 <code>Hydrogen</code> 施工期新增的增量付费。只要往返未超服务端缓存 TTL，且 <code>Carbon</code> 头部的 System Prompt、Tool Schema 与早期前缀保持稳定，原缓存依然有效。对比逐请求横跳的网关 Router，阶段级切换把预热次数压到最低，让执行模型在长施工段里充分摊薄冷启动成本。</li>
+          <li><strong>暖调用里固定的两千多普通输入来自 <code>2,050</code> Token 尾窗规则</strong>。Gemini 4 隐式缓存（满 <code>4,096</code> Token 自动生效）只有在单轮新增内容达到 <code>2,050</code> Token 时才将上一轮完整封入缓存；增量不足 <code>2,050</code> Token 时，上一轮末尾的 <code>2,050</code> Token 会按普通输入重算。拿 <code>#6 &rarr; #7</code> 验算：总输入从 <code>14,309</code> 增至 <code>14,951</code>，增量 <code>642 &lt; 2,050</code>，理论 <code>cacheRead = 14,309 - 2,050 = 12,259</code>、理论 <code>input = 642 + 2,050 = 2,692</code>，与实测 <code>12,260</code> / <code>2,691</code> 仅差 1 个分词边界 Token。</li>
+        </ol>
+
+        <h2 id="economics">成本算式与三条边界</h2>
+
+        <p>以全程强模型基线成本为 1，设可由执行模型接管的施工占比为 <code>f</code>，执行模型相对强模型的综合单价折扣比为 <code>r</code>（<code>r &lt; 1</code>），写计划、二次冷启动、复核与返工带来的额外固定开销占比为 <code>h</code>，则相对成本为：</p>
+
+        <div class="formula-box">
+          <div class="formula-main">C_rel &approx; 1 &minus; f &times; (1 &minus; r) + h</div>
+          <div class="formula-note">满足 <strong>f &times; (1 &minus; r) &gt; h</strong> 才有净收益。</div>
+        </div>
+
+        <!-- STAGE 4: BREAK-EVEN CALCULATOR -->
+        <figure class="stage-card" id="stage-econ">
+          <div class="stage-header">
+            <span class="stage-title">双模交接回本线测算器：拖动参数看什么时候省钱、什么时候倒贴</span>
+            <span class="stage-meta-readout" id="s4-readout">相对基线成本 67.0% · 净省 33.0%</span>
+          </div>
+          <div class="stage-controls" style="border-top:none; border-bottom:1px solid var(--rule);">
+            <button type="button" class="btn-ctl is-active" data-s4-preset="feature">预设一：多文件常规开发</button>
+            <button type="button" class="btn-ctl" data-s4-preset="trivial">预设二：两步小修补</button>
+            <button type="button" class="btn-ctl" data-s4-preset="thrash">预设三：高频返工深水探索</button>
+          </div>
+          <div class="stage-canvas">
+            <div class="econ-sliders">
+              <div class="slider-item">
+                <div class="slider-head">
+                  <label for="slider-f">可替代施工占比 f</label>
+                  <span class="slider-val" id="val-f">68%</span>
+                </div>
+                <input type="range" id="slider-f" min="10" max="90" step="1" value="68">
+                <div class="slider-hint">明确计划后的机械改码与跑测比例</div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-head">
+                  <label for="slider-r">快模有效单价比 r</label>
+                  <span class="slider-val" id="val-r">0.28</span>
+                </div>
+                <input type="range" id="slider-r" min="15" max="65" step="1" value="28">
+                <div class="slider-hint">执行模型综合单价 / 强模型单价</div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-head">
+                  <label for="slider-h">交接与冷启动税 h</label>
+                  <span class="slider-val" id="val-h">16%</span>
+                </div>
+                <input type="range" id="slider-h" min="5" max="45" step="1" value="16">
+                <div class="slider-hint">显式计划、二次预热、复核与返工</div>
+              </div>
+            </div>
+
+            <div class="econ-bars">
+              <div class="econ-row">
+                <span>全程强模型基线</span>
+                <div class="econ-track">
+                  <div class="econ-seg" id="bar-base" style="width: 100%; background: var(--ink-muted);"></div>
+                </div>
+                <strong style="font-family:var(--font-mono); text-align:right;">100.0%</strong>
+              </div>
+              <div class="econ-row">
+                <span>Orchestrator 估算</span>
+                <div class="econ-track">
+                  <div class="econ-seg" id="bar-keep" style="background: var(--blue);"></div>
+                  <div class="econ-seg" id="bar-exec" style="background: var(--ok);"></div>
+                  <div class="econ-seg" id="bar-over" style="background: var(--accent);"></div>
+                </div>
+                <strong id="val-total" style="font-family:var(--font-mono); text-align:right;">67.0%</strong>
+              </div>
+            </div>
+
+            <div class="econ-verdict is-win" id="s4-verdict"></div>
+          </div>
+          <div class="stage-caption">图例：蓝段 = 规划与验收留存成本 (1&minus;f)；绿段 = 轻量模型执行成本 (f&times;r)；红段 = 跨模预热与交接税 (h)。</div>
+        </figure>
+
+        <p>官方披露的 Terminal-Bench 4.1 实测——成功率接近全程 <code>Carbon</code>，平均省 <strong>24% quota</strong>、快 <strong>19%</strong>——正好落在 <code>f</code> 较高且一两次交接即收敛的区间。落到实际工程里要注意三条边界：</p>
+
+        <ul>
+          <li><strong>两头场景会倒贴</strong>：两三步改完的琐碎修改 <code>f</code> 太小，写计划与 <code>Hydrogen</code> 冷启动开销 <code>h</code> 超过模型差价，直接单选 <code>Hydrogen</code> 更省；需求与实现强耦合、改两行就推翻假设的探索任务会频繁触发 <code>enter_plan_mode</code> 往返，直接单跑 <code>Carbon</code> 更稳。</li>
+          <li><strong>不突破单线串行耗时</strong>：同一时刻主轨迹只有一个模型在跑，前后端与测试能拆开并发的工程仍需交给 <code>Subagents</code> 或 <code>/swarm</code>。</li>
+          <li><strong>同源上下文锚定</strong>：两模型共用同一条轨迹，<code>Carbon</code> 最初漏掉的边界条件若单测也没覆盖，回程复核时很容易顺着自己列的清单放行。双模接力替代不了客观验证脚本和独立测试审校。</li>
+        </ul>
+
+        <h2 id="implementation">自研落地要点与选型对照</h2>
+
+        <p>在自研 Coding Agent Harness 中复现这套机制，靠 Prompt 扮演角色没有意义，运行时至少需要落齐五件事：</p>
+
+        <ol>
+          <li><strong>阶段与计划原子持久化</strong>：落盘维护 <code>PLANNING / EXECUTING / REVIEW_PENDING / DONE</code> 与生效计划，防止中断重启后丢失阶段或重复执行副作用。</li>
+          <li><strong>追加式原始轨迹 + 阶段水位线</strong>：完整保留工具调用与返回原文，不压成有损摘要；在交接与复核处写入边界标记供步数扫描。</li>
+          <li><strong>跨模请求装配与签名隔离</strong>：换模（尤其跨厂商模型配对）时剥离或转换历史中的 <code>thinking / signature</code> 字段避免校验报错，同时固定各模型头部的 System Prompt 与 Tool Schema 顺序以保住前缀缓存。</li>
+          <li><strong>成对注册交接工具 + 前置 <code>Tool Gate</code></strong>：规划态挂 <code>exit_plan_mode</code> 并拒掉写操作；执行态务必挂上 <code>enter_plan_mode</code>（漏注册会导致遇阻报 <code>unknown tool</code> 卡死）；<code>ReviewPending</code> 态拒掉除交回报告外的一切工具。</li>
+          <li><strong>按风险信号提前拉起复核</strong>：除最高优拦截用户插话和 30 步保底外，可在检测到改动公共接口、触碰计划外文件或连续报错时提前切入 <code>ReviewPending</code>。</li>
+        </ol>
+
+        <p>最后把五种常见方案放在一起对照：</p>
+
+        <div class="matrix-wrap" tabindex="0" role="region" aria-labelledby="modes-table-caption">
+          <table class="compare-table tbl-modes">
+            <caption id="modes-table-caption">五种模型调度与 Agent 协作方案选型对照</caption>
+            <thead>
+              <tr>
+                <th scope="col">方案</th>
+                <th scope="col">切模粒度</th>
+                <th scope="col">上下文与缓存</th>
+                <th scope="col">适用场景</th>
+                <th scope="col">主要代价</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">单模型跑到底（直选 <code>Carbon</code> / <code>Hydrogen</code>）</th>
+                <td>不切换</td>
+                <td>单一缓存池连续命中，零交接开销</td>
+                <td>琐碎小改（<code>Hydrogen</code>）或强探索难题（<code>Carbon</code>）</td>
+                <td>速度与推理上限只能二选一</td>
+              </tr>
+              <tr>
+                <th scope="row">请求级 Model Router</th>
+                <td>单次请求级（启发式）</td>
+                <td>前缀频繁跳变，缓存易碎，推理链易断</td>
+                <td>无长程状态依赖的独立短问答分流</td>
+                <td>看不懂任务阶段，无契约无门禁，小模改偏难回退</td>
+              </tr>
+              <tr>
+                <th scope="row">Subagent / SDK 流水线</th>
+                <td>独立子会话级</td>
+                <td>上下文隔离，靠结构化消息或摘要传递</td>
+                <td>天然解耦任务（如 <code>Hydrogen</code> 分流 Issue、<code>Carbon</code> 做大重构）</td>
+                <td>紧耦合改码会丢原始现场，来回同步损耗高</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>Orchestrator</code> 同轨迹交接</th>
+                <td>会话内阶段级</td>
+                <td>共享完整轨迹；切入冷启动一次，切回保原缓存</td>
+                <td>日常多文件功能开发、跨模块重构、常规修 Bug</td>
+                <td>仍是单线串行；极小任务倒贴；存在同源锚定</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>/swarm</code> 并行工坊</th>
+                <td>多工作副本并发</td>
+                <td>独立 worktree + 共享消息板按 <code>@mention</code> 唤醒</td>
+                <td>前后端与测试可切分并行的大型工程</td>
+                <td>单线强因果任务协作开销过高</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇导航">
+        <a href="04-anatomy-of-claude-code-loop.html">&larr; #04 拆解 Claude Code 的 Loop</a>
+        <a href="index.html">返回目录 &uarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p>参考资料：Google Antigravity 官方文档 <a href="https://antigravity.google/docs/models#orchestrator">Orchestrator</a>、官方博客 <a href="https://antigravity.google/blog/gemini-4-hydrogen-in-google-antigravity">Gemini 4 Hydrogen and Orchestrator</a>、Gemini API <a href="https://ai.google.dev/gemini-api/docs/caching">Context caching</a> 与 <a href="https://ai.google.dev/gemini-api/docs/thought-signatures">Thought signatures</a> 文档；网页版附有四路线对比、状态机推演、7 轮缓存账本与回本计算器。</p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      /* 1. Theme Toggle & OS Color-Scheme Sync */
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function applyTheme(theme) {
+        root.setAttribute("data-theme", theme);
+        label.textContent = theme.toUpperCase();
+      }
+
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      if (saved === "dark" || saved === "light") {
+        applyTheme(saved);
+      } else {
+        applyTheme(darkMql.matches ? "dark" : "light");
+      }
+
+      darkMql.addEventListener("change", function (ev) {
+        var manual = null;
+        try { manual = localStorage.getItem("blog.theme"); } catch (e) {}
+        if (manual !== "dark" && manual !== "light") {
+          applyTheme(ev.matches ? "dark" : "light");
+        }
+      });
+
+      btn.addEventListener("click", function () {
+        var current = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        applyTheme(current);
+        try { localStorage.setItem("blog.theme", current); } catch (e) {}
+      });
+
+      /* 2. Reading Progress & Left Rail TOC */
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var sections = ["intro", "prerequisites", "state-machine", "prompt-cache", "economics", "implementation"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      var tocLinks = document.querySelectorAll("#toc-list a");
+
+      function onScroll() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+        if (scrollTop > 220) strip.classList.add("is-visible");
+        else strip.classList.remove("is-visible");
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+
+        var currentSectionId = "intro";
+        for (var i = 0; i < sections.length; i++) {
+          if (sections[i].getBoundingClientRect().top <= 160) {
+            currentSectionId = sections[i].id;
+          }
+        }
+        tocLinks.forEach(function (link) {
+          link.classList.toggle("is-active", link.getAttribute("href") === "#" + currentSectionId);
+        });
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+
+      /* 3. Stage 1: Four Architectural Routes */
+      (function initStage1() {
+        var svgG = document.getElementById("s1-svg");
+        var readout = document.getElementById("s1-readout");
+        var cap = document.getElementById("s1-cap");
+
+        var routes = [
+          {
+            readout: "ROUTE 1 / 4 · 单模型一条道走到黑",
+            cap: "单模型一条道走到黑：上下文不断裂、缓存一路热，但全程 Carbon 慢且烧前沿额度，全程轻量模型遇强耦合会打转。",
+            svg:
+              '<rect x="24" y="30" width="712" height="72" rx="7" fill="var(--bg-elevated)" stroke="var(--purple)" stroke-width="1.5"/>' +
+              '<text x="44" y="57" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--purple)">选项 A：全程 Gemini 4 Carbon（一个 Session 跑到底）</text>' +
+              '<text x="44" y="82" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">调研拍板 &rarr; 批量改十几个文件 &rarr; 补单测 &rarr; 验收，每步全吃高推理延迟与前沿额度</text>' +
+              '<rect x="24" y="116" width="712" height="72" rx="7" fill="var(--bg-elevated)" stroke="var(--warn)" stroke-width="1.5"/>' +
+              '<text x="44" y="143" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--warn)">选项 B：全程轻量模型（一个 Session 跑到底）</text>' +
+              '<text x="44" y="168" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">常规修改快且省钱，但撞上跨文件状态机耦合时无重推理托底，容易陷入反复试错</text>'
+          },
+          {
+            readout: "ROUTE 2 / 4 · 请求级 Model Router",
+            cap: "入口猜难度或网关逐请求硬切：看不懂任务演化阶段，缺交接契约与工具门禁，思维链/签名易断层且双边缓存破碎。",
+            svg:
+              '<rect x="24" y="64" width="126" height="82" rx="7" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.5"/>' +
+              '<text x="87" y="96" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ink)">每轮请求到达</text>' +
+              '<text x="87" y="120" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">无阶段语义</text>' +
+              '<line x1="150" y1="105" x2="198" y2="105" stroke="var(--rule-strong)" stroke-width="1.6"/>' +
+              '<rect x="198" y="54" width="154" height="102" rx="7" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>' +
+              '<text x="275" y="84" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--accent)">启发式 Router</text>' +
+              '<text x="275" y="108" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink)">靠字数/首句猜难度</text>' +
+              '<text x="275" y="132" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">无契约 · 无 Tool Gate</text>' +
+              '<line x1="352" y1="84" x2="430" y2="54" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 3"/>' +
+              '<line x1="352" y1="126" x2="430" y2="154" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 3"/>' +
+              '<rect x="430" y="20" width="306" height="68" rx="7" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.3"/>' +
+              '<text x="583" y="47" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--ink)">痛点 1：推理链与签名中途断层</text>' +
+              '<text x="583" y="69" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">大模型刚建立假设，下轮硬切小模型直接丢思考</text>' +
+              '<rect x="430" y="118" width="306" height="68" rx="7" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.3"/>' +
+              '<text x="583" y="145" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="600" fill="var(--ink)">痛点 2：改偏难退回 + 缓存打碎</text>' +
+              '<text x="583" y="167" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">小模型改坏现场无交回通道，频繁横跳毁掉缓存前缀</text>'
+          },
+          {
+            readout: "ROUTE 3 / 4 · Subagent / SDK 边界切模型",
+            cap: "以独立会话切模型：适合 Issue 分流等天然解耦流水线；但放回紧耦合单次编码里，隔着有损摘要同步现场太重。",
+            svg:
+              '<rect x="24" y="30" width="242" height="148" rx="8" fill="var(--bg-elevated)" stroke="var(--blue)" stroke-width="1.6"/>' +
+              '<text x="145" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--blue)">主会话 / 重构 Agent (Carbon)</text>' +
+              '<text x="145" y="88" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">掌握完整排查记录与原始上下文</text>' +
+              '<text x="145" y="114" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">独立上下文窗口 A</text>' +
+              '<text x="145" y="146" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--warn)">看不见子窗口里的实时报错现场</text>' +
+              '<line x1="266" y1="84" x2="478" y2="84" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4"/>' +
+              '<text x="372" y="72" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--accent)">有损摘要派单 &rarr;</text>' +
+              '<line x1="478" y1="126" x2="266" y2="126" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4"/>' +
+              '<text x="372" y="144" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--accent)">&larr; 几行结果回传</text>' +
+              '<rect x="478" y="30" width="258" height="148" rx="8" fill="var(--bg-elevated)" stroke="var(--ok)" stroke-width="1.6"/>' +
+              '<text x="607" y="62" text-anchor="middle" font-family="var(--font-sans)" font-size="13.5" font-weight="600" fill="var(--ok)">Subagent / 分流组 (Hydrogen)</text>' +
+              '<text x="607" y="88" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink)">空白桌子起步 · 适合独立 Issue/PR</text>' +
+              '<text x="607" y="114" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">独立上下文窗口 B</text>' +
+              '<text x="607" y="146" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--warn)">强耦合单次改码来回同步损耗高</text>'
+          },
+          {
+            readout: "ROUTE 4 / 4 · Orchestrator 同轨迹双向协作",
+            cap: "保留同一条 Trajectory，由宿主 Harness 用状态机、显式计划与 Tool Gate 在阶段边界切换模型。",
+            svg:
+              '<rect x="24" y="18" width="712" height="54" rx="7" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.6"/>' +
+              '<text x="380" y="41" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ink)">宿主 Harness：三态状态机 + Tool Gate + Review Hook（阶段边界换模）</text>' +
+              '<text x="380" y="61" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">exit_plan_mode (带显式契约交棒) &harr; enter_plan_mode (两次失败或硬门禁交回)</text>' +
+              '<rect x="64" y="90" width="256" height="62" rx="7" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.6"/>' +
+              '<text x="192" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--blue)">Planner: Carbon / Argon</text>' +
+              '<text x="192" y="137" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">只读查库 · 拍板计划 · 复核 diff</text>' +
+              '<line x1="320" y1="112" x2="438" y2="112" stroke="var(--ok)" stroke-width="1.8"/>' +
+              '<text x="379" y="104" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ok)">显式计划契约</text>' +
+              '<line x1="438" y1="132" x2="320" y2="132" stroke="var(--accent)" stroke-width="1.8"/>' +
+              '<text x="379" y="146" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">受阻/复核交回</text>' +
+              '<rect x="438" y="90" width="256" height="62" rx="7" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6"/>' +
+              '<text x="566" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="600" fill="var(--ok)">Executor: Hydrogen (TB 4.1 57%)</text>' +
+              '<text x="566" y="137" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">读写施工 · 跑构建测试 · 快速收敛</text>' +
+              '<rect x="24" y="166" width="712" height="32" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)"/>' +
+              '<text x="380" y="186" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-secondary)">底层共用同一条持久 Trajectory + Workspace · 暖调用各自命中独立的 Prompt Cache 池</text>'
+          }
+        ];
+
+        function select(idx) {
+          var m = routes[idx];
+          readout.textContent = m.readout;
+          cap.textContent = m.cap;
+          svgG.innerHTML = m.svg;
+          document.querySelectorAll("[data-s1]").forEach(function (b) {
+            b.classList.toggle("is-active", parseInt(b.getAttribute("data-s1"), 10) === idx);
+          });
+          if (window.gsap && !prefersReducedMotion.matches) {
+            window.gsap.fromTo(svgG.children, { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: 0.24, stagger: 0.03, ease: "power2.out" });
+          }
+        }
+
+        document.querySelectorAll("[data-s1]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            select(parseInt(b.getAttribute("data-s1"), 10));
+          });
+        });
+        select(0);
+      })();
+
+      /* 4. Stage 2: Harness Three-State Handoff Simulator */
+      (function initStage2() {
+        var curCase = "standard";
+        var step = 1;
+        var timer = null;
+        var graphG = document.getElementById("s2-graph");
+        var readout = document.getElementById("s2-readout");
+        var line1 = document.getElementById("s2-line-1");
+        var line2 = document.getElementById("s2-line-2");
+        var cap = document.getElementById("s2-cap");
+        var prevBtn = document.getElementById("s2-prev");
+        var nextBtn = document.getElementById("s2-next");
+        var autoBtn = document.getElementById("s2-auto");
+
+        var nodeMeta = {
+          PLANNING: { x: 40, y: 26, w: 185, h: 90, title: "PLANNING", model: "Carbon / Argon", gate: "写工具禁用 · 仅读/测" },
+          EXECUTING: { x: 285, y: 26, w: 190, h: 90, title: "EXECUTING", model: "Hydrogen", gate: "开放文件编辑与命令" },
+          REVIEW_PENDING: { x: 285, y: 128, w: 190, h: 44, title: "REVIEW_PENDING", model: "Hydrogen (受限)", gate: "仅放行 enter_plan_mode" },
+          DONE: { x: 535, y: 26, w: 185, h: 90, title: "DONE", model: "Carbon / Argon", gate: "验收通过 · 会话空闲" }
+        };
+
+        var cases = {
+          standard: {
+            label: "标准往返",
+            steps: [
+              { active: "PLANNING", gate: "只读调查（禁止写盘）", l1: "Step 1 / 5 · 收到用户新需求，Harness 默认锁定在 PLANNING 阶段", l2: "由 Carbon 读代码、摸清调用链并写计划；此时若仅是纯问答，直接答完结束不唤醒执行模型。", cap: "任何空闲期新输入都先过规划态，避免快模型没看清全局就直接动手改文件。" },
+              { active: "EXECUTING", gate: "读写开放（Hydrogen 施工）", l1: "Step 2 / 5 · Carbon 调用 exit_plan_mode 交出显式计划与 Re-plan if 清单", l2: "Harness 将阶段切至 EXECUTING 并把后续请求换为 Hydrogen，按清单改文件、跑单测。", cap: "规划期未写出来的内部思考不会传给 Hydrogen，因此计划必须明确文件、符号与验证命令。" },
+              { active: "EXECUTING", gate: "消化轻微偏差（不回程）", l1: "Step 3 / 5 · Hydrogen 遇到缺一个 import 或测试偶发抖动，当场自行修补", l2: "执行协议允许消化这类小摩擦；如果一遇小错就切回 Carbon，往返开销会把收益吃光。", cap: "双模交接追求的是粗粒度稳态段分工，而不是每一行报错都跨模型求助。" },
+              { active: "PLANNING", gate: "只读复核（核验 diff）", l1: "Step 4 / 5 · 施工结束（或命中 30 步体检），Hydrogen 调 enter_plan_mode 交回报告", l2: "Carbon 切回后读回真实 diff 与测试输出；注意此处直接命中 Carbon 原先的热缓存前缀。", cap: "复核不是盖章走形式，Carbon 必须以客观测试和 diff 为准，防止同源叙事锚定。" },
+              { active: "DONE", gate: "交付收工", l1: "Step 5 / 5 · 复核确认所有验收条件通过，Carbon 向用户交付最终结果", l2: "本轮任务闭环，轨迹保留全部交接标记与完整工具证据。", cap: "标准往返下，一次任务只为 Hydrogen 付了一次冷启动预热税。" }
+            ]
+          },
+          friction: {
+            label: "两次失败交回",
+            steps: [
+              { active: "PLANNING", gate: "只读调查（建立初始计划）", l1: "Step 1 / 4 · Carbon 排查模块后拟定修改方案并调用 exit_plan_mode", l2: "计划中约定接口兼容性假设与目标单测命令，交棒给 Hydrogen。", cap: "高质量的计划会提前写明针对当前任务的 Re-plan if 边界。" },
+              { active: "EXECUTING", gate: "首次验证失败（允许自修）", l1: "Step 2 / 4 · Hydrogen 改完代码跑测试失败，先按协议自己定位修一轮", l2: "第一次失败属于执行模型允许处理的范围，Harness 不会立刻打断它。", cap: "给执行模型留一次自纠机会，能避免大量表面语法或漏引用问题反复摇人。" },
+              { active: "PLANNING", gate: "只读重算（触发熔断红线）", l1: "Step 3 / 4 · 同一项验证第二次仍失败！Hydrogen 按协议调 enter_plan_mode 交回", l2: "拒绝盲猜第三次：Hydrogen 附带两次报错堆栈把方向盘还给 Carbon，避免在错误假设上越改越乱。", cap: "连续两次失败、假设不成立、出现未决方案或改动越界，均触发主动交回。" },
+              { active: "EXECUTING", gate: "持修订计划重新施工", l1: "Step 4 / 4 · Carbon 核对现场报错后修正设计方案，再次 exit_plan_mode 交棒", l2: "因为两边一直共用同一条轨迹，Hydrogen 接着刚才的磁盘现场继续完成剩余修复。", cap: "双向往返让复杂度在中途暴露时也能及时升档，这是入口静态 Router 做不到的。" }
+            ]
+          },
+          hook: {
+            label: "硬门禁强拦",
+            steps: [
+              { active: "EXECUTING", gate: "读写开放（Hydrogen 连续干活）", l1: "Step 1 / 4 · Hydrogen 正在 EXECUTING 阶段连续改十几个文件、跑构建", l2: "Harness 背后的 Review Hook 持续监测用户插话与模型响应步数（累计满 30 步触发）。", cap: "注意计数口径：统计的是模型响应步数，不是挂钟秒数，也不是单轮并发调用的工具数。" },
+              { active: "REVIEW_PENDING", gate: "Tool Gate 锁死其余工具", l1: "Step 2 / 4 · 突发：用户半途敲入新指令，或执行累计刚满 30 次模型响应", l2: "Harness 立刻切至 REVIEW_PENDING 并注入隐藏复核请求，除 enter_plan_mode 外全部工具被拒绝。", cap: "强约束就在这里：就算轻量模型想忽略提示词继续改文件，Tool Gate 也会在副作用前直接拦住。" },
+              { active: "PLANNING", gate: "只读消化新指令 / 体检进度", l1: "Step 3 / 4 · Hydrogen 被迫立刻调用 enter_plan_mode，汇总已改项与未完项交回", l2: "控制权回到 Carbon：若用户插了新需求，由 Carbon 统一改写计划；若是 30 步体检，确认未偏航。", cap: "用工具门禁把“记得停下来汇报”从软提示词变成硬运行时状态机。" },
+              { active: "EXECUTING", gate: "恢复读写施工", l1: "Step 4 / 4 · Carbon 下发更新后的剩余计划，再次交棒 Hydrogen 收尾", l2: "阶段边界标记写入轨迹，30 步计数器从新边界重新起算。", cap: "既有防跑偏的硬兜底，又不剥夺中间长施工段的执行效率。" }
+            ]
+          }
+        };
+
+        function stopAuto() {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          autoBtn.textContent = "▶ 自动演示";
+        }
+
+        function draw() {
+          var c = cases[curCase];
+          var total = c.steps.length;
+          if (step > total) step = total;
+          var st = c.steps[step - 1];
+          prevBtn.disabled = step <= 1;
+          nextBtn.disabled = step >= total;
+          readout.textContent = "CASE: " + c.label + " · STEP " + step + " / " + total;
+          line1.textContent = st.l1;
+          line2.textContent = st.l2;
+          cap.textContent = st.cap;
+
+          var html = '';
+          html += '<path d="M 225 56 L 281 56" stroke="var(--ok)" stroke-width="1.7" fill="none" marker-end="url(#fsm-arrow)" />';
+          html += '<text x="253" y="48" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ok)">exit_plan</text>';
+          html += '<path d="M 285 88 L 229 88" stroke="var(--blue)" stroke-width="1.7" fill="none" marker-end="url(#fsm-arrow)" />';
+          html += '<text x="257" y="103" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--blue)">enter_plan</text>';
+          html += '<path d="M 380 116 L 380 124" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#fsm-arrow)" />';
+          html += '<path d="M 285 150 Q 132 150 132 120" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#fsm-arrow)" />';
+          html += '<text x="195" y="166" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent)">门禁强逼交回</text>';
+          html += '<path d="M 132 26 Q 380 -6 627 24" stroke="var(--ink-muted)" stroke-width="1.4" stroke-dasharray="4 3" fill="none" marker-end="url(#fsm-arrow)" />';
+          html += '<text x="380" y="14" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">纯问答或复核达标直接交付</text>';
+
+          Object.keys(nodeMeta).forEach(function (k) {
+            var m = nodeMeta[k];
+            var isCur = st.active === k;
+            var stroke = isCur ? "var(--accent)" : "var(--rule-strong)";
+            var fill = isCur ? (k === "REVIEW_PENDING" ? "var(--accent-soft)" : k === "EXECUTING" ? "var(--ok-soft)" : k === "DONE" ? "var(--purple-soft)" : "var(--blue-soft)") : "var(--bg-elevated)";
+            var op = isCur ? "1" : "0.52";
+            var sw = isCur ? "2.3" : "1.2";
+
+            html += '<g opacity="' + op + '">';
+            html += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" rx="7" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
+            if (k === "REVIEW_PENDING") {
+              html += '<text x="' + (m.x + m.w / 2) + '" y="' + (m.y + 18) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink)") + '">' + m.title + '</text>';
+              html += '<text x="' + (m.x + m.w / 2) + '" y="' + (m.y + 34) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">' + m.gate + '</text>';
+            } else {
+              html += '<text x="' + (m.x + m.w / 2) + '" y="' + (m.y + 24) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="12" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink)") + '">' + m.title + '</text>';
+              html += '<text x="' + (m.x + m.w / 2) + '" y="' + (m.y + 47) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ink)">' + m.model + '</text>';
+              html += '<text x="' + (m.x + m.w / 2) + '" y="' + (m.y + 70) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">' + m.gate + '</text>';
+            }
+            html += '</g>';
+          });
+
+          html += '<rect x="535" y="128" width="185" height="44" rx="7" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+          html += '<text x="627" y="146" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">TOOL GATE STATUS</text>';
+          html += '<text x="627" y="163" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--accent)">' + st.gate + '</text>';
+
+          graphG.innerHTML = html;
+        }
+
+        document.querySelectorAll("[data-s2-case]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            stopAuto();
+            curCase = b.getAttribute("data-s2-case");
+            step = 1;
+            document.querySelectorAll("[data-s2-case]").forEach(function (x) { x.classList.remove("is-active"); });
+            b.classList.add("is-active");
+            draw();
+          });
+        });
+
+        prevBtn.addEventListener("click", function () { stopAuto(); if (step > 1) { step--; draw(); } });
+        nextBtn.addEventListener("click", function () {
+          stopAuto();
+          var total = cases[curCase].steps.length;
+          if (step < total) { step++; draw(); }
+        });
+        autoBtn.addEventListener("click", function () {
+          if (timer) {
+            stopAuto();
+            return;
+          }
+          var total = cases[curCase].steps.length;
+          if (step >= total) step = 1;
+          draw();
+          autoBtn.textContent = "⏸ 暂停演示";
+          timer = setInterval(function () {
+            var maxS = cases[curCase].steps.length;
+            if (step >= maxS) {
+              stopAuto();
+              return;
+            }
+            step++;
+            draw();
+          }, 1450);
+        });
+        document.getElementById("s2-reset").addEventListener("click", function () {
+          stopAuto();
+          step = 1;
+          draw();
+        });
+        draw();
+      })();
+
+      /* 5. Stage 3: 7-Turn Prompt Cache Ledger Inspector */
+      (function initStage3() {
+        var idx = 2;
+        var svgG = document.getElementById("s3-svg");
+        var readout = document.getElementById("s3-readout");
+        var modelEl = document.getElementById("s3-model");
+        var tokensEl = document.getElementById("s3-tokens");
+        var rateEl = document.getElementById("s3-rate");
+        var cap = document.getElementById("s3-cap");
+        var prevBtn = document.getElementById("s3-prev");
+        var nextBtn = document.getElementById("s3-next");
+
+        var rows = [
+          { id: "#1", model: "Gemini 4 Carbon", phase: "Planning · 首轮", inp: 11313, cache: 0, total: 11313, pct: "0.0%", note: "Carbon 首次冷启动，System Prompt 与初始上下文全部按普通输入写入缓存池。" },
+          { id: "#2", model: "Gemini 4 Carbon", phase: "Planning · 次轮", inp: 2335, cache: 9259, total: 11594, pct: "79.9%", note: "Carbon 暖请求直接复用上一轮前缀，约 2k 普通输入来自 2,050-token 尾窗规则。" },
+          { id: "#3", model: "Gemini 4 Hydrogen", phase: "Executing · 切入", inp: 12566, cache: 0, total: 12566, pct: "0.0%", note: "切到 Hydrogen 后必须冷启动预热！共享轨迹不等于跨模型共享 Prompt Cache，这是双模切换的核心固定税。" },
+          { id: "#4", model: "Gemini 4 Hydrogen", phase: "Executing · 次轮", inp: 2389, cache: 10517, total: 12906, pct: "81.5%", note: "Hydrogen 暖请求命中超过八成缓存，施工轮次越长，越能把 #3 的冷启动成本摊薄。" },
+          { id: "#5", model: "Gemini 4 Hydrogen", phase: "Executing · 末轮", inp: 2121, cache: 10951, total: 13072, pct: "83.8%", note: "Hydrogen 继续高比例命中缓存，完成编辑与断言验证后调用 enter_plan_mode 交回。" },
+          { id: "#6", model: "Gemini 4 Carbon", phase: "Planning · 切回复核", inp: 2714, cache: 11595, total: 14309, pct: "81.0%", note: "关键实测证据：切回 Carbon 时没有清零重算！Carbon 自己的旧缓存池依然热着（命中 11,595），只付了施工新增增量。" },
+          { id: "#7", model: "Gemini 4 Carbon", phase: "Planning · 复核收尾", inp: 2691, cache: 12260, total: 14951, pct: "82.0%", note: "精确印证尾窗公式：14,309 → 14,951 新增 642 < 2,050，理论复用 14,309 − 2,050 = 12,259，普通输入 642 + 2,050 = 2,692，与实测差 1 Token。" }
+        ];
+
+        var maxVal = 15500;
+
+        function render(n) {
+          idx = Math.max(0, Math.min(rows.length - 1, n));
+          var r = rows[idx];
+          prevBtn.disabled = idx <= 0;
+          nextBtn.disabled = idx >= rows.length - 1;
+          readout.textContent = "REQ " + r.id + " / 7 · " + r.phase;
+          modelEl.textContent = r.model + " (" + r.phase + ")";
+          tokensEl.textContent = r.inp.toLocaleString() + " / " + r.cache.toLocaleString() + " (总 " + r.total.toLocaleString() + ")";
+          rateEl.textContent = "命中 " + r.pct;
+          cap.textContent = r.note;
+
+          document.querySelectorAll("[data-s3]").forEach(function (b) {
+            b.classList.toggle("is-active", parseInt(b.getAttribute("data-s3"), 10) === idx);
+          });
+
+          var html = '';
+          html += '<rect x="140" y="6" width="12" height="12" rx="2" fill="var(--ok)" />';
+          html += '<text x="158" y="16" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">缓存读取 (cacheReadTokens)</text>';
+          html += '<rect x="360" y="6" width="12" height="12" rx="2" fill="var(--accent)" />';
+          html += '<text x="378" y="16" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">普通输入 (inputTokens，含冷启动与 2,050 尾窗)</text>';
+
+          var barX = 140;
+          var barMaxW = 490;
+          var startY = 34;
+          var rowH = 27;
+
+          rows.forEach(function (item, i) {
+            var y = startY + i * rowH;
+            var isCur = i === idx;
+            var cacheW = Math.round((item.cache / maxVal) * barMaxW);
+            var inpW = Math.round((item.inp / maxVal) * barMaxW);
+
+            if (i === 2 || i === 5) {
+              html += '<line x1="20" y1="' + (y - 3) + '" x2="740" y2="' + (y - 3) + '" stroke="var(--rule)" stroke-dasharray="4 3" />';
+            }
+
+            html += '<g style="cursor:pointer" data-s3-bar="' + i + '">';
+            if (isCur) {
+              html += '<rect x="16" y="' + (y - 1) + '" width="728" height="23" rx="4" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.3" />';
+            }
+            var isHydro = item.model.indexOf("Hydrogen") !== -1;
+            html += '<text x="24" y="' + (y + 15) + '" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="' + (isHydro ? "var(--ok)" : "var(--blue)") + '">' + item.id + ' ' + (isHydro ? "Hydrogen" : "Carbon") + '</text>';
+            if (cacheW > 0) {
+              html += '<rect x="' + barX + '" y="' + (y + 3) + '" width="' + cacheW + '" height="15" rx="2" fill="var(--ok)" opacity="' + (isCur ? "1" : "0.75") + '" />';
+            }
+            html += '<rect x="' + (barX + cacheW) + '" y="' + (y + 3) + '" width="' + inpW + '" height="15" rx="2" fill="var(--accent)" opacity="' + (isCur ? "1" : "0.78") + '" />';
+            html += '<text x="' + (barX + cacheW + inpW + 8) + '" y="' + (y + 14) + '" font-family="var(--font-mono)" font-size="11" fill="var(--ink-secondary)">' + item.total.toLocaleString() + ' (' + item.pct + ')</text>';
+            html += '</g>';
+          });
+
+          svgG.innerHTML = html;
+          svgG.querySelectorAll("[data-s3-bar]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              render(parseInt(el.getAttribute("data-s3-bar"), 10));
+            });
+          });
+        }
+
+        prevBtn.addEventListener("click", function () { if (idx > 0) render(idx - 1); });
+        nextBtn.addEventListener("click", function () { if (idx < rows.length - 1) render(idx + 1); });
+        document.querySelectorAll("[data-s3]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            render(parseInt(b.getAttribute("data-s3"), 10));
+          });
+        });
+        render(2);
+      })();
+
+      /* 6. Stage 4: Break-Even Cost Calculator */
+      (function initStage4() {
+        var sF = document.getElementById("slider-f");
+        var sR = document.getElementById("slider-r");
+        var sH = document.getElementById("slider-h");
+        var vF = document.getElementById("val-f");
+        var vR = document.getElementById("val-r");
+        var vH = document.getElementById("val-h");
+        var bBase = document.getElementById("bar-base");
+        var bKeep = document.getElementById("bar-keep");
+        var bExec = document.getElementById("bar-exec");
+        var bOver = document.getElementById("bar-over");
+        var vTotal = document.getElementById("val-total");
+        var readout = document.getElementById("s4-readout");
+        var verdict = document.getElementById("s4-verdict");
+
+        var presets = {
+          feature: { f: 68, r: 28, h: 16 },
+          trivial: { f: 25, r: 28, h: 32 },
+          thrash: { f: 45, r: 32, h: 38 }
+        };
+
+        function update() {
+          var f = parseInt(sF.value, 10) / 100;
+          var r = parseInt(sR.value, 10) / 100;
+          var h = parseInt(sH.value, 10) / 100;
+
+          vF.textContent = Math.round(f * 100) + "%";
+          vR.textContent = r.toFixed(2);
+          vH.textContent = Math.round(h * 100) + "%";
+
+          var keepPart = 1 - f;
+          var execPart = f * r;
+          var total = keepPart + execPart + h;
+          var pct = total * 100;
+          var scaleMax = Math.max(100, pct);
+
+          bBase.style.width = (100 / scaleMax * 100).toFixed(1) + "%";
+          bKeep.style.width = ((keepPart * 100) / scaleMax * 100).toFixed(1) + "%";
+          bExec.style.width = ((execPart * 100) / scaleMax * 100).toFixed(1) + "%";
+          bOver.style.width = ((h * 100) / scaleMax * 100).toFixed(1) + "%";
+          vTotal.textContent = pct.toFixed(1) + "%";
+
+          var diff = 100 - pct;
+          var savedFormula = f * (1 - r);
+          if (diff > 0.5) {
+            readout.textContent = "相对基线成本 " + pct.toFixed(1) + "% · 净省 " + diff.toFixed(1) + "%";
+            verdict.className = "econ-verdict is-win";
+            verdict.innerHTML = "<strong>当前参数区间划算：</strong>可替代段省下的差价 <code>f(1&minus;r) = " + (savedFormula * 100).toFixed(1) + "%</code> 超过了交接与冷启动固定税 <code>h = " + (h * 100).toFixed(0) + "%</code>，相比全程强模型净省约 <strong>" + diff.toFixed(1) + "%</strong> 成本。";
+          } else {
+            readout.textContent = "相对基线成本 " + pct.toFixed(1) + "% · 反超 " + Math.abs(diff).toFixed(1) + "%";
+            verdict.className = "econ-verdict is-loss";
+            verdict.innerHTML = "<strong>当前参数区间倒贴：</strong>执行段差价 <code>f(1&minus;r) = " + (savedFormula * 100).toFixed(1) + "%</code> 盖不住 <code>h = " + (h * 100).toFixed(0) + "%</code> 的交接与预热税。若是琐碎小活，请直接单选 <code>Hydrogen</code>；若是强探索返工，请直接单选 <code>Carbon</code>。";
+          }
+        }
+
+        [sF, sR, sH].forEach(function (inp) {
+          inp.addEventListener("input", function () {
+            document.querySelectorAll("[data-s4-preset]").forEach(function (b) { b.classList.remove("is-active"); });
+            update();
+          });
+        });
+
+        document.querySelectorAll("[data-s4-preset]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var p = presets[b.getAttribute("data-s4-preset")];
+            if (!p) return;
+            sF.value = p.f;
+            sR.value = p.r;
+            sH.value = p.h;
+            document.querySelectorAll("[data-s4-preset]").forEach(function (x) { x.classList.remove("is-active"); });
+            b.classList.add("is-active");
+            update();
+          });
+        });
+
+        update();
+      })();
+    })();
+  </script>
+</body>
+</html>

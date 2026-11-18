@@ -75,6 +75,7 @@
       align-items: center;
       gap: 18px;
       font-size: 14px;
+      flex-wrap: wrap;
     }
     .site-nav a {
       color: var(--ink-secondary);
@@ -222,6 +223,7 @@
   <header class="site-header">
     <a class="site-brand" href="index.html">Notes &amp; Essays</a>
     <nav class="site-nav" aria-label="导航">
+      <a href="05-inside-antigravity-orchestrator.html">#05 Orchestrator 双模交接</a>
       <a href="04-anatomy-of-claude-code-loop.html">#04 Claude Code Loop</a>
       <a href="03-from-single-agent-to-swarm.html">#03 多 Agent 协作演进</a>
       <a href="02-the-next-flat-world.html">#02 下一个 Flat 时代</a>
@@ -239,6 +241,39 @@
     </section>
 
     <div class="essay-list">
+      <article class="essay-card">
+        <div class="essay-meta">
+          <span class="essay-issue">ESSAY #05</span>
+          <span>·</span>
+          <time datetime="2026-11-18">2026-11-18</time>
+          <span>·</span>
+          <span>6 分钟阅读 · 含交互图解</span>
+        </div>
+        <h2><a href="05-inside-antigravity-orchestrator.html">同会话双模交接：拆解 Antigravity Orchestrator</a></h2>
+        <a class="essay-thumb" href="05-inside-antigravity-orchestrator.html" style="background: var(--bg-elevated); padding: 18px 20px;">
+          <svg viewBox="0 0 700 180" style="display:block; width:100%; height:auto;" aria-label="Antigravity Orchestrator 同会话双模交接示意图">
+            <rect x="24" y="20" width="652" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
+            <text x="350" y="42" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--ink)">Harness 状态机 + Tool Gate + Review Hook（控制模型切换与硬门禁）</text>
+            <rect x="44" y="72" width="236" height="60" rx="6" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.5" />
+            <text x="162" y="97" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--ink)">PLANNING · Carbon / Argon</text>
+            <text x="162" y="118" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">只读查库 · 拍板计划 · 复核验收</text>
+            <line x1="280" y1="92" x2="420" y2="92" stroke="var(--accent)" stroke-width="1.6" />
+            <text x="350" y="85" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent)">exit_plan_mode &rarr;</text>
+            <line x1="420" y1="114" x2="280" y2="114" stroke="var(--ink-muted)" stroke-width="1.5" stroke-dasharray="4 3" />
+            <text x="350" y="128" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-muted)">&larr; enter_plan_mode</text>
+            <rect x="420" y="72" width="236" height="60" rx="6" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.8" />
+            <text x="538" y="97" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--accent)">EXECUTING · Hydrogen</text>
+            <text x="538" y="118" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">高速改码 · 跑构建测试 · 遇阻交回</text>
+            <rect x="24" y="144" width="652" height="24" rx="4" fill="var(--bg-paper)" stroke="var(--rule)" />
+            <text x="350" y="160" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">共享同一条持久 Trajectory + Workspace · 两模型各自维护独立 Prompt Cache 池</text>
+          </svg>
+        </a>
+        <p class="essay-excerpt">
+          单模型跑到底太烧额度，按请求硬切的 Model Router 脆而不可控，按 Subagent 切模型又隔着一层有损摘要。对比四条路线，拆解 Antigravity Orchestrator 如何保留同一条会话轨迹，靠宿主三态状态机、显式计划与工具门禁调度快慢模型，以及 Prompt Cache 7 轮实测账本与自研落地要点。
+        </p>
+        <a class="read-link" href="05-inside-antigravity-orchestrator.html">阅读全文 &rarr;</a>
+      </article>
+
       <article class="essay-card">
         <div class="essay-meta">
           <span class="essay-issue">ESSAY #04</span>
