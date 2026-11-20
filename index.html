@@ -1,8 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      var meta = document.querySelector('meta[name="color-scheme"]');
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+        if (meta) meta.content = saved;
+      }
+    })();
+  </script>
   <title>Notes &amp; Essays — Mapix</title>
   <meta name="description" content="关于 AI、系统演进与创造方式的思考随笔。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,6 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
   <style>
     :root {
+      color-scheme: light dark;
       --bg-paper: #f6f2ea;
       --bg-elevated: #efeae0;
       --ink: #191816;
@@ -27,7 +40,33 @@
       --wrap: 1080px;
     }
 
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-paper: #141311;
+        --bg-elevated: #1d1b18;
+        --ink: #ece6dc;
+        --ink-secondary: #b8b0a4;
+        --ink-muted: #857d72;
+        --rule: #2e2a25;
+        --rule-strong: #ece6dc;
+        --accent: #e06d53;
+      }
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+    }
+
     html[data-theme="dark"] {
+      color-scheme: dark;
       --bg-paper: #141311;
       --bg-elevated: #1d1b18;
       --ink: #ece6dc;
@@ -179,10 +218,26 @@
       display: block;
       width: 100%;
       height: auto;
-      transition: transform 0.35s ease;
     }
-    .essay-thumb:hover img {
-      transform: scale(1.012);
+    @media (prefers-reduced-motion: no-preference) {
+      .essay-thumb img {
+        transition: transform 0.35s ease;
+      }
+      .essay-thumb:hover img {
+        transform: scale(1.012);
+      }
+    }
+
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
     }
 
     .essay-excerpt {
@@ -222,14 +277,15 @@
 
   <header class="site-header">
     <a class="site-brand" href="index.html">Notes &amp; Essays</a>
-    <nav class="site-nav" aria-label="导航">
+    <nav class="site-nav" aria-label="站点随笔">
+      <a href="06-rights-and-duties-of-agents.html">#06 人与 AI 切蛋糕</a>
       <a href="05-inside-antigravity-orchestrator.html">#05 Orchestrator 双模交接</a>
       <a href="04-anatomy-of-claude-code-loop.html">#04 Claude Code Loop</a>
       <a href="03-from-single-agent-to-swarm.html">#03 多 Agent 协作演进</a>
       <a href="02-the-next-flat-world.html">#02 下一个 Flat 时代</a>
       <a href="01-think-big-build-from-small.html">#01 Think Big &amp; Build from Small</a>
-      <button type="button" class="theme-btn" id="theme-toggle" title="切换明暗主题">
-        <span id="theme-label">LIGHT</span>
+      <button type="button" class="theme-btn" id="theme-toggle">
+        <span class="visually-hidden">切换明暗主题，当前 </span><span id="theme-label">LIGHT</span>
       </button>
     </nav>
   </header>
@@ -241,6 +297,51 @@
     </section>
 
     <div class="essay-list">
+      <article class="essay-card">
+        <div class="essay-meta">
+          <span class="essay-issue">ESSAY #06</span>
+          <span>·</span>
+          <time datetime="2026-11-20">2026-11-20</time>
+          <span>·</span>
+          <span>11 分钟阅读 · 含交互图解</span>
+        </div>
+        <h2><a href="06-rights-and-duties-of-agents.html">人与 AI 切蛋糕：从工具到数字员工的权责演进</a></h2>
+        <a class="essay-thumb" href="06-rights-and-duties-of-agents.html" style="background: var(--bg-elevated); padding: 18px 20px;">
+          <svg viewBox="0 0 700 180" role="img" style="display:block; width:100%; height:auto;" aria-label="人与 AI 切蛋糕六阶段演进示意图：局部补全、代码沙盒、日常办公、多人协作、数字员工值守到找问题·定规矩·签字担责">
+            <line x1="56" y1="40" x2="620" y2="40" stroke="var(--rule)" stroke-width="1.8" stroke-dasharray="4 3" />
+            <g font-family="var(--font-sans)" font-size="10.2" text-anchor="middle">
+              <rect x="18" y="22" width="76" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
+              <text x="56" y="44" font-weight="600" fill="var(--ink)">局部补全</text>
+              <rect x="103" y="22" width="92" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
+              <text x="149" y="44" font-weight="600" fill="var(--ink)">代码沙盒</text>
+              <rect x="204" y="22" width="92" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
+              <text x="250" y="44" font-weight="600" fill="var(--ink)">日常办公</text>
+              <rect x="305" y="22" width="92" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.4" />
+              <text x="351" y="44" font-weight="600" fill="var(--accent)">多人协作</text>
+              <rect x="406" y="22" width="116" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.5" />
+              <text x="464" y="44" font-weight="600" fill="var(--accent)">数字员工值守</text>
+              <rect x="531" y="22" width="151" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.8" />
+              <text x="606.5" y="44" font-weight="700" fill="var(--accent)">找问题·定规矩·签字担责</text>
+            </g>
+            <rect x="18" y="76" width="664" height="84" rx="6" fill="var(--bg-paper)" stroke="var(--rule)" />
+            <rect x="34" y="92" width="388" height="52" rx="5" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.2" />
+            <text x="228" y="113" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ink)">分给 AI 的工作：不确定判断 · 调工具自修 · 常驻盯业务域</text>
+            <text x="228" y="132" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">隔离沙盒回滚 · 先拟草稿 · 权限取交集 · 分析库与运行账本分开</text>
+            <line x1="452" y1="84" x2="452" y2="152" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" />
+            <polygon points="452,82 447,89 452,96 457,89" fill="var(--accent)" />
+            <rect x="433" y="109" width="38" height="18" rx="3" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.2" />
+            <text x="452" y="121" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="700" fill="var(--accent)">边界</text>
+            <rect x="480" y="92" width="186" height="52" rx="5" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.5" />
+            <text x="573" y="113" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--accent)">留在人手里的三件事</text>
+            <text x="573" y="132" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">找真问题 · 定规矩 · 签字担责</text>
+          </svg>
+        </a>
+        <p class="essay-excerpt">
+          过去一年，Agent 从写代码延伸到日常办公，从个人助手搬进团队群聊，再到常驻业务域变成“数字员工”。顺着 AI 能力一步步长出来的过程，聊聊人和机器怎么重新切分工作蛋糕、权限与义务怎么跟着配平，以及当机器接过越来越多执行工作之后，哪三件事依然留在人手里。
+        </p>
+        <a class="read-link" href="06-rights-and-duties-of-agents.html">阅读全文 &rarr;</a>
+      </article>
+
       <article class="essay-card">
         <div class="essay-meta">
           <span class="essay-issue">ESSAY #05</span>
@@ -407,18 +508,57 @@
       var root = document.documentElement;
       var btn = document.getElementById("theme-toggle");
       var label = document.getElementById("theme-label");
-      var saved = null;
-      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
-      if (saved === "dark" || saved === "light") {
-        root.setAttribute("data-theme", saved);
-        label.textContent = saved.toUpperCase();
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      var darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function getStoredTheme() {
+        try {
+          var v = localStorage.getItem("blog.theme");
+          return v === "dark" || v === "light" ? v : null;
+        } catch (e) {
+          return null;
+        }
       }
 
+      function syncThemeUI(stored) {
+        var resolved = stored || (darkMql.matches ? "dark" : "light");
+        if (stored) {
+          root.setAttribute("data-theme", stored);
+          if (metaScheme) metaScheme.content = stored;
+        } else {
+          root.removeAttribute("data-theme");
+          if (metaScheme) metaScheme.content = "light dark";
+        }
+        label.textContent = resolved.toUpperCase();
+      }
+
+      syncThemeUI(getStoredTheme());
+
+      darkMql.addEventListener("change", function () {
+        if (!getStoredTheme()) {
+          syncThemeUI(null);
+        }
+      });
+
+      window.addEventListener("storage", function (ev) {
+        if (ev.key === "blog.theme") {
+          var next = ev.newValue === "dark" || ev.newValue === "light" ? ev.newValue : null;
+          syncThemeUI(next);
+        }
+      });
+
       btn.addEventListener("click", function () {
-        var current = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-        root.setAttribute("data-theme", current);
-        label.textContent = current.toUpperCase();
-        try { localStorage.setItem("blog.theme", current); } catch (e) {}
+        var stored = getStoredTheme();
+        var currentRendered = stored || (darkMql.matches ? "dark" : "light");
+        var target = currentRendered === "dark" ? "light" : "dark";
+        var sysTheme = darkMql.matches ? "dark" : "light";
+        if (target === sysTheme) {
+          try { localStorage.removeItem("blog.theme"); } catch (e) {}
+          syncThemeUI(null);
+        } else {
+          try { localStorage.setItem("blog.theme", target); } catch (e) {}
+          syncThemeUI(target);
+        }
       });
     })();
   </script>

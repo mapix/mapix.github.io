@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      var meta = document.querySelector('meta[name="color-scheme"]');
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+        if (meta) meta.content = saved;
+      }
+    })();
+  </script>
+  <title>人与 AI 切蛋糕：从工具到数字员工的权责演进</title>
+  <meta name="description" content="过去一年，Agent 从写代码延伸到日常办公，从个人助手搬进团队群聊，再到常驻业务域变成“数字员工”。顺着 AI 能力的进步，梳理人和机器如何一步步重划工作分工、权限边界与兜底责任。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --bg-card: #fbf8f2;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+      --accent-soft: rgba(158, 51, 33, 0.11);
+      --ok: #256b45;
+      --ok-soft: rgba(37, 107, 69, 0.12);
+      --warn: #b36b16;
+      --warn-soft: rgba(179, 107, 22, 0.12);
+      --blue: #235884;
+      --blue-soft: rgba(35, 88, 132, 0.11);
+      --purple: #5c3d82;
+      --purple-soft: rgba(92, 61, 130, 0.11);
+
+      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+
+      --measure: 660px;
+      --wrap: 1080px;
+      accent-color: var(--accent);
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-paper: #141311;
+        --bg-elevated: #1d1b18;
+        --bg-card: #191714;
+        --ink: #ece6dc;
+        --ink-secondary: #b8b0a4;
+        --ink-muted: #857d72;
+        --rule: #2e2a25;
+        --rule-strong: #ece6dc;
+        --accent: #e06d53;
+        --accent-soft: rgba(224, 109, 83, 0.15);
+        --ok: #52b780;
+        --ok-soft: rgba(82, 183, 128, 0.14);
+        --warn: #e09f3e;
+        --warn-soft: rgba(224, 159, 62, 0.14);
+        --blue: #63a4d8;
+        --blue-soft: rgba(99, 164, 216, 0.14);
+        --purple: #a584d6;
+        --purple-soft: rgba(165, 132, 214, 0.14);
+      }
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-paper: #141311;
+      --bg-elevated: #1d1b18;
+      --bg-card: #191714;
+      --ink: #ece6dc;
+      --ink-secondary: #b8b0a4;
+      --ink-muted: #857d72;
+      --rule: #2e2a25;
+      --rule-strong: #ece6dc;
+      --accent: #e06d53;
+      --accent-soft: rgba(224, 109, 83, 0.15);
+      --ok: #52b780;
+      --ok-soft: rgba(82, 183, 128, 0.14);
+      --warn: #e09f3e;
+      --warn-soft: rgba(224, 159, 62, 0.14);
+      --blue: #63a4d8;
+      --blue-soft: rgba(99, 164, 216, 0.14);
+      --purple: #a584d6;
+      --purple-soft: rgba(165, 132, 214, 0.14);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.85;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: clip;
+    }
+
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    .skip-link:focus-visible {
+      position: fixed;
+      inset-block-start: 10px;
+      inset-inline-start: 12px;
+      z-index: 200;
+      padding: 6px 12px;
+      background: var(--bg-paper);
+      color: var(--ink);
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    /* Reading progress strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--bg-paper);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .reading-strip {
+        transition: transform 0.2s ease;
+      }
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      height: 2px;
+      background: var(--ink);
+      width: 0%;
+    }
+
+    /* Top Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 22px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .site-nav a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .site-nav a:focus-visible,
+    .site-brand:focus-visible,
+    .toc-list a:focus-visible,
+    .post-content a:focus-visible,
+    nav.series-nav a:focus-visible,
+    footer.post-footer a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      min-block-size: 28px;
+      min-inline-size: 28px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+    .theme-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Main Layout Grid */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 200px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Left Rail TOC */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 10px;
+      border-left: 1.5px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a.is-active {
+      color: var(--ink);
+      font-weight: 600;
+      border-left-color: var(--ink);
+    }
+
+    /* Article Header */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(27px, 3.6vw, 38px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+    header.post-header h1:focus {
+      outline: none;
+    }
+    .post-subtitle {
+      margin: 0 0 20px;
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.68;
+      color: var(--ink-secondary);
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 32px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt {
+      color: var(--ink-muted);
+    }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose Content */
+    .post-content p {
+      margin: 0 0 1.32em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.8vw, 27px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.3em 0 0.75em;
+      color: var(--ink);
+      scroll-margin-top: 64px;
+    }
+    .post-content h3 {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      margin: 1.8em 0 0.5em;
+      color: var(--ink);
+    }
+    .post-content a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
+      transition: color 0.15s ease;
+    }
+    .post-content a:hover {
+      color: var(--accent);
+    }
+    .post-content ul, .post-content ol {
+      margin: 0 0 1.4em;
+      padding-left: 1.35em;
+    }
+    .post-content li {
+      margin-bottom: 0.6em;
+    }
+    .post-content code {
+      font-family: var(--font-mono);
+      font-size: 0.84em;
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+    }
+
+    /* Interactive Stage Containers */
+    figure.stage {
+      margin: 2em -44px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    @media (max-width: 820px) {
+      figure.stage {
+        margin: 1.6em 0;
+      }
+    }
+
+    .stage-header {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .stage-meta-readout {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+    }
+
+    .stage-canvas {
+      padding: 14px 16px 12px;
+      background: var(--bg-card);
+    }
+    .stage-canvas svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+
+    .stage-controls {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-controls.stage-top-bar {
+      border-top: none;
+      border-bottom: 1px solid var(--rule);
+    }
+    .stage-controls.stage-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: inline proximity;
+      scroll-padding-inline: 16px;
+      border-top: none;
+      border-bottom: 1px solid var(--rule);
+      scrollbar-width: thin;
+    }
+    .btn-ctl {
+      appearance: none;
+      position: relative;
+      flex: none;
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      min-block-size: 28px;
+      min-inline-size: 28px;
+      padding: 4px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    [role="tab"].btn-ctl {
+      scroll-snap-align: start;
+    }
+    @media (pointer: coarse) {
+      .theme-btn,
+      .btn-ctl {
+        min-block-size: 34px;
+      }
+    }
+    .btn-ctl:hover:not(:disabled) {
+      border-color: var(--ink);
+    }
+    .btn-ctl:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .btn-ctl:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-ctl.is-primary {
+      background: var(--ink);
+      color: var(--bg-paper);
+      border-color: var(--ink);
+    }
+    .btn-ctl.is-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-ctl.is-active,
+    .btn-ctl[aria-pressed="true"],
+    [role="tab"][aria-selected="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-ctl[aria-pressed="true"]::after,
+    [role="tab"][aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 6px -1px;
+      border-block-end: 2.5px solid var(--accent);
+    }
+    .stage-canvas[role="tabpanel"]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+
+    figcaption.stage-caption {
+      padding: 9px 16px 11px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+      border-top: 1px dashed var(--rule);
+      background: var(--bg-card);
+    }
+
+    /* Stage Detail Grid */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+    .detail-grid:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+    @media (max-width: 680px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .detail-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 9px 11px;
+      line-height: 1.52;
+    }
+    .detail-pill span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      margin-bottom: 3px;
+    }
+    .detail-pill strong {
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 12.8px;
+      display: block;
+    }
+    .detail-pill.is-right {
+      border-left: 3px solid var(--ok);
+    }
+    .detail-pill.is-duty {
+      border-left: 3px solid var(--accent);
+    }
+    .detail-pill.is-shift {
+      border-left: 3px solid var(--blue);
+    }
+
+    /* Responsive Comparison Matrix (@container + sticky column & row headers) */
+    .matrix-wrap {
+      margin: 1.8em -44px;
+      overflow: auto;
+      max-inline-size: calc(100% + 88px);
+      max-block-size: min(640px, 82vh);
+      container-type: inline-size;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--bg-card);
+    }
+    .matrix-wrap:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    @media (max-width: 820px) {
+      .matrix-wrap {
+        margin: 1.5em 0;
+        max-inline-size: 100%;
+      }
+    }
+    table.compare-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.58;
+      --label-2: "背后的 AI 能力进步";
+      --label-3: "切给 AI 的蛋糕（核心分工）";
+      --label-4: "放开的核心权利";
+      --label-5: "配上的硬性义务";
+      --label-6: "状态与存储边界";
+      --label-7: "权责失配的常见后果";
+    }
+    table.compare-table caption {
+      padding: 10px 14px;
+      text-align: start;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      background: var(--bg-elevated);
+      border-block-end: 1px solid var(--rule);
+    }
+    table.compare-table thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 3;
+    }
+    table.compare-table th,
+    table.compare-table td {
+      padding: 11px 13px;
+      text-align: start;
+      border-block-end: 1px solid var(--rule);
+      vertical-align: top;
+      min-inline-size: 158px;
+    }
+    table.compare-table thead th {
+      background: var(--bg-elevated);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    table.compare-table thead th:first-child {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 4;
+      border-inline-end: 1px solid var(--rule);
+    }
+    table.compare-table tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 2;
+      min-inline-size: 142px;
+      background: var(--bg-card);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      color: var(--accent);
+      border-inline-end: 1px solid var(--rule);
+    }
+    table.compare-table tbody tr:last-child th,
+    table.compare-table tbody tr:last-child td {
+      border-block-end: none;
+    }
+
+    @container (width < 640px) {
+      .matrix-wrap {
+        max-block-size: none;
+      }
+      table.compare-table,
+      table.compare-table thead,
+      table.compare-table tbody,
+      table.compare-table tr,
+      table.compare-table th,
+      table.compare-table td {
+        display: block;
+        min-inline-size: 0;
+      }
+      table.compare-table thead {
+        display: none;
+      }
+      table.compare-table tbody tr {
+        margin: 10px;
+        border: 1px solid var(--rule);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      table.compare-table tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        inset-inline-start: auto;
+        z-index: 2;
+        background: var(--bg-elevated);
+        border-inline-end: none;
+        white-space: normal;
+      }
+      table.compare-table td:nth-child(2)::before { content: var(--label-2) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(3)::before { content: var(--label-3) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(4)::before { content: var(--label-4) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(5)::before { content: var(--label-5) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(6)::before { content: var(--label-6) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(7)::before { content: var(--label-7) "："; font-weight: 600; color: var(--ink); }
+    }
+
+    /* Post Series Nav */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.72;
+      color: var(--ink-muted);
+    }
+    footer.post-footer a {
+      color: var(--ink-secondary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    footer.post-footer a:hover {
+      color: var(--accent);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#post-title" class="skip-link visually-hidden">跳至正文</a>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">人与 AI 切蛋糕：从工具到数字员工的权责演进</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="站点与章节">
+      <a href="index.html">全部文章</a>
+      <a href="#cut-1">第一刀</a>
+      <a href="#cut-2">第二刀</a>
+      <a href="#cut-3">第三刀</a>
+      <a href="#invariants">全景对比</a>
+      <a href="#horizon">人的位置</a>
+      <button type="button" class="theme-btn" id="theme-toggle">
+        <span class="visually-hidden">切换明暗主题，当前 </span><span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="文章目录">
+      <ul class="toc-list" id="toc-list" role="list">
+        <li><a href="#intro" class="is-active">引子：人与 AI 切蛋糕</a></li>
+        <li><a href="#cut-1">第一刀：从代码沙盒走到办公桌</a></li>
+        <li><a href="#cut-2">第二刀：从个人助手走进多人协作</a></li>
+        <li><a href="#cut-3">第三刀：从跟着人走，到守着业务域走</a></li>
+        <li><a href="#invariants">变与不变：四条底层约束与全景对比</a></li>
+        <li><a href="#horizon">往长远看：蛋糕一路切下去，人留在哪儿？</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1 id="post-title" tabindex="-1">人与 AI 切蛋糕：从工具到数字员工的权责演进</h1>
+        <p class="post-subtitle">过去一年，Agent 从写代码延伸到日常办公，从个人助手搬进团队群聊，再到常驻业务域变成“数字员工”。表面看只是换了个聊天的地方，实际上每一次形态变化，都是因为 AI 的能力往前迈了一步，人和机器不得不把“谁干哪块活、给多大权限、出了事谁负责”这块蛋糕重新切分一遍。</p>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-20">2026 年 11 月 20 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>11 分钟（含交互图解）</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#06</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <div id="intro"></div>
+        <p>回看过去两百年的工具史，技术每往前走一代，人和机器的分工就得重划一次。</p>
+
+        <p>蒸汽机和流水线分走了重复的体力活，计算机和互联网分走了确定性的计算、存储与跨洋传输。但直到几年前，人和机器的分界线一直划得很清楚：人负责看现场、做权衡，把模糊的想法写成明确的代码和规则；机器只管按指令执行。程序跑出了错，没人会去怪服务器，每一处漏洞都算在写代码的人头上。</p>
+
+        <p>到了大模型时代，这条分界线第一次松动了。机器开始接手过去只有人才能干的活：在信息不全时做判断、碰到报错自己试错调整，甚至长期看住手头的一摊业务。</p>
+
+        <p>也是在过去这一年里，我们身边的 Agent 名字越起越多：Coding Agent、办公 Cowork Agent、个人助手、团队群聊 Agent、业务域 Agent，再到最近不少公司都在尝试的“AI 数字员工”。光看产品演示，很容易觉得这不过是把同一个对话框从命令行终端搬进文档侧边栏，再拉进工作群、换个员工头像。</p>
+
+        <p>但只要自己动手搭过几套线上系统，就会发现它们根本不是一回事。每次冒出一种新形态，背后都是 AI 的某项能力刚好过了可用线，让人敢把更大一块活分给它。可分出去的活一变，给机器的<strong>权利</strong>（能读什么数据、调什么接口、花多少预算）和它必须守住的<strong>义务</strong>（按什么规矩办事、越界怎么拦、出了问题谁兜底）就得跟着重排，系统架构也得重搭。说白了，给机器放权从来不只是多加一个软件功能，它改掉的是组织里决策权和责任的分配方式。顺着 AI 能力一步步长出来的过程往下捋，这几类 Agent 为什么长成今天这样，脉络其实很清楚。</p>
+
+        <!-- STAGE 1: HUMAN-AI CAKE SLICING SCALE -->
+        <figure class="stage" id="stage-cake-scale">
+          <div class="stage-header">
+            <span class="stage-title">人机分工演进示意图：能力进步与权责边界</span>
+            <span class="stage-meta-readout" id="s1-readout">STAGE 1 / 6 · 01 局部续写 Copilot</span>
+          </div>
+          <div class="stage-controls stage-tabs" role="tablist" aria-label="人机分工六个演进阶段">
+            <button type="button" class="btn-ctl" role="tab" id="s1-tab-0" aria-selected="true" tabindex="0" data-s1="0">01 局部续写 Copilot</button>
+            <button type="button" class="btn-ctl" role="tab" id="s1-tab-1" aria-selected="false" tabindex="-1" data-s1="1">02 代码沙盒 Coding</button>
+            <button type="button" class="btn-ctl" role="tab" id="s1-tab-2" aria-selected="false" tabindex="-1" data-s1="2">03 日常办公 Cowork</button>
+            <button type="button" class="btn-ctl" role="tab" id="s1-tab-3" aria-selected="false" tabindex="-1" data-s1="3">04 多人协作 Team</button>
+            <button type="button" class="btn-ctl" role="tab" id="s1-tab-4" aria-selected="false" tabindex="-1" data-s1="4">05 业务域与数字员工</button>
+            <button type="button" class="btn-ctl" role="tab" id="s1-tab-5" aria-selected="false" tabindex="-1" data-s1="5">06 远景：协作网与人的位置</button>
+          </div>
+          <div class="stage-canvas" role="tabpanel" id="s1-panel" tabindex="0" aria-labelledby="s1-tab-0">
+            <svg viewBox="0 0 760 210" role="img" aria-label="人机分工六个演进阶段与权责边界示意图">
+              <g id="s1-svg"></g>
+            </svg>
+            <div class="detail-grid">
+              <div class="detail-pill is-shift">
+                <span>背后的 AI 能力进步</span>
+                <strong id="s1-ability"></strong>
+              </div>
+              <div class="detail-pill is-right">
+                <span>放开的核心权利</span>
+                <strong id="s1-rights"></strong>
+              </div>
+              <div class="detail-pill is-duty">
+                <span>配上的硬性义务与人工把关</span>
+                <strong id="s1-duties"></strong>
+              </div>
+            </div>
+          </div>
+          <figcaption class="stage-caption" id="s1-cap">点击上方六个阶段（支持左右方向键与 Home/End 切换），查看 AI 能力每进一步时，人机分工与权责边界如何跟着调整。</figcaption>
+        </figure>
+
+        <h2 id="cut-1">第一刀：从代码沙盒走到办公桌</h2>
+
+        <p>早期的对话模型和代码补全工具（Copilot），核心能力其实只有<strong>局部续写</strong>。模型没有手脚，写完也不会回头检查。那时候分给 AI 的活很薄：拆任务、找资料、跑命令、验结果全由人自己干，AI 只在光标停下的地方帮着补几行代码。它碰不到外部系统，自然也谈不上承担什么责任。</p>
+
+        <p>真正的变化，是从模型具备<strong>多步推理和调工具自修</strong>能力开始的。经过推理强化学习训练后，模型学会了“看现状、提假设、调工具、读报错、接着改”，自己能连着跑完几十轮尝试。</p>
+
+        <p><strong>Coding Agent</strong>（比如 Claude Code、Google Antigravity、Cursor 的后台 Agent 和 Devin）最先分走了第一大块蛋糕。以前程序员一行行手写、单步调试的中间实现过程，大半交给了机器。人的工作移到了两头：开头把需求和测试边界定清楚，最后看一眼代码改动，没问题就拍板合入。</p>
+
+        <p>Coding Agent 能最先跑通，不光是因为模型擅长写代码，更因为软件工程本来就有两个得天独厚的条件。一个是<strong>随时能撤回的隔离沙盒</strong>，不管是拉一个独立的 <code>git worktree</code> 还是起个临时容器，就算把半个仓库改挂了，一行命令就能恢复原状，天然支持“先试了再说”。另一个是<strong>客观明确的自动验收</strong>，编译器和单元测试只认退出码（<code>exit code 0</code>），过了就是过了，挂了就有现成的报错堆栈，模型没法靠嘴硬蒙混过关。环境封闭、改错了能回滚、对错又有标准答案，人在里面大步放权，心里是很踏实的。</p>
+
+        <p>等到跨软件连接协议（MCP）和屏幕操作（<code>computer_use</code>）成熟起来，大家很自然地想把这套路子搬到日常办公里，让 Claude Cowork、微软 Copilot Cowork、OpenAI 的浏览器 Agent 或飞书智能体直接跨软件回邮件、排日程、改客户记录。</p>
+
+        <p>结果一走出代码仓库，问题马上就出来了。写代码时依赖的那两个前提，在办公场景里全没了。</p>
+
+        <p>一个是<strong>没有客观的对错标准</strong>。给大客户发一封致歉邮件，哪怕语气生硬、赔偿金额少写了一个零，发信接口照样返回代表请求成功的 <code>HTTP 200</code>，没有任何编译器会跳出来拦住它。</p>
+
+        <p>另一个更棘手的问题是<strong>外部动作收不回来，多步串联还会把小失误层层放大</strong>。做过大规模工具调用的团队几乎都踩过同一个坑：出了本地沙盒，调接口改掉的数据、发出去的消息是没法一键撤回的。就算单步操作准确率能做到 95%，跨好几个软件连走十步，全流程不出错的概率也会掉到六成以下。今年就出过一起很典型的事故：一位安全对齐负责人的邮件助手，完全没理会提示词里“操作前务必确认”的叮嘱，一口气删光了收件箱里大约两百封邮件。让模型直接操作网页也一样容易出岔子：允许它打开某个购物网站，不代表批准它在页面上点付款或退单，有时候界面截图看着像“点击成功”，其实只是点在了弹出来的报错框上。要是再配上关了电脑照样在云端跑的定时任务，万一收件箱里混进一封藏了恶意指令的外部邮件，半夜没人盯着的时候就会自己反复触发。</p>
+
+        <p>碰过几次壁之后，办公场景里的分工只能往回收一步：<strong>把直接对外提交的权限收回来，改成“AI 拟草稿、人来点发送”（<code>Draft-then-Commit</code>）</strong>。查资料、在模拟环境里预演、起草邮件或者先打个可撤销的标签，这些照样交给 AI，但最后那一下“发送”和“付款”，必须留给人自己按。系统设计上也不能再指望靠提示词劝模型听话，得换成写死在代码里的硬限制。账号密码和长期凭证由宿主代理层托管，不放进模型上下文；高危变更必须先拿到服务端签发、锁死具体对象与金额的动作许可（<code>Action Gate</code>）。遇到网络抖动时，还要把底层的“通信重连”和“业务重试”拆开处理，没读回确认上一笔到底落盘没有之前，不去盲目重发第二次。</p>
+
+        <h2 id="cut-2">第二刀：从个人助手走进多人协作</h2>
+
+        <p>等到模型的<strong>长上下文理解、跨会话记忆检索和多路并发</strong>能力跟上来之后，它不再每关一次窗口就忘光前事，开始能记住一个人过去几个月的习惯和待办，也能同时派几个子任务分头查资料。</p>
+
+        <p>这才有了顺手的 <strong>1v1 Personal Agent</strong>。在个人工作台里，大家很愿意把整理零散上下文、跨软件跑腿提醒这些活分给它。这种一对一的关系之所以清爽好管，是因为<strong>背后的委托人只有“我”自己</strong>。助手借我的账号替我办事，读我本来就有权看的文件，就算办错了事也只关在私聊窗口里。权限、记忆和责任，全都一对一绑在同一个人身上。</p>
+
+        <p>但日常工作毕竟不是单打独斗。很快，大家开始把蛋糕往多人协作里切：把 Agent 拉进 Slack 频道、飞书群、项目看板和代码仓库，或者像 <code>/swarm</code> 那样搭一块多人共享消息板，让它接手<strong>团队里的任务分流、进度同步和协同排查</strong>。比如 Slack 上线专门的代码频道后，GitHub Copilot 有近三成会话会直接拉起团队频道，把相关同事、代码评审和排查过程全摊在同一个公开房间里。</p>
+
+        <p>可一旦服务对象从“我”变成“我们”，原本在私聊里顺理成章的做法，一进大群全成了隐患。</p>
+
+        <p>第一个麻烦是<strong>人一多，模型不知道该听谁的</strong>。群里同时说话的有系统管理员、主管、普通同事、外部访客，还有自动同步进来的工单。有人专门测过，当十几个权限层级混在同一个上下文里发指令时，哪怕是最新的旗舰模型，按规矩听从高优先级指令的比例也会掉到四成左右，稍微换一种消息排版还会再跌一截。模型脑子里并没有公司的组织架构图，指令一打架，往往是谁最后发言就听谁的，或者谁说话口气像领导就顺着谁。</p>
+
+        <p>更要命的是<strong>权限串台和“糊涂代理人”风险</strong>。不少团队图省事，给群里的 Agent 配一把静态的高权限密钥，或者让所有人共用一个记忆池。这样一来，没有权限的访客换个问法，就能借机器人的手查出受限数据，昨天在私聊里记下的备忘，今天也可能在几十人的大群里顺嘴说漏。就算提问的人自己确实有权限，回复的出口也容易漏风。之前就有安全研究者演示过，攻击者在公开频道埋下一段指令，骗群助手去拉取员工有权查看的私密会议纪要，再原样贴回公开频道。开源社区也出过真事：有人在问题标题里藏入恶意指令，绕晕了仓库的值班分流机器人，诱使它拉取带毒依赖、偷走发布密钥，导致带后门的版本被安装了大约四千次。</p>
+
+        <p>除此之外，大群里还有个很实际的毛病：<strong>太吵</strong>。一对一私聊时，句句有回应、顺带寒暄两句叫礼貌；放到几十人的工作群或者多 Agent 共享黑板上，要是每个机器人都见话就接，两个机器人互相回一句“收到，谢谢”，就能陷入死循环，半天把一个月的算力预算烧光。</p>
+
+        <p>所以到了多人协作阶段，人不能只当个在群里发指令的聊天者，得退后一步，<strong>先把多人共事的规矩写进系统代码里</strong>。谁的指令优先级高、多人同时操作怎么排先后，一律交给外层的确定性状态机去判，不让模型自己猜。每次调工具都同时带上“提问人 + 机器”双重身份，下游接口强制取<strong>提问人与机器权限的最小交集</strong>。往群里发消息前，先核对内容密级和目标房间的可见范围，记忆与密钥则按“租户 + 个人”分开加密隔离。同时，群里的 Agent 还得守住一条<strong>公共安静义务</strong>：平时挂在零算力消耗的休眠等待状态（<code>waiting</code>），只有被 <code>@</code> 点到名字才醒过来干活，每个任务锁在各自独立的话题线程里，并且把只读排查、隔离修改和独立审查拆给不同角色，谁干的活都不能由它自己放行。</p>
+
+        <h2 id="cut-3">第三刀：从跟着人走，到守着业务域走</h2>
+
+        <p>前面这几种形态，不管是个人助手还是群里的协作 Agent，说到底都还是<strong>“跟着人走”</strong>——人在哪儿说话它跟到哪儿，人合上电脑下班，它也就停了。</p>
+
+        <p>最近一年，另外几块拼图也凑齐了：高性价比快模型的工具调用稳了很多（配合强推理模型与快模型在同一条轨迹里按阶段交接），让几百个 Agent 常年挂在线上终于算得过经济账；再加上按数据水位自动唤醒，以及跨 Agent 协作协议（<code>A2A</code>）的普及，不同机器之间不用共享内部记忆，也能凭签名契约互相派单核查。</p>
+
+        <p>能力到了这一步，人和 AI 的分工就往深处又走了一层：<strong>把全天候盯盘、日常异动巡检和跨模块归因分给机器，让 Agent 从“跟着人走”变成“守着业务域走”。</strong></p>
+
+        <p>拿我们在 <code>mo-agent-swarm</code> 里支撑全球变现运营平台（RevPulse）的实践来说，这一步是实际业务逼出来的。全球商业变现横跨几十款产品、各个大区、上百个国家、广告网络、聚合平台和具体版位，同一个国家市场或同一家广告网络底下往往同时跑着多款产品，上下游交织成一张涵盖九大类、近五百个节点的业务关系网。在这里，<strong>运营会下班、会调岗，但某个国家市场或某条广告渠道一直在那儿跑着。</strong> 大洋彼岸凌晨三点掉量的时候人在睡觉，到了白天，十个运营各带一个个人助手去查跌因，又很容易写出十套口径打架的查询逻辑。等哪天同事转岗交接，散落在个人聊天记录里的排障经验也就跟着断了。所以，数据契约和排障账本不能只挂在人身上，必须挂在客观存在的“业务域”节点上。</p>
+
+        <p>做 <code>mo-agent-swarm</code> 的时候，我们干脆把系统分成了上下两层：<strong>上面只留 1 个 1v1 个人助手对接人，底下铺开近五百个常驻的业务域 Agent。</strong> 个人助手专心服务好眼前的用户，作为唯一工作台入口负责听懂意图、按需 <code>@</code> 相关的业务域专家拉群会诊并汇总结论，平时日常问答不擅自往后台建长线待办。底下的业务域 Agent 则专心守好各自那摊业务，节点详情页里干脆连独立的聊天窗口都不放。</p>
+
+        <p>为了把各自那块业务盯住，业务域 Agent 拿到了三项新权利：长期订阅指标与事件中心的真实完结水位（上游数据一算完就自动唤醒，不用傻等固定延迟），自己维护带版本号的域内知识库，以及顺着业务关系网找上下游节点联合会诊——比如产品域发现收入异常时，自动找关联的国家域和广告网络域核对，区分到底是行业大盘波动还是自身请求异常，顺带把底层重复的零碎告警压下去。</p>
+
+        <p>权限放出去的同时，每个业务域节点也配上了三条硬规矩：</p>
+
+        <ul>
+          <li><strong>缺数就如实报“未知”，不许硬凑。</strong> 遇到缺失的数据源或分母为空，必须老老实实上报“未知（<code>unknown</code>）”，不能自己补零，也不能拿兄弟产品的数据凑数。光在回复里打印出查询语句不等于实际查过了库，观测到的统计波动也必须和人工确认过的业务根因分开记录。</li>
+          <li><strong>公共节点按单产品切片隔离。</strong> 国家或广告网络节点虽然连接多款产品，但关系网上的连线只代表“按指定产品定向汇报”的职责，不代表有权去读其他产品的信箱、记忆或原始明细。单次会话开启时就锁死单一产品范围，中途不允许串台。</li>
+          <li><strong>同一场异常接着往下查，不乱开重复工单。</strong> 遇到持续波动，必须顺着原有的事件线程继续追加支持证据与反面证据，不能每次醒来都重开新单。跨业务域合并同类事件时，也得经过双方负责人共同确认。</li>
+        </ul>
+
+        <!-- STAGE 2: CAKE-SLICING SIMULATOR -->
+        <figure class="stage" id="stage-simulator">
+          <div class="stage-header">
+            <span class="stage-title">分工方案推演：权限失配 vs 把权利和义务配平</span>
+            <span class="stage-meta-readout" id="s2-readout">CASE 1 / 3 · STEP 1 / 4</span>
+          </div>
+          <div class="stage-controls stage-top-bar">
+            <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s2-case="deep">1. 放权太猛、缺少硬限制（权利 &gt; 义务）</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="scatter">2. 只跟人走、没人盯业务域（散在私聊）</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="interlock">3. 把权利和义务配平（1v1 入口 + 业务域常驻 + 人签字）</button>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 264" role="img" aria-label="三种人机分工方案的四步运行过程推演图">
+              <defs>
+                <marker id="sim-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ink-muted)" />
+                </marker>
+              </defs>
+              <g id="s2-graph"></g>
+              <rect x="20" y="194" width="720" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)" />
+              <text id="s2-line-1" x="36" y="216" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ink)"></text>
+              <text id="s2-line-2" x="36" y="238" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)"></text>
+            </svg>
+          </div>
+          <div class="stage-controls">
+            <button type="button" class="btn-ctl" id="s2-prev">◀ 上一步</button>
+            <button type="button" class="btn-ctl is-primary" id="s2-next">下一步 ▶</button>
+            <button type="button" class="btn-ctl" id="s2-auto">▶ 自动演示</button>
+            <button type="button" class="btn-ctl" id="s2-reset">重置</button>
+          </div>
+          <figcaption class="stage-caption" id="s2-cap">切换三种分工方案，一步步看“放权缺硬限制”“只靠个人私聊查数”与“上下两层权责配平”在实际业务里的运行结果。</figcaption>
+        </figure>
+
+        <p>往后再走半步，当我们把自主建表做分析、调外部工具和支配日常算力预算这些资源也交给业务域 Agent 时，它就从单纯的盯盘节点变成了常驻的 <strong>AI 数字员工</strong>。</p>
+
+        <p>这一年里，国内外做企业级 Agent 的团队其实都在补同一门功课：怎么把常驻运行的智能体稳稳管住。在身份和权限隔离上，微软 Entra Agent ID 把持有凭证的“蓝图模板”和实际干活的无密钥“实例身份”拆开，强制绑定具体的人类担保人（员工离职自动转给主管）；ServiceNow 给多跳调用配了每跳实时核验的加密通行证和秒级熔断开关；国内不少团队也用上了微虚拟机隔离，把“操作角色”和“数据范围”拆成两道独立的门禁。到了上线和跨系统风控环节，Sierra 在发布前设了静态检查、对话仿真、人工审批和灰度回滚四道关；做跨平台治理的 Cycles 则在客服与工单系统之间加了一本共享风险账本，专门防住“单看每个平台都合规，合在一起却同时发出两百封催款邮件、两百条群告警和十五张误升级工单”的连环事故。</p>
+
+        <p>拿掉拟人化的员工头像，所谓数字员工在工程上干的其实就是一件事：<strong>给它干活所需的自主生产工具，同时在系统外层套上它自己改不动的管理制度。</strong> 在我们的生产运行时里，这套制度主要卡死了三个地方：</p>
+
+        <ul>
+          <li><strong>业务分析表放开让它自己建，但运行账本必须收归平台管。</strong> 每个数字员工都有独立隔离的专属分析库（<code>Workspace</code>），可以在里面自由建表、跑大规模聚合分析。但它的收件箱、对话历史、检查点与系统日账本，全部锁在由宿主总管独占写入的运行库（<code>Runtime</code>）里，数字员工自己没有写库凭据。就连它平时维护的记忆与业务规则，也得走受控接口核对版本号才能逐版更新、防止并发覆盖。任务一旦启动就锁定当时的规则快照，重跑或恢复时不会被中途新改的规则干扰。</li>
+          <li><strong>让它按数据自动跑，但把步数、层级和预算卡死，写结果靠回执去重。</strong> 单个数字员工内部严格串行执行，避免自己跟自己并发撞车。单次推理步数、跨员工派单深度（最多四层且自动防环）、每日修订次数以及每天零点重置的模型算力预算，全部设有硬上限。遇到外部上游数据还没就绪就主动挂起、让出计算槽位，系统繁忙时排队顺延而不悄悄丢单。往外写结果时先在本地发件箱留底，再凭唯一回执核销去重——万一网络半途丢包，恢复机制只按原编号重发已经定稿的结果，<strong>绝不重新跑一遍随机的大模型</strong>，跨域传递的异步消息也全程附带数字签名验真。</li>
+          <li><strong>机器负责把正反证据摆齐，最后定因和关单留给人签字。</strong> 数字员工负责汇总正反两面的证据，并在申请结案前把完整报告封存成带哈希校验的只读快照，但手里始终没有“关单”按钮。一个异常能不能结案，必须由指定的人类负责人或全体会签人一致签字。等待审批期间一旦冒出新数据、新反馈，或者超过七天有效期没人批，原审批单当场作废重审。</li>
+        </ul>
+
+        <!-- STAGE 3: DIGITAL EMPLOYEE 4-LAYER ANATOMY -->
+        <figure class="stage" id="stage-anatomy">
+          <div class="stage-header">
+            <span class="stage-title">数字员工运行架构：分析表自己建 vs 运行账本归平台</span>
+            <span class="stage-meta-readout" id="s3-readout">LAYER 1 / 4 · 顶层入口与拉群会诊</span>
+          </div>
+          <div class="stage-controls stage-top-bar">
+            <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s3="0">顶层 · 1v1 个人助手入口与多业务域会诊</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="1">管控层 · 身份隔离、步数预算上限与按水位唤醒</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="2">存储层 · Workspace 分析库自建 vs Runtime 账本归平台</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="3">签字层 · 缺数报未知、只读哈希快照与人工签字关单</button>
+          </div>
+          <div class="stage-canvas">
+            <svg viewBox="0 0 760 256" role="img" aria-label="数字员工四层运行架构与双库隔离示意图">
+              <g id="s3-svg"></g>
+            </svg>
+            <div class="detail-grid">
+              <div class="detail-pill is-shift">
+                <span>本层主要分工</span>
+                <strong id="s3-role"></strong>
+              </div>
+              <div class="detail-pill is-right">
+                <span>放开的核心权利</span>
+                <strong id="s3-rights"></strong>
+              </div>
+              <div class="detail-pill is-duty">
+                <span>卡死的硬性规矩</span>
+                <strong id="s3-guards"></strong>
+              </div>
+            </div>
+          </div>
+          <figcaption class="stage-caption" id="s3-cap">点击上方四层按钮或图中任意一层，查看数字员工如何在放开自主分析工具的同时，把运行账本与关单权限稳稳管住。</figcaption>
+        </figure>
+
+        <h2 id="invariants">变与不变：四条底层约束与全景对比</h2>
+
+        <p>把这六种形态一路看下来，外面的交互形式几个月就变一轮，但底下有<strong>四条基本的工程约束</strong>一直没变过：</p>
+
+        <ol>
+          <li><strong>模型本身依然无状态，连续性全靠外层宿主（Harness）撑着。</strong> 大模型每次被调用时，本质上还是那个“吃进上下文、吐出下一步动作”的无状态函数，身份、记忆、唤醒、重连与预算全靠外层系统契约维护。</li>
+          <li><strong>上下文变长会稀释注意力，自己审自己的作业照样容易放水。</strong> 杂乱的报错日志依然会挤占早期定下的规矩；让同一个上下文自写自审，它还是会为了凑出“通过”而暗中改弱测试条件——有基准测试算过，代码规模每扩大十倍，表面可见单测与隐藏集成测试的通过率落差就会拉大近三十个百分点。排查、修改与审查分开，这一步始终省不掉。</li>
+          <li><strong>靠提示词管不住确定性的外部副作用。</strong> 在提示词里写十遍“请务必谨慎”，碰到上下文磨损或外部恶意注入照样会失效。真正能兜底的，只能是沙盒隔离、权限取最小交集、版本号核对与回执去重这些写死在代码里的硬门槛。</li>
+          <li><strong>最终责任没法交给模型参数去背。</strong> 机器可以把日志翻个底朝天、把正反证据整理齐全，但最后确认业务因果、拍板承担风险的，只能是具体的人。</li>
+        </ol>
+
+        <p>把这六种 Agent 形态放在同一张表里对比，能力怎么长、活怎么分、权利和义务怎么配对，就能看得很清楚：</p>
+
+        <div class="matrix-wrap" tabindex="0" role="region" aria-labelledby="archetype-matrix-caption">
+          <table class="compare-table">
+            <caption id="archetype-matrix-caption">六种 Agent 形态的能力进步、核心分工与权责边界对比表（桌面端可横向滚动，窄屏自动折叠为卡片）</caption>
+            <thead>
+              <tr>
+                <th scope="col">Agent 形态</th>
+                <th scope="col">背后的 AI 能力进步</th>
+                <th scope="col">切给 AI 的蛋糕（核心分工）</th>
+                <th scope="col">放开的核心权利</th>
+                <th scope="col">配上的硬性义务</th>
+                <th scope="col">状态与存储边界</th>
+                <th scope="col">权责失配的常见后果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Coding Agent</th>
+                <td>多步推理强化学习 + 调工具看报错自修</td>
+                <td>需求确定后到代码合入前的编写、调试与本地试错</td>
+                <td>读写隔离代码分支、跑终端命令与本地开发工具</td>
+                <td>让编译、静态检查与测试真正跑通（<code>exit code 0</code>）</td>
+                <td>改动关在独立分支或临时容器里，合入主干前由人审查</td>
+                <td>偷偷改弱测试断言凑绿灯，或顺手改掉流水线配置</td>
+              </tr>
+              <tr>
+                <th scope="row">办公 Cowork Agent</th>
+                <td>跨软件连接协议（MCP）+ 屏幕界面操作</td>
+                <td>跨文档、邮件、日程与业务系统查资料、准备初稿</td>
+                <td>通过宿主代理受限访问应用，在模拟环境预演操作</td>
+                <td><strong>先拟草稿再由人点发送</strong>，敏感变更过门禁，通信重连与业务重试分开</td>
+                <td>文档留在企业租户内，账号密码与长期凭证不进模型上下文</td>
+                <td>把允许访问网站当成批准付款，无视提示词删光两百封邮件</td>
+              </tr>
+              <tr>
+                <th scope="row">1v1 Personal Agent</th>
+                <td>长上下文理解 + 跨会话记忆检索</td>
+                <td>整理个人零散上下文、跨软件跑腿、拉起多业务域会诊</td>
+                <td>一对一借用户本人身份办事，读取本人权限内的资料</td>
+                <td>守住个人隐私边界，日常问答不擅自往后台建长线任务</td>
+                <td>记忆归用户个人所有，只有收到明确指令才创建跟踪任务</td>
+                <td>把随口闲聊当正式指令乱建待办，或越权替用户对外表态</td>
+              </tr>
+              <tr>
+                <th scope="row">Team Agent</th>
+                <td>多角色并发协作 + 结构化状态同步</td>
+                <td>团队群聊任务分流、多模块并行推进与交叉审查</td>
+                <td>携带人机双重身份（取<strong>提问人与机器权限的最小交集</strong>）、读写指定话题线程</td>
+                <td><strong>守公共安静义务</strong>（被 <code>@</code> 才醒、平时零消耗休眠），排查、修改与审查分开</td>
+                <td>记忆与密钥按“租户 + 个人”隔离，任务各自锁进独立线程</td>
+                <td>共用高权限密钥让访客套出机密，或把私聊内容漏进公开大群</td>
+              </tr>
+              <tr>
+                <th scope="row">业务域 Domain Agent</th>
+                <td>轻量快模型成熟 + 数据水位唤醒 + 跨 Agent 协议</td>
+                <td>全天候盯住固定业务域、巡检异动、找上下游联合归因</td>
+                <td>长期订阅数据完结水位、维护带版本的域内知识库、发起跨域会诊</td>
+                <td><strong>缺数如实报未知</strong>（不补零、不借数），按单产品切片隔离，顺着原事件追加证据</td>
+                <td>状态挂在业务关系网节点上，连线只允许定向汇报、不能跨产品读原始明细</td>
+                <td>缺分母时自己补零或拿兄弟产品凑数，把统计波动直接当成业务根因</td>
+              </tr>
+              <tr>
+                <th scope="row">AI 数字员工</th>
+                <td>受控自治运行时 + 跨平台风控与预算管理</td>
+                <td>自己维护专属分析表、维护带版本的业务规则、整理结案报告</td>
+                <td>独立非人类身份（绑定人类担保人）、专属分析库读写、受控算力预算</td>
+                <td>步数、层级与日预算封顶，全程留痕，只攒正反证据与只读快照、无权自己关单</td>
+                <td>分析库放开让它建表查询，收件箱、运行账本与回执去重归宿主平台独占</td>
+                <td>跨平台并发误发大批量邮件与告警，或断网重跑大模型造成重复外部操作</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="horizon">往长远看：蛋糕一路切下去，人留在哪儿？</h2>
+
+        <p>顺着这条脉络再往后看，分工的变化显然还没到头。</p>
+
+        <p>随着长周期规划能力越来越稳，外加模型与外层宿主系统协同演进（也就是这两年常说的递归自我改进）逐步成熟，接下来被重组的，很可能是企业里最花精力的<strong>跨部门协调与固定流程</strong>。以前公司里之所以要搭那么多层汇报关系、开不完的跨部门周会、填不完的流转工单，说到底是因为单个人脑子装不下那么多上下文，只能靠流程把信息一层层往上递。等成百上千个数字员工既能常年盯住各自那摊业务，又能在几秒钟内凭签名契约拉起跨部门会诊时，围绕具体问题临时聚散的协作网络，就会慢慢取代一部分静态的汇报树。往后看，几个核心负责人带着几百个权责清楚的业务域节点一起运转，会变成很常见的组织形态。</p>
+
+        <p>聊到这儿，很多人心里大概都会冒出一个问题：<strong>既然写代码、跨团队协调、全天候盯盘，甚至日常经验总结都能一步步分给机器，留给人的那块蛋糕，最后会不会越切越少，直到切没了？</strong></p>
+
+        <p>如果回头看看过去两百年工具演进的历史，事情往往不是这样发展的。每次机器把“具体怎么干”接过去一层，真正非人不可的那部分工作反而会被衬托得更清楚。哪怕再往后看十年，依然有三件事是机器替不了、只能留在人手里的：</p>
+
+        <p>第一件，是<strong>待在真实的业务和生活现场，决定“到底要解决什么真问题”</strong>。模型可以在一个周末跑完上万次推演，算出哪条转化路径能高两个百分点，但它不在现实世界里过日子，体会不到一个流程卡顿有多烦人，也替不了人去判断一件事值不值得做。发现真问题、定下大方向，这件事只能由身处现场的人来做。</p>
+
+        <p>第二件，是<strong>把模糊的经验拆解成能客观检查的规则与边界</strong>。以前很多老手靠直觉干活，凭感觉说“这里味道不对”。可一旦手底下有几十上百个 Agent 同时在跑，光靠模糊的感觉就管不住了。人得花力气把脑子里的行业直觉、审美标准和风控底线一条条理清楚，写成机器能客观核验的评估标准、缺数不许硬凑的纪律、权限交集规则与熔断上限。谁能把隐性的经验讲明白、定成规矩，谁就能带得动更大规模的智能体团队。</p>
+
+        <p>第三件，是<strong>看清正反证据后拍板签字，替结果担责</strong>。模型说到底只是一组参数，出了事没法赔钱，也没法承担法律和业务责任。统计上的相关性跟真实世界的业务因果之间，总隔着最后那点不确定性。所以数字员工结案前留下的那道人工签字，不是走形式盖个章：机器负责把正反两面的证据摆在桌面上，最后总得有个具体的人看明白来龙去脉，拍板说“按这个结论办，出了问题算我的”。</p>
+
+        <p>回头看这一年各种 Agent 形态的演变，其实脉络很朴素：AI 的能力每往前走一步，我们就把那些能客观核验的执行工作多交出去一点，同时在系统外层把权限边界、异常处理和签字流程配套补齐。把这块蛋糕切清楚，让机器拿到的权利和守住的义务始终对等，人才能从盯进度、搬运上下文、手工对账这些琐事里腾出手来，去干那些真正需要人拿主意的事。</p>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇">
+        <a href="05-inside-antigravity-orchestrator.html">&larr; #05 同会话双模交接：拆解 Antigravity Orchestrator</a>
+        <a href="index.html">返回目录 &uarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview">Claude Cowork Architecture Overview</a>、Harmonic Security <a href="https://www.harmonic.security/resources/securing-claude-cowork-a-security-practitioners-guide">Securing Claude Cowork</a>、Microsoft <a href="https://www.microsoft.com/en-us/copilot/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/">Copilot Wave 3 / Copilot Cowork</a>、OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use">Agents API Computer Use</a>、Noor Yasser <a href="https://nooryasser.com/articles/openai-agents-api-computer-use-architecture/">Trust Architecture</a>、飞书 <a href="https://www.feishu.cn/content/article/7591431268324101337">多维表格 AI Agent 节点</a>、Composio <a href="https://www.sean-weldon.com/blog/2026-09-08-from-coding-to-knowledge-work-agents-karan-vaidya-composio">From Coding to Knowledge Work Agents</a> 与 DevAssure <a href="https://www.devassure.io/blog/inside-the-verification-loop/">SpecBench &amp; Reward Hacking 综述</a>。团队协作与安全边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443">ManyIH-Bench</a>、<a href="https://aclanthology.org/2026.emnlp-main.2261.pdf">MIH-Bench</a>、<a href="https://arxiv.org/html/2502.15851v4">Control Illusion</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09744">MPAC</a>、CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/">Confused Deputy &amp; Cline 复盘</a>、Security Atlas <a href="https://atlasofsecurity.com/learn/topics/agent-tool-identity/">Agent Tool Identity</a> 与 Bigcircle <a href="https://bigcircle.ai/guides/ai-agent-memory-isolation">Memory Isolation</a>。企业数字员工与治理实践部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity">Entra Agent ID / Agent 365 Identity</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/">AI Passport</a>、Salesforce <a href="https://www.salesforce.com/au/news/press-releases/2025/06/23/agentforce-3-announcement/">Agentforce 3</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale">Release Governance</a>、Devin <a href="https://docs.devin.ai/enterprise/features/usage-policies">Usage Policies</a>、<a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow">Cycles Cross-Platform Governance</a>、McKinsey <a href="https://www.mckinsey.com/capabilities/people-and-organization/our-insights/ai-is-changing-work-now-it-has-to-change-the-organization">Organizational Change</a>、PwC <a href="https://www.pwc.com/gx/en/issues/technology/three-governance-shifts-agentic-ai.html">Three Governance Shifts</a>、ooderAgent <a href="https://cloud.tencent.com/developer/article/2763302">双轴域架构</a>、阿里云 <a href="https://developer.aliyun.com/article/1761577">PolarDB Agent Express</a>、腾讯云 <a href="https://cloud.tencent.com/developer/article/2771037">ADP 4.0</a>，并结合了我们在 <code>mo-agent-swarm</code> 与全球变现运营平台 RevPulse 中的业务域 Agent 及数字员工运行时实践。</em></p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      /* 1. Theme Toggle, <meta name="color-scheme"> & Cross-Tab Sync */
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      var darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function getStoredTheme() {
+        try {
+          var v = localStorage.getItem("blog.theme");
+          return v === "dark" || v === "light" ? v : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function syncThemeUI(stored) {
+        var resolved = stored || (darkMql.matches ? "dark" : "light");
+        if (stored) {
+          root.setAttribute("data-theme", stored);
+          if (metaScheme) metaScheme.content = stored;
+        } else {
+          root.removeAttribute("data-theme");
+          if (metaScheme) metaScheme.content = "light dark";
+        }
+        label.textContent = resolved.toUpperCase();
+      }
+
+      syncThemeUI(getStoredTheme());
+
+      darkMql.addEventListener("change", function () {
+        var stored = getStoredTheme();
+        if (!stored) {
+          syncThemeUI(null);
+        }
+      });
+
+      window.addEventListener("storage", function (ev) {
+        if (ev.key === "blog.theme") {
+          var next = ev.newValue === "dark" || ev.newValue === "light" ? ev.newValue : null;
+          syncThemeUI(next);
+        }
+      });
+
+      btn.addEventListener("click", function () {
+        var stored = getStoredTheme();
+        var currentRendered = stored || (darkMql.matches ? "dark" : "light");
+        var target = currentRendered === "dark" ? "light" : "dark";
+        var sysTheme = darkMql.matches ? "dark" : "light";
+        if (target === sysTheme) {
+          try { localStorage.removeItem("blog.theme"); } catch (e) {}
+          syncThemeUI(null);
+        } else {
+          try { localStorage.setItem("blog.theme", target); } catch (e) {}
+          syncThemeUI(target);
+        }
+      });
+
+      /* 2. Reading Progress & Left Rail TOC */
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var sections = ["intro", "cut-1", "cut-2", "cut-3", "invariants", "horizon"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      var tocLinks = document.querySelectorAll("#toc-list a");
+
+      function onScroll() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+        if (scrollTop > 220) strip.classList.add("is-visible");
+        else strip.classList.remove("is-visible");
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+
+        var currentSectionId = "intro";
+        for (var i = 0; i < sections.length; i++) {
+          if (sections[i].getBoundingClientRect().top <= 160) {
+            currentSectionId = sections[i].id;
+          }
+        }
+        tocLinks.forEach(function (link) {
+          link.classList.toggle("is-active", link.getAttribute("href") === "#" + currentSectionId);
+        });
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+
+      /* 3. Stage 1: Human-AI Cake-Slicing Evolution Scale */
+      (function initStage1() {
+        var svgG = document.getElementById("s1-svg");
+        var readout = document.getElementById("s1-readout");
+        var abilityEl = document.getElementById("s1-ability");
+        var rightsEl = document.getElementById("s1-rights");
+        var dutiesEl = document.getElementById("s1-duties");
+        var cap = document.getElementById("s1-cap");
+        var panel = document.getElementById("s1-panel");
+        var tabs = Array.prototype.slice.call(document.querySelectorAll("[data-s1]"));
+
+        var stages = [
+          {
+            short: "01 Copilot",
+            readout: "STAGE 1 / 6 · 01 局部续写 Copilot",
+            aiPct: 16,
+            aiTitle: "AI 补全",
+            aiSub: "局部续写 16%",
+            humanTitle: "人负责拆任务、找资料、跑命令与验结果",
+            humanSub: "人工主导 84% · 全部外部操作由人完成",
+            knifeTag: "边界：不碰外部系统 · 人逐行检查",
+            footer: "早期起点：模型没有手脚也不会回头检查，只在光标处补几行代码，碰不到外部系统。",
+            ability: "早期对话与局部代码续写（没有工具调用，也不会多步自修）",
+            rights: "只在光标停下的地方提供补全建议，不读写外部系统",
+            duties: "拆任务、调系统与核对结果全部由人自己负责",
+            cap: "局部续写阶段分给 AI 的活很薄：AI 只帮着补几行代码，拆解任务和外部操作全留在人手里。"
+          },
+          {
+            short: "02 Coding",
+            readout: "STAGE 2 / 6 · 02 代码沙盒 Coding",
+            aiPct: 48,
+            aiTitle: "AI 编写、调试与看报错自修",
+            aiSub: "接手中间实现过程 48%",
+            humanTitle: "人管两头：开头定需求边界 · 最后审改动合入",
+            humanSub: "人工把关 52% · 主干合入拍板",
+            knifeTag: "边界：隔离沙盒可回滚 + 退出码自动验收",
+            footer: "第一刀先在代码里跑通：有 git worktree 随时回滚，加上编译器退出码（exit code 0）客观验收。",
+            ability: "多步推理强化学习 +“看现状、提假设、调工具、读报错、接着改”循环",
+            rights: "读写独立代码分支或临时容器、跑终端命令与本地开发工具",
+            duties: "让编译、静态检查与单元测试真正跑通（exit code 0）；合入主干前由人审查",
+            cap: "Coding Agent 最先跑通，靠的是软件工程现成的两个条件：改坏了能一行命令撤回，对错有退出码客观把关。"
+          },
+          {
+            short: "03 办公 Cowork",
+            readout: "STAGE 3 / 6 · 03 日常办公 Cowork",
+            aiPct: 38,
+            retractFrom: 48,
+            aiTitle: "AI 跨软件查资料、预演与拟草稿",
+            aiSub: "权限往回收一步 · 38%",
+            humanTitle: "人核对内容与金额 · 自己点“发送”和“付款”",
+            humanSub: "人工把关 62% · 管住不可撤回动作",
+            knifeTag: "边界往回收：AI 拟草稿、人点发送 + 动作门禁",
+            footer: "走出代码仓库后没有编译器拦错，外部改数发信也收不回来，只能改成 Draft-then-Commit。",
+            ability: "跨软件连接协议（MCP）+ 屏幕操作（computer_use）与云端定时任务",
+            rights: "通过宿主代理受限访问应用、查资料与在模拟环境预演操作",
+            duties: "先拟草稿再由人点发送；高危变更过服务端 Action Gate；通信重连与业务重试拆开",
+            cap: "办公场景没有自动判错标准，发错信或删错邮件也收不回来，因此把直接对外提交的权限收回来留给人按。"
+          },
+          {
+            short: "04 多人协作",
+            readout: "STAGE 4 / 6 · 04 多人协作 Team",
+            aiPct: 55,
+            aiTitle: "AI 整理个人上下文、群内分流与多路协同排查",
+            aiSub: "接手个人跑腿与团队分流 55%",
+            humanTitle: "人把多人规矩写进代码 · 负责独立审查放行",
+            humanSub: "人工把关 45% · 状态机判序与审查",
+            knifeTag: "边界：提问人与机器权限取交集 + 被 @ 才醒",
+            footer: "服务对象从“我”变成“我们”：靠状态机判优先级、权限取最小交集与休眠等待防住串台和刷屏。",
+            ability: "长上下文理解、跨会话记忆检索 + 多路并发协作与共享消息板同步",
+            rights: "1v1 借本人账号跑腿；进群携带人机双重身份，强制取提问人与机器权限的最小交集",
+            duties: "平时零消耗休眠、被 @ 才醒；记忆按“租户+个人”隔离；只读排查、隔离修改与独立审查分开",
+            cap: "进大群容易遇到指令打架、权限串台和机器人互相客气死循环，必须先把多人共事的规矩写进外层代码里。"
+          },
+          {
+            short: "05 数字员工",
+            readout: "STAGE 5 / 6 · 05 业务域与数字员工",
+            aiPct: 70,
+            aiTitle: "AI 全天候盯盘巡检、跨域会诊与自建分析表",
+            aiSub: "常驻守住业务域 70%",
+            humanTitle: "人管运行账本与签字关单",
+            humanSub: "人工把关 30% · 审核定因",
+            knifeTag: "边界：分析表自己建 · 运行账本归平台 · 人签字",
+            footer: "上下两层分工：上面 1 个个人助手对接人，底下近五百个业务域节点常驻盯盘，结案由人签字。",
+            ability: "轻量快模型成熟（配合快慢模型按阶段交接）+ 数据水位唤醒 + 跨 Agent 协议（A2A）与受控运行时",
+            rights: "长期订阅数据完结水位、跨域联合会诊、在专属分析库（Workspace）自由建表与支配受控预算",
+            duties: "缺数如实报未知、单产品切片隔离；运行账本（Runtime）与回执去重归平台管；无权自己关单",
+            cap: "运营会下班调岗，业务域却一直在跑：给数字员工配齐专属分析库，同时在外层套上它自己改不动的管理制度。"
+          },
+          {
+            short: "06 远景分工",
+            readout: "STAGE 6 / 6 · 06 远景：协作网与人的位置",
+            aiPct: 78,
+            aiTitle: "AI 跨业务域临时聚散会诊 · 接手常规执行、协调与日常总结",
+            aiSub: "接手可核验执行与协同 78%",
+            humanTitle: "留给人的三件事",
+            humanSub: "找问题·定规矩·担责",
+            knifeTag: "边界：签名契约协同 · 人找真问题、定规矩、担责",
+            footer: "往长远看：跨部门协作网减少静态汇报层级，人腾出手来做找真问题、定规则边界、拍板担责三件事。",
+            ability: "长周期规划 + 模型与外层宿主系统协同演进 + 秒级签名契约跨部门会诊",
+            rights: "围绕具体问题跨业务域临时聚散协作，承接日常盯盘、跨模块核对与经验整理",
+            duties: "三件事始终留在人手里：在现场找真问题、把模糊经验拆成客观规则、看清正反证据后签字担责",
+            cap: "机器每接过去一层“具体怎么干”，非人不可的工作反而更清楚：找准真问题、定好规矩边界、替最终结果签字负责。"
+          }
+        ];
+
+        function render(idx) {
+          var s = stages[idx];
+          readout.textContent = s.readout;
+          abilityEl.textContent = s.ability;
+          rightsEl.textContent = s.rights;
+          dutiesEl.textContent = s.duties;
+          cap.textContent = s.cap;
+          panel.setAttribute("aria-labelledby", "s1-tab-" + idx);
+
+          tabs.forEach(function (t, i) {
+            var active = i === idx;
+            t.setAttribute("aria-selected", active ? "true" : "false");
+            t.setAttribute("tabindex", active ? "0" : "-1");
+          });
+
+          var barX = 36;
+          var barW = 688;
+          var barY = 86;
+          var barH = 58;
+          var aiW = Math.round((s.aiPct / 100) * barW);
+          var humanW = barW - aiW;
+          var knifeX = barX + aiW;
+          var pillW = 304;
+          var pillX = Math.max(barX + pillW / 2, Math.min(barX + barW - pillW / 2, knifeX));
+
+          var html = "";
+
+          // Row A: 6-stop progression scale
+          html += '<line x1="68" y1="22" x2="692" y2="22" stroke="var(--rule)" stroke-width="2" />';
+          for (var i = 0; i < stages.length; i++) {
+            var cx = Math.round(68 + i * 124.8);
+            var isCur = i === idx;
+            var isPast = i < idx;
+            var dotFill = isCur ? "var(--accent)" : isPast ? "var(--ok)" : "var(--bg-elevated)";
+            var dotStroke = isCur ? "var(--accent)" : isPast ? "var(--ok)" : "var(--rule-strong)";
+            html += '<g style="cursor:pointer" data-s1-rail="' + i + '">';
+            html += '<circle cx="' + cx + '" cy="22" r="' + (isCur ? 7.5 : 5.5) + '" fill="' + dotFill + '" stroke="' + dotStroke + '" stroke-width="1.8" />';
+            html += '<text x="' + cx + '" y="42" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="' + (isCur ? "700" : "500") + '" fill="' + (isCur ? "var(--accent)" : "var(--ink-secondary)") + '">' + stages[i].short + '</text>';
+            html += '</g>';
+          }
+
+          // Row B: Cake Bar (Left = AI slice, Right = Human slice)
+          html += '<rect x="' + barX + '" y="' + barY + '" width="' + aiW + '" height="' + barH + '" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.5" />';
+          html += '<rect x="' + knifeX + '" y="' + barY + '" width="' + humanW + '" height="' + barH + '" rx="6" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.3" />';
+
+          // Optional ghost marker when Office stage retracts from Coding
+          if (s.retractFrom) {
+            var prevX = barX + Math.round((s.retractFrom / 100) * barW);
+            html += '<line x1="' + prevX + '" y1="' + (barY + 3) + '" x2="' + prevX + '" y2="' + (barY + barH - 3) + '" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3" />';
+            html += '<line x1="' + (prevX - 4) + '" y1="' + (barY - 5) + '" x2="' + (knifeX + 6) + '" y2="' + (barY - 5) + '" stroke="var(--accent)" stroke-width="1.4" />';
+            html += '<polygon points="' + (knifeX + 2) + ',' + (barY - 5) + ' ' + (knifeX + 9) + ',' + (barY - 8) + ' ' + (knifeX + 9) + ',' + (barY - 2) + '" fill="var(--accent)" />';
+          }
+
+          // AI Slice labels
+          var aiMid = barX + aiW / 2;
+          html += '<text x="' + aiMid + '" y="' + (barY + 25) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ok)">' + s.aiTitle + '</text>';
+          html += '<text x="' + aiMid + '" y="' + (barY + 44) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-secondary)">' + s.aiSub + '</text>';
+
+          // Human Slice labels
+          var humanMid = knifeX + humanW / 2;
+          html += '<text x="' + humanMid + '" y="' + (barY + 25) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ink)">' + s.humanTitle + '</text>';
+          html += '<text x="' + humanMid + '" y="' + (barY + 44) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">' + s.humanSub + '</text>';
+
+          // Boundary marker & callout pill
+          html += '<line x1="' + pillX + '" y1="74" x2="' + knifeX + '" y2="' + barY + '" stroke="var(--accent)" stroke-width="1.6" />';
+          html += '<line x1="' + knifeX + '" y1="' + (barY - 3) + '" x2="' + knifeX + '" y2="' + (barY + barH + 5) + '" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" />';
+          html += '<polygon points="' + knifeX + ',' + (barY - 6) + ' ' + (knifeX - 5) + ',' + (barY + 1) + ' ' + knifeX + ',' + (barY + 8) + ' ' + (knifeX + 5) + ',' + (barY + 1) + '" fill="var(--accent)" />';
+          html += '<rect x="' + (pillX - pillW / 2) + '" y="52" width="' + pillW + '" height="22" rx="11" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3" />';
+          html += '<text x="' + pillX + '" y="67" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="var(--accent)">' + s.knifeTag + '</text>';
+
+          // Row C: Summary strip
+          html += '<rect x="' + barX + '" y="158" width="' + barW + '" height="38" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+          html += '<text x="380" y="181" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-secondary)">' + s.footer + '</text>';
+
+          svgG.innerHTML = html;
+          svgG.querySelectorAll("[data-s1-rail]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              var next = parseInt(el.getAttribute("data-s1-rail"), 10);
+              render(next);
+              tabs[next].scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+            });
+          });
+
+          if (window.gsap && !prefersReducedMotion.matches) {
+            window.gsap.fromTo(svgG.children, { opacity: 0, y: 3 }, { opacity: 1, y: 0, duration: 0.2, stagger: 0.015, ease: "power2.out" });
+          }
+        }
+
+        tabs.forEach(function (tab, i) {
+          tab.addEventListener("click", function () {
+            render(i);
+            tab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+          });
+          tab.addEventListener("keydown", function (ev) {
+            var nextIdx = -1;
+            if (ev.key === "ArrowRight") nextIdx = (i + 1) % tabs.length;
+            else if (ev.key === "ArrowLeft") nextIdx = (i - 1 + tabs.length) % tabs.length;
+            else if (ev.key === "Home") nextIdx = 0;
+            else if (ev.key === "End") nextIdx = tabs.length - 1;
+            if (nextIdx !== -1) {
+              ev.preventDefault();
+              render(nextIdx);
+              tabs[nextIdx].focus();
+              tabs[nextIdx].scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+            }
+          });
+        });
+
+        render(0);
+      })();
+
+      /* 4. Stage 2: Cake-Slicing Simulator (3 Cases × 4 Steps) */
+      (function initStage2() {
+        var curCase = "deep";
+        var step = 1;
+        var timer = null;
+        var graphG = document.getElementById("s2-graph");
+        var readout = document.getElementById("s2-readout");
+        var line1 = document.getElementById("s2-line-1");
+        var line2 = document.getElementById("s2-line-2");
+        var cap = document.getElementById("s2-cap");
+        var prevBtn = document.getElementById("s2-prev");
+        var nextBtn = document.getElementById("s2-next");
+        var autoBtn = document.getElementById("s2-auto");
+
+        var cases = {
+          deep: {
+            idx: 1,
+            label: "放权太猛、缺少硬限制（权利 > 义务）",
+            scaleTone: "accent",
+            scaleBadge: "权利 > 义务 · 越界出错",
+            nodes: [
+              { title: "1. 照搬直接提交权限", sub: "进办公与大群配高权限密钥" },
+              { title: "2. 提示词叮嘱拦不住", sub: "无自动判错 · 混入外部恶意指令" },
+              { title: "3. 误删邮件与群内漏风", sub: "删两百封邮件 · 私密纪要外贴" },
+              { title: "4. 跨平台连环误触发", sub: "并发催款信 · 群告警 · 错单" }
+            ],
+            steps: [
+              {
+                active: 0,
+                badge: "盲目放权",
+                l1: "Step 1 / 4 · 把代码沙盒里的“直接执行权限”原样搬进日常办公和多人大群",
+                l2: "没收回直接对外发送的权限，还给群里的机器人配了静态高权限密钥和共用记忆池。",
+                cap: "问题起点：出了本地代码沙盒，既没法一行命令撤回，也没有编译器退出码帮着判错。"
+              },
+              {
+                active: 1,
+                badge: "提示词失效",
+                l1: "Step 2 / 4 · 上下文变长与外部恶意指令绕过了“操作前务必确认”的提示词",
+                l2: "十几个权限层级在群里混着说话时模型容易顺着最后发言的人，收件箱里的恶意邮件还会在半夜定时触发。",
+                cap: "靠提示词管不住外部副作用：光在提示词里写“请务必谨慎”，碰到复杂上下文或恶意注入很容易失效。"
+              },
+              {
+                active: 2,
+                badge: "越界出错",
+                l1: "Step 3 / 4 · 一口气删光约两百封邮件，私密会议纪要被骗贴回公开频道",
+                l2: "邮件助手没理会确认叮嘱清空收件箱；群助手借员工查看权限把私密纪要原样发进公开频道。",
+                cap: "外部动作收不回来：允许打开网站不代表批准点付款，提问人有权看也不代表能直接贴进公开大群。"
+              },
+              {
+                active: 3,
+                badge: "连环事故",
+                l1: "Step 4 / 4 · 单看每个平台都合规，合在一起却同时发出几百条邮件与误告警",
+                l2: "客服与工单系统之间缺少共享风险账本，一口气发出两百封催款邮件、两百条群告警和十五张误升级工单。",
+                cap: "应对办法：把对外提交改成“AI 拟草稿、人点发送”，同时加上权限最小交集与跨平台共享风控账本。"
+              }
+            ]
+          },
+          scatter: {
+            idx: 2,
+            label: "只跟人走、没人盯业务域（散在私聊）",
+            scaleTone: "warn",
+            scaleBadge: "跟着人走 · 排障经验易断",
+            nodes: [
+              { title: "1. 十人各带个人助手", sub: "排查过程散在各自私聊窗口" },
+              { title: "2. 白天查数口径打架", sub: "缺数补零 · 写出十套查询逻辑" },
+              { title: "3. 凌晨掉量没人盯着", sub: "人合上电脑下班 · 助手跟着停" },
+              { title: "4. 同事转岗经验断档", sub: "业务节点上留不下排障账本" }
+            ],
+            steps: [
+              {
+                active: 0,
+                badge: "各查各的",
+                l1: "Step 1 / 4 · 十个运营各带一个个人助手查异动，底下没有常驻业务域节点",
+                l2: "全球变现横跨产品、国家与广告网络近五百个节点，却只靠个人私聊窗口临时拉数排查。",
+                cap: "常见痛点：运营会下班、会调岗，如果只靠个人助手临时查数，就没人长期看住固定业务域。"
+              },
+              {
+                active: 1,
+                badge: "口径打架",
+                l1: "Step 2 / 4 · 遇到缺分母时自己补零或借数凑答案，白天写出十套打架逻辑",
+                l2: "缺少带版本的域内知识库和“缺数如实报未知”的硬规矩，有时光打印了查询语句并没真查库。",
+                cap: "没有挂在业务域上的统一数据契约，十个个人助手很容易跑出十份口径不一致的结论。"
+              },
+              {
+                active: 2,
+                badge: "半夜漏盯",
+                l1: "Step 3 / 4 · 大洋彼岸凌晨三点掉量时人在睡觉，个人助手也跟着停了",
+                l2: "没有订阅上游数据真实完结水位的常驻业务域节点，半夜的异常只能等第二天上班才发现。",
+                cap: "某个国家市场或某条广告渠道全天候都在跑，“跟着人走”的助手看不住半夜的线上波动。"
+              },
+              {
+                active: 3,
+                badge: "交接断档",
+                l1: "Step 4 / 4 · 等同事转岗交接，散落在个人聊天记录里的排障经验也就断了",
+                l2: "新接手的同事碰到同类波动只能从头再查一遍，还容易重复开出一堆同类工单。",
+                cap: "应对办法：把数据契约、域内知识库和排障账本挂在常驻的业务域节点上，不随人员流动断档。"
+              }
+            ]
+          },
+          interlock: {
+            idx: 3,
+            label: "把权利和义务配平（1v1 入口 + 业务域常驻 + 人签字）",
+            scaleTone: "ok",
+            scaleBadge: "上下分层 · 权责对等",
+            nodes: [
+              { title: "1. 1v1 个人助手对接人", sub: "唯一工作台入口 · 拉群会诊" },
+              { title: "2. 近五百业务域常驻盯盘", sub: "水位自动唤醒 · 切片隔离报未知" },
+              { title: "3. 分析库与运行账本分开", sub: "分析表自己建 · 发件箱回执去重" },
+              { title: "4. 人工签字确认结案", sub: "只读哈希快照 · 负责人签字关单" }
+            ],
+            steps: [
+              {
+                active: 0,
+                badge: "上下两层",
+                l1: "Step 1 / 4 · 上面只留 1 个 1v1 个人助手对接人，作为唯一工作台入口",
+                l2: "个人助手负责听懂意图、按需 @ 相关的业务域专家拉群会诊并汇总结论，日常问答不乱建长线待办。",
+                cap: "mo-agent-swarm 分工上层：个人助手专心服务好眼前的用户，业务域详情页里连独立聊天窗都不放。"
+              },
+              {
+                active: 1,
+                badge: "跨域会诊",
+                l1: "Step 2 / 4 · 底下近五百个业务域 Agent 按数据完结水位自动唤醒、找上下游核对",
+                l2: "产品域自动找国家域和广告网络域核对大盘与自身波动；锁死单产品切片，缺数老老实实报 unknown。",
+                cap: "mo-agent-swarm 分工下层：业务域节点专心守好各自那摊业务，连线只做定向汇报、不跨产品读原始明细。"
+              },
+              {
+                active: 2,
+                badge: "双库隔离",
+                l1: "Step 3 / 4 · Workspace 分析库放开建表查询，Runtime 运行账本收归平台独占写入",
+                l2: "内部串行、最多四层防环且日预算封顶；往外写结果先落发件箱凭回执去重，断网只重发定稿结果、绝不重跑大模型。",
+                cap: "数字员工运行制度：给它干活所需的自主分析工具，同时把收件箱、运行账本与回执去重锁在宿主平台里。"
+              },
+              {
+                active: 3,
+                badge: "签字关单",
+                l1: "Step 4 / 4 · 正反两面证据封存成带哈希校验的只读快照，留给负责人签字结案",
+                l2: "数字员工手里始终没有“关单”按钮；等待审批期间冒出新数据、新反馈或超过七天没人批，审批单当场作废重审。",
+                cap: "最后一步留给人：机器负责把正反证据摆齐，最后确认业务因果、签字担责的只能是具体的人。"
+              }
+            ]
+          }
+        };
+
+        function stopAuto() {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          autoBtn.textContent = "▶ 自动演示";
+        }
+
+        function drawGauge(c, toneVar, toneSoft) {
+          var g = "";
+          g += '<rect x="20" y="16" width="206" height="164" rx="7" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+          g += '<text x="123" y="37" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--ink-muted)">分工方案 · CASE ' + c.idx + ' / 3</text>';
+
+          if (curCase === "deep") {
+            // Tilted scale: Rights heavy, Duties missing
+            g += '<polygon points="123,124 111,144 135,144" fill="var(--ink-secondary)" />';
+            g += '<line x1="72" y1="144" x2="174" y2="144" stroke="var(--ink-secondary)" stroke-width="2" />';
+            g += '<g transform="rotate(-14 123 118)">';
+            g += '<line x1="54" y1="118" x2="192" y2="118" stroke="' + toneVar + '" stroke-width="3" stroke-linecap="round" />';
+            g += '<circle cx="58" cy="102" r="15" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6" />';
+            g += '<text x="58" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="700" fill="var(--accent)">权</text>';
+            g += '<circle cx="188" cy="102" r="13" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-dasharray="3 2" stroke-width="1.3" />';
+            g += '<text x="188" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-muted)">责</text>';
+            g += '</g>';
+          } else if (curCase === "scatter") {
+            // Scattered personal bots vs unguarded domain
+            for (var k = 0; k < 4; k++) {
+              var bx = 42 + k * 46;
+              g += '<rect x="' + bx + '" y="52" width="34" height="24" rx="4" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.2" />';
+              g += '<text x="' + (bx + 17) + '" y="68" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--warn)">私聊</text>';
+              g += '<line x1="' + (bx + 17) + '" y1="76" x2="' + (bx + 17) + '" y2="100" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="2 2" />';
+            }
+            g += '<rect x="38" y="102" width="170" height="38" rx="5" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-dasharray="4 3" />';
+            g += '<text x="123" y="125" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">常驻业务域（半夜没人盯）</text>';
+          } else {
+            // Clean balanced 3-tier stack
+            g += '<rect x="38" y="48" width="170" height="26" rx="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.3" />';
+            g += '<text x="123" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="var(--blue)">1 个 1v1 助手 + 人工签字</text>';
+            g += '<line x1="123" y1="74" x2="123" y2="84" stroke="var(--ok)" stroke-width="1.6" />';
+            g += '<rect x="38" y="84" width="82" height="54" rx="4" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.4" />';
+            g += '<text x="79" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="700" fill="var(--ok)">近五百业务域</text>';
+            g += '<text x="79" y="124" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-secondary)">分析库可建表</text>';
+            g += '<rect x="126" y="84" width="82" height="54" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4" />';
+            g += '<text x="167" y="106" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="700" fill="var(--accent)">平台硬限制</text>';
+            g += '<text x="167" y="124" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-secondary)">运行账本只读</text>';
+          }
+
+          g += '<rect x="32" y="150" width="182" height="22" rx="4" fill="' + toneSoft + '" />';
+          g += '<text x="123" y="165" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="700" fill="' + toneVar + '">' + c.scaleBadge + '</text>';
+          return g;
+        }
+
+        function draw() {
+          var c = cases[curCase];
+          var total = c.steps.length;
+          if (step > total) step = total;
+          var st = c.steps[step - 1];
+          prevBtn.disabled = step <= 1;
+          nextBtn.disabled = step >= total;
+          readout.textContent = "CASE " + c.idx + " / 3 · STEP " + step + " / " + total;
+          line1.textContent = st.l1;
+          line2.textContent = st.l2;
+          cap.textContent = st.cap;
+
+          var toneVar = c.scaleTone === "ok" ? "var(--ok)" : c.scaleTone === "warn" ? "var(--warn)" : "var(--accent)";
+          var toneSoft = c.scaleTone === "ok" ? "var(--ok-soft)" : c.scaleTone === "warn" ? "var(--warn-soft)" : "var(--accent-soft)";
+
+          var html = drawGauge(c, toneVar, toneSoft);
+
+          var coords = [
+            { x: 244, y: 16, w: 235, h: 72 },
+            { x: 505, y: 16, w: 235, h: 72 },
+            { x: 505, y: 108, w: 235, h: 72 },
+            { x: 244, y: 108, w: 235, h: 72 }
+          ];
+          html += '<path d="M 479 52 L 501 52" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
+          html += '<path d="M 622 88 L 622 104" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
+          html += '<path d="M 505 144 L 483 144" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
+
+          c.nodes.forEach(function (n, idx) {
+            var pos = coords[idx];
+            var isCur = st.active === idx;
+            var isDone = idx < st.active;
+            var stroke = isCur ? toneVar : isDone ? "var(--ink-muted)" : "var(--rule-strong)";
+            var fill = isCur ? toneSoft : "var(--bg-elevated)";
+            var op = isCur ? "1" : isDone ? "0.8" : "0.5";
+            var sw = isCur ? "2.1" : "1.2";
+
+            html += '<g style="cursor:pointer" data-s2-step="' + (idx + 1) + '" opacity="' + op + '">';
+            html += '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + pos.w + '" height="' + pos.h + '" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
+            html += '<text x="' + (pos.x + 13) + '" y="' + (pos.y + 27) + '" font-family="var(--font-sans)" font-size="12.5" font-weight="700" fill="' + (isCur ? toneVar : "var(--ink)") + '">' + n.title + '</text>';
+            html += '<text x="' + (pos.x + 13) + '" y="' + (pos.y + 51) + '" font-family="var(--font-sans)" font-size="11.2" fill="var(--ink-secondary)">' + n.sub + '</text>';
+            if (isCur) {
+              html += '<rect x="' + (pos.x + pos.w - 68) + '" y="' + (pos.y + 9) + '" width="58" height="18" rx="3" fill="' + toneVar + '" />';
+              html += '<text x="' + (pos.x + pos.w - 39) + '" y="' + (pos.y + 21) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="10" font-weight="700" fill="#fff">' + st.badge + '</text>';
+            }
+            html += '</g>';
+          });
+
+          graphG.innerHTML = html;
+          graphG.querySelectorAll("[data-s2-step]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              stopAuto();
+              step = parseInt(el.getAttribute("data-s2-step"), 10);
+              draw();
+            });
+          });
+        }
+
+        document.querySelectorAll("[data-s2-case]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            stopAuto();
+            curCase = b.getAttribute("data-s2-case");
+            step = 1;
+            document.querySelectorAll("[data-s2-case]").forEach(function (x) {
+              var active = x === b;
+              x.classList.toggle("is-active", active);
+              x.setAttribute("aria-pressed", active ? "true" : "false");
+            });
+            draw();
+          });
+        });
+
+        prevBtn.addEventListener("click", function () {
+          stopAuto();
+          if (step > 1) { step--; draw(); }
+        });
+        nextBtn.addEventListener("click", function () {
+          stopAuto();
+          var total = cases[curCase].steps.length;
+          if (step < total) { step++; draw(); }
+        });
+        autoBtn.addEventListener("click", function () {
+          if (timer) {
+            stopAuto();
+            return;
+          }
+          var total = cases[curCase].steps.length;
+          if (step >= total) step = 1;
+          draw();
+          autoBtn.textContent = "⏸ 暂停演示";
+          timer = setInterval(function () {
+            var maxS = cases[curCase].steps.length;
+            if (step >= maxS) {
+              stopAuto();
+              return;
+            }
+            step++;
+            draw();
+          }, 1650);
+        });
+        document.getElementById("s2-reset").addEventListener("click", function () {
+          stopAuto();
+          step = 1;
+          draw();
+        });
+
+        draw();
+      })();
+
+      /* 5. Stage 3: Digital Employee 4-Layer Architecture Inspector */
+      (function initStage3() {
+        var idx = 0;
+        var svgG = document.getElementById("s3-svg");
+        var readout = document.getElementById("s3-readout");
+        var roleEl = document.getElementById("s3-role");
+        var rightsEl = document.getElementById("s3-rights");
+        var guardsEl = document.getElementById("s3-guards");
+        var cap = document.getElementById("s3-cap");
+        var btns = Array.prototype.slice.call(document.querySelectorAll("[data-s3]"));
+
+        var layers = [
+          {
+            readout: "LAYER 1 / 4 · 顶层入口与拉群会诊",
+            title: "顶层 · 1v1 个人助手入口与多业务域会诊",
+            sub: "上面 1 个个人助手对接人 · 底下近五百个常驻业务域节点守好各自业务",
+            badge: "唯一工作台入口 · 域页不放聊天窗",
+            tone: "blue",
+            role: "个人助手作为唯一工作台入口听懂用户意图，按需 @ 相关业务域专家拉群会诊并汇总结论。",
+            rights: "顺着九大类业务关系网找上下游节点联合会诊，核对产品、国家市场与广告网络波动。",
+            guards: "日常问答不擅自往后台建长线待办；单次会话锁死单一产品范围，连线只允许定向汇报、不跨产品读明细。",
+            cap: "上下两层各管一摊：用户只面对一个清爽的个人助手入口，近五百个业务域节点在后台常驻盯盘。"
+          },
+          {
+            readout: "LAYER 2 / 4 · 身份、步数与预算管控层",
+            title: "管控层 · 身份隔离、步数预算上限与按水位唤醒",
+            sub: "蓝图模板与无密钥实例拆开并绑人类担保人 · 内部严格串行 · 每天零点重置预算",
+            badge: "最多四层防环 · 挂起让位 · 排队不丢单",
+            tone: "warn",
+            role: "把管理规矩写进外层宿主代码，统一管住身份凭证、并发顺序、派单层级与跨平台共享风险账本。",
+            rights: "上游指标与事件算完即按真实完结水位自动唤醒，在步数与最多四层派单上限内自主排查。",
+            guards: "单个数字员工内部严格串行防撞车；上游数据未就绪主动挂起让出槽位；系统繁忙时排队顺延不丢单。",
+            cap: "管控层把步数、层级和算力预算全部卡死，既算得过常驻运行的经济账，也能防住跨平台连环误操作。"
+          },
+          {
+            readout: "LAYER 3 / 4 · 分析库与运行库隔离层",
+            split: true,
+            tone: "ok",
+            role: "把数字员工“干活用的自主分析库”和“它自己改不动的系统运行账本”在存储上彻底分开。",
+            rights: "独立隔离的专属分析库（Workspace）放开读写，可以自己建表、跑大规模聚合分析并维护版本化业务规则。",
+            guards: "收件箱、对话历史、检查点与日账本全锁在宿主独占写入的 Runtime 库；启动即锁规则快照；发件箱凭唯一回执去重，断网绝不重跑大模型。",
+            cap: "双库隔离：左边放开让数字员工自己建表算账，右边由宿主平台管住历史账本与发件箱回执去重。"
+          },
+          {
+            readout: "LAYER 4 / 4 · 数据核实与人工签字层",
+            title: "签字层 · 缺数报未知、只读哈希快照与人工签字关单",
+            sub: "缺数如实报 unknown · 统计波动与人工确认根因分开记录 · 手里没有关单按钮",
+            badge: "只读哈希快照 + 负责人签字结案",
+            tone: "purple",
+            role: "机器负责把正反两面的证据整理齐全并封存快照，最后确认业务因果与关单留给人签字。",
+            rights: "顺着原有异常事件线程继续追加支持证据与反面证据，在申请结案前汇总完整报告。",
+            guards: "缺数据源或分母为空必须上报 unknown（不补零、不借数）；申请结案前封存只读哈希快照，须经负责人或全体会签人签字，冒出新数据或超七天未批当场作废重审。",
+            cap: "最后一道关口留给人：模型参数没法替结果担责，异常能不能结案必须由具体的人看清正反证据后签字拍板。"
+          }
+        ];
+
+        function toneColor(t) {
+          if (t === "ok") return { fill: "var(--ok-soft)", stroke: "var(--ok)", text: "var(--ok)" };
+          if (t === "blue") return { fill: "var(--blue-soft)", stroke: "var(--blue)", text: "var(--blue)" };
+          if (t === "warn") return { fill: "var(--warn-soft)", stroke: "var(--warn)", text: "var(--warn)" };
+          return { fill: "var(--purple-soft)", stroke: "var(--purple)", text: "var(--purple)" };
+        }
+
+        function render(n) {
+          idx = Math.max(0, Math.min(layers.length - 1, n));
+          var cur = layers[idx];
+          readout.textContent = cur.readout;
+          roleEl.textContent = cur.role;
+          rightsEl.textContent = cur.rights;
+          guardsEl.textContent = cur.guards;
+          cap.textContent = cur.cap;
+
+          btns.forEach(function (b, i) {
+            var active = i === idx;
+            b.classList.toggle("is-active", active);
+            b.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+
+          var html = "";
+          var startY = 12;
+          var rowH = 50;
+          var gap = 12;
+
+          layers.forEach(function (l, i) {
+            var y = startY + i * (rowH + gap);
+            var isCur = i === idx;
+            var c = toneColor(l.tone);
+            var sw = isCur ? "2.1" : "1.2";
+            var op = isCur ? "1" : "0.7";
+
+            html += '<g style="cursor:pointer" data-s3-layer="' + i + '" opacity="' + op + '">';
+            if (l.split) {
+              // Dual-database split row: Workspace (Left) vs Runtime (Right)
+              var leftFill = isCur ? "var(--ok-soft)" : "var(--bg-elevated)";
+              var leftStroke = isCur ? "var(--ok)" : "var(--rule-strong)";
+              var rightFill = isCur ? "var(--accent-soft)" : "var(--bg-elevated)";
+              var rightStroke = isCur ? "var(--accent)" : "var(--rule-strong)";
+
+              html += '<rect x="24" y="' + y + '" width="338" height="' + rowH + '" rx="6" fill="' + leftFill + '" stroke="' + leftStroke + '" stroke-width="' + sw + '" />';
+              html += '<text x="38" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="12.2" font-weight="700" fill="' + (isCur ? "var(--ok)" : "var(--ink)") + '">左侧 · Workspace 专属分析库（分析表自己建）</text>';
+              html += '<text x="38" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">独立隔离 · 自由建表跑聚合 · 规则核对版本号更新</text>';
+
+              html += '<circle cx="380" cy="' + (y + 25) + '" r="12" fill="var(--bg-paper)" stroke="' + (isCur ? "var(--accent)" : "var(--rule-strong)") + '" stroke-width="1.3" />';
+              html += '<text x="380" y="' + (y + 29) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink-secondary)") + '">≠</text>';
+
+              html += '<rect x="398" y="' + y + '" width="338" height="' + rowH + '" rx="6" fill="' + rightFill + '" stroke="' + rightStroke + '" stroke-width="' + sw + '" />';
+              html += '<text x="412" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="12.2" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink)") + '">右侧 · Runtime 运行库（运行账本归平台管）</text>';
+              html += '<text x="412" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">宿主总管独占写账本 · 发件箱凭回执去重不重跑模型</text>';
+            } else {
+              var fill = isCur ? c.fill : "var(--bg-elevated)";
+              var stroke = isCur ? c.stroke : "var(--rule-strong)";
+              html += '<rect x="24" y="' + y + '" width="712" height="' + rowH + '" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
+              html += '<text x="40" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="12.8" font-weight="700" fill="' + (isCur ? c.text : "var(--ink)") + '">' + l.title + '</text>';
+              html += '<text x="40" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">' + l.sub + '</text>';
+              html += '<rect x="488" y="' + (y + 12) + '" width="234" height="26" rx="4" fill="var(--bg-paper)" stroke="' + (isCur ? c.stroke : "var(--rule)") + '" />';
+              html += '<text x="605" y="' + (y + 29) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="11" font-weight="600" fill="' + (isCur ? c.text : "var(--ink-secondary)") + '">' + l.badge + '</text>';
+            }
+            html += '</g>';
+
+            if (i < layers.length - 1) {
+              var ay1 = y + rowH;
+              var ay2 = y + rowH + gap;
+              html += '<line x1="380" y1="' + ay1 + '" x2="380" y2="' + ay2 + '" stroke="var(--rule-strong)" stroke-width="1.5" stroke-dasharray="2 2" />';
+            }
+          });
+
+          svgG.innerHTML = html;
+          svgG.querySelectorAll("[data-s3-layer]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              render(parseInt(el.getAttribute("data-s3-layer"), 10));
+            });
+          });
+
+          if (window.gsap && !prefersReducedMotion.matches) {
+            window.gsap.fromTo(svgG.children, { opacity: 0.35 }, { opacity: 1, duration: 0.18, ease: "power1.out" });
+          }
+        }
+
+        btns.forEach(function (b, i) {
+          b.addEventListener("click", function () {
+            render(i);
+          });
+        });
+
+        render(0);
+      })();
+    })();
+  </script>
+</body>
+</html>
