@@ -278,7 +278,7 @@
   <header class="site-header">
     <a class="site-brand" href="index.html">Notes &amp; Essays</a>
     <nav class="site-nav" aria-label="站点随笔">
-      <a href="06-rights-and-duties-of-agents.html">#06 人与 AI 切蛋糕</a>
+      <a href="06-rights-and-duties-of-agents.html">#06 Agent 权责分化</a>
       <a href="05-inside-antigravity-orchestrator.html">#05 Orchestrator 双模交接</a>
       <a href="04-anatomy-of-claude-code-loop.html">#04 Claude Code Loop</a>
       <a href="03-from-single-agent-to-swarm.html">#03 多 Agent 协作演进</a>
@@ -301,43 +301,65 @@
         <div class="essay-meta">
           <span class="essay-issue">ESSAY #06</span>
           <span>·</span>
-          <time datetime="2026-11-20">2026-11-20</time>
+          <time datetime="2026-11-22">2026-11-22</time>
           <span>·</span>
           <span>11 分钟阅读 · 含交互图解</span>
         </div>
-        <h2><a href="06-rights-and-duties-of-agents.html">人与 AI 切蛋糕：从工具到数字员工的权责演进</a></h2>
+        <h2><a href="06-rights-and-duties-of-agents.html">各归其位：Agent 的权责分化与人机边界</a></h2>
         <a class="essay-thumb" href="06-rights-and-duties-of-agents.html" style="background: var(--bg-elevated); padding: 18px 20px;">
-          <svg viewBox="0 0 700 180" role="img" style="display:block; width:100%; height:auto;" aria-label="人与 AI 切蛋糕六阶段演进示意图：局部补全、代码沙盒、日常办公、多人协作、数字员工值守到找问题·定规矩·签字担责">
-            <line x1="56" y1="40" x2="620" y2="40" stroke="var(--rule)" stroke-width="1.8" stroke-dasharray="4 3" />
-            <g font-family="var(--font-sans)" font-size="10.2" text-anchor="middle">
-              <rect x="18" y="22" width="76" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
-              <text x="56" y="44" font-weight="600" fill="var(--ink)">局部补全</text>
-              <rect x="103" y="22" width="92" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
-              <text x="149" y="44" font-weight="600" fill="var(--ink)">代码沙盒</text>
-              <rect x="204" y="22" width="92" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.3" />
-              <text x="250" y="44" font-weight="600" fill="var(--ink)">日常办公</text>
-              <rect x="305" y="22" width="92" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.4" />
-              <text x="351" y="44" font-weight="600" fill="var(--accent)">多人协作</text>
-              <rect x="406" y="22" width="116" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.5" />
-              <text x="464" y="44" font-weight="600" fill="var(--accent)">数字员工值守</text>
-              <rect x="531" y="22" width="151" height="36" rx="5" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.8" />
-              <text x="606.5" y="44" font-weight="700" fill="var(--accent)">找问题·定规矩·签字担责</text>
+          <svg viewBox="0 0 700 180" role="img" style="display:block; width:100%; height:auto;" aria-label="Agent 权责分化图谱：从早期万能对话框顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界，分化为 Coding Agent、办公 Agent、Personal Agent、Team Agent、业务域 Agent 与 AI 数字员工六类并存形态，实现模型推演、宿主护栏与人类担责各归其位">
+            <rect x="16" y="39" width="118" height="66" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.4" />
+            <text x="75" y="61" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ink-muted)">00 · 早期混沌</text>
+            <text x="75" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="700" fill="var(--ink)">万能对话框</text>
+            <text x="75" y="96" text-anchor="middle" font-family="var(--font-sans)" font-size="9.2" fill="var(--ink-muted)">长出手脚后开始归位</text>
+            <path d="M 134 72 L 150 72 M 150 24 L 150 120 M 150 24 L 166 24 M 150 56 L 166 56 M 150 88 L 166 88 M 150 120 L 166 120" stroke="var(--rule-strong)" stroke-width="1.3" fill="none" />
+            <g font-family="var(--font-sans)" font-size="10" font-weight="600" text-anchor="middle">
+              <rect x="166" y="12" width="114" height="24" rx="4" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-width="1.2" />
+              <text x="223" y="28" fill="var(--ink)">试错与裁判</text>
+              <rect x="166" y="44" width="114" height="24" rx="4" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-width="1.2" />
+              <text x="223" y="60" fill="var(--ink)">私域与公域</text>
+              <rect x="166" y="76" width="114" height="24" rx="4" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.3" />
+              <text x="223" y="92" fill="var(--accent)">动静锚点</text>
+              <rect x="166" y="108" width="114" height="24" rx="4" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.4" />
+              <text x="223" y="124" fill="var(--accent)">自主与立制</text>
             </g>
-            <rect x="18" y="76" width="664" height="84" rx="6" fill="var(--bg-paper)" stroke="var(--rule)" />
-            <rect x="34" y="92" width="388" height="52" rx="5" fill="var(--bg-elevated)" stroke="var(--ink)" stroke-width="1.2" />
-            <text x="228" y="113" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--ink)">分给 AI 的工作：不确定判断 · 调工具自修 · 常驻盯业务域</text>
-            <text x="228" y="132" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-muted)">隔离沙盒回滚 · 先拟草稿 · 权限取交集 · 分析库与运行账本分开</text>
-            <line x1="452" y1="84" x2="452" y2="152" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" />
-            <polygon points="452,82 447,89 452,96 457,89" fill="var(--accent)" />
-            <rect x="433" y="109" width="38" height="18" rx="3" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.2" />
-            <text x="452" y="121" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="700" fill="var(--accent)">边界</text>
-            <rect x="480" y="92" width="186" height="52" rx="5" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.5" />
-            <text x="573" y="113" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="600" fill="var(--accent)">留在人手里的三件事</text>
-            <text x="573" y="132" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" fill="var(--ink-secondary)">找真问题 · 定规矩 · 签字担责</text>
+            <g stroke="var(--rule-strong)" stroke-width="1.2">
+              <line x1="280" y1="24" x2="306" y2="24" />
+              <line x1="488" y1="24" x2="498" y2="24" stroke-dasharray="2 2" />
+              <line x1="280" y1="56" x2="306" y2="56" />
+              <line x1="488" y1="56" x2="498" y2="56" stroke-dasharray="2 2" />
+              <line x1="280" y1="88" x2="306" y2="88" stroke="var(--accent)" />
+              <line x1="488" y1="88" x2="498" y2="88" stroke="var(--accent)" stroke-dasharray="2 2" />
+              <line x1="280" y1="120" x2="306" y2="120" stroke="var(--accent)" />
+              <line x1="488" y1="120" x2="498" y2="120" stroke="var(--accent)" stroke-dasharray="2 2" />
+            </g>
+            <g font-family="var(--font-sans)" font-size="10" text-anchor="middle">
+              <rect x="306" y="11" width="182" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.2" />
+              <text x="397" y="28" fill="var(--ink)"><tspan font-weight="600">Coding Agent</tspan> · 隔离沙盒</text>
+              <rect x="498" y="11" width="186" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.2" />
+              <text x="591" y="28" fill="var(--ink)"><tspan font-weight="600">办公 Agent</tspan> · 草稿门禁</text>
+
+              <rect x="306" y="43" width="182" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.2" />
+              <text x="397" y="60" fill="var(--ink)"><tspan font-weight="600">Personal Agent</tspan> · 单人私域</text>
+              <rect x="498" y="43" width="186" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.2" />
+              <text x="591" y="60" fill="var(--ink)"><tspan font-weight="600">Team Agent</tspan> · 多人公域</text>
+
+              <rect x="306" y="75" width="182" height="26" rx="4" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.2" stroke-dasharray="3 2" />
+              <text x="397" y="92" fill="var(--ink-secondary)">人侧代理 · 随人流转</text>
+              <rect x="498" y="75" width="186" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.4" />
+              <text x="591" y="92" fill="var(--accent)"><tspan font-weight="700">业务域 Agent</tspan> · 常驻地盘</text>
+
+              <rect x="306" y="107" width="182" height="26" rx="4" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.2" stroke-dasharray="3 2" />
+              <text x="397" y="124" fill="var(--ink-secondary)">宿主制度 · 双库分立</text>
+              <rect x="498" y="107" width="186" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="591" y="124" fill="var(--accent)"><tspan font-weight="700">AI 数字员工</tspan> · 入编纳管</text>
+            </g>
+            <rect x="16" y="144" width="668" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--rule)" />
+            <text x="350" y="161" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="500" fill="var(--ink-secondary)">模型推演 · 宿主护栏 · 人类担责 各归其位（六类形态长期并存、互不替代）</text>
           </svg>
         </a>
         <p class="essay-excerpt">
-          过去一年，Agent 从写代码延伸到日常办公，从个人助手搬进团队群聊，再到常驻业务域变成“数字员工”。顺着 AI 能力一步步长出来的过程，聊聊人和机器怎么重新切分工作蛋糕、权限与义务怎么跟着配平，以及当机器接过越来越多执行工作之后，哪三件事依然留在人手里。
+          今年以来，智能体分化出 Coding Agent、办公 Agent、Personal Agent、Team Agent、业务域 Agent 与 AI 数字员工六类并存形态。当模型长出调工具的手脚，混在“万能对话框”里的模糊代理顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界各自归位：概率推演归大模型，确定性的宿主护栏归代码，价值判断、制度立法与最终责任归具体的人。
         </p>
         <a class="read-link" href="06-rights-and-duties-of-agents.html">阅读全文 &rarr;</a>
       </article>
