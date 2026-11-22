@@ -16,7 +16,7 @@
     })();
   </script>
   <title>各归其位：Agent 的权责分化与人机边界</title>
-  <meta name="description" content="今年以来，Agent 分化出 Coding Agent、办公 Agent、Personal Agent、Team Agent、业务域 Agent 与 AI 数字员工六类并存形态。顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界，拆解各形态的分工、权利、义务与宿主护栏，看清大模型、宿主代码与具体的人如何各归其位。">
+  <meta name="description" content="今年以来，Agent 分化出 Coding Agent、办公 Agent、Personal Agent、Team Agent、业务域 Agent 与 AI 数字员工六类并存形态。顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界，拆解各形态的分工、权利、义务与宿主护栏，并通过跨国业务异动的虚构多角色接力推演看清大模型、宿主代码与具体的人如何各归其位。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
@@ -816,6 +816,7 @@
       <a href="#axis-principal">私域与公域</a>
       <a href="#axis-anchor">动静锚点</a>
       <a href="#axis-governance">自主与立制</a>
+      <a href="#warroom">组合形态（虚构推演）</a>
       <a href="#triad">三重归位</a>
       <a href="#horizon">人的位置</a>
       <button type="button" class="theme-btn" id="theme-toggle">
@@ -832,6 +833,7 @@
         <li><a href="#axis-principal">私域与公域：单人委托的归 Personal Agent，多人共事的归 Team Agent</a></li>
         <li><a href="#axis-anchor">动静锚点：随人流转的归人侧代理，常驻地盘的归业务域 Agent</a></li>
         <li><a href="#axis-governance">自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度</a></li>
+        <li><a href="#warroom">组合形态（虚构推演）：一场跨国业务异动里的多角色接力</a></li>
         <li><a href="#triad">三重归位：上帝的归上帝，凯撒的归凯撒</a></li>
         <li><a href="#horizon">往长远看：当人工胶水退场，什么真正归于人？</a></li>
       </ul>
@@ -848,7 +850,7 @@
           </div>
           <div>
             <dt>阅读时间</dt>
-            <dd>11 分钟（含交互图解）</dd>
+            <dd>12 分钟（含交互图解）</dd>
           </div>
           <div>
             <dt>系列</dt>
@@ -928,35 +930,68 @@
 
         <h2 id="axis-anchor">动静锚点：随人流转的归人侧代理，常驻地盘的归业务域 Agent</h2>
 
-        <p>再看职责锚定在哪儿：企业运转里原本就并存着一动一静两套坐标。无论是写代码的 Coding Agent、拟草稿的办公 Agent，还是一对一的 Personal Agent 与群里的 Team Agent，哪怕给它们挂上云端定时任务，职责锚点依然<strong>跟着流动的人走</strong>；但企业里<strong>人会下班、休假、轮岗，客观存在的业务地盘——产品线、大区、国家市场、广告渠道——却在全天候运转</strong>。</p>
+        <p>再看职责锚定在哪儿：现代企业的运转里，原本就并存着一动一静两套坐标。无论是写代码的 Coding Agent、拟草稿的办公 Agent，还是一对一的 Personal Agent 与群里的 Team Agent，哪怕给它们挂上云端定时任务，职责锚点依然<strong>跟着流动的人走</strong>；可不论做跨境应用、电商零售、支付结算，还是管供应链与云服务，企业里<strong>人总会下班、休假、轮岗，客观存在的业务地盘——具体产品线、国家与地区市场、支付或流量渠道、核心履约模块——却在全天候运转</strong>。</p>
 
-        <p>随着高性价比快模型稳定调工具（配合强推理模型与快模型在同一轨迹按阶段交接）让几百个节点常年在线算得过账，加上<strong>数据完结水位自动唤醒</strong>与<strong>跨 Agent 协作协议（<code>A2A</code>）</strong>普及，原本塞在个人窗口里的盯盘巡检活计，便顺着动静分界分化出了常驻地盘的 <strong>业务域 Agent</strong>。</p>
+        <p>随着高性价比快模型稳定调工具（配合强推理模型与快模型在同一轨迹按阶段交接）让成百上千个节点常年在线算得过账，加上<strong>数据完结水位自动唤醒</strong>与<strong>跨 Agent 协作协议（<code>A2A</code>）</strong>普及，原本塞在个人窗口里的盯盘巡检活计，便顺着动静分界分化出了常驻地盘的 <strong>业务域 Agent</strong>。</p>
 
-        <p>我们在 <code>mo-agent-swarm</code>（全球变现运营平台 RevPulse）的实践，正好印证了这种“分化即并存”。全球变现横跨几十款产品、各大区、上百个国家市场、广告网络、聚合平台与版位，同一国家或广告网络下跑着多款产品，交织成九大类、近五百个节点的业务关系网。过去只靠人侧助手时，海外凌晨三点掉量无人盯；白天十位运营各带 Personal Agent 查跌因，能写出十套打架口径；半年后同事轮岗，散在个人记录里的排障经验也跟着断档。</p>
+        <p>所谓业务域 Agent，就是把智能体的职责直接锚定在某块客观业务单元上——一个节点守一块地盘，自带本域统一的指标口径、领域记忆与上下游拓扑连线。在中大型业务里，几十条产品线、上百个国家市场与各类支付、流量渠道往往交织成一张密集的业务关系网：同一个国家市场或同一条渠道下同时跑着多款产品，一处指标波动常常牵连上下游好几跳。如果只靠随人走动的个人助手盯盘，马上会撞上三道硬伤：一是<strong>跨时区凌晨盲区</strong>，海外市场或夜间链路在凌晨三点掉量时无人值守；二是<strong>口径各自为政</strong>，白天十位运营或分析师各带 Personal Agent 查跌因，能写出十套互相打架的 <code>SQL</code> 口径；三是<strong>轮岗经验断档</strong>，半年后人员调动，散在个人对话记录里的排障脉络也跟着流失。</p>
 
-        <p>顺着“人流转、地盘常驻”的结构，<code>mo-agent-swarm</code> 切出上下配合的双层架构：<strong>顶层为每位运营保留 1 个纯粹的 Personal Agent</strong>，服务流动的人——听懂意图，跨模块排查时按需 <code>@</code> 相关业务域节点拉起会诊并汇总答复；<strong>底层铺开近五百个常驻的业务域 Agent</strong>，死守各自的产品、国家或渠道地盘，承担全天盯盘、异动巡检、告警折叠收敛与上下游联合归因的<strong>分工</strong>，节点详情页干脆不放闲聊输入框。</p>
+        <p>顺着“人流转、地盘常驻”的现实结构，企业智能体自然形成上下配合的双层分工：<strong>顶层为每位成员保留一对一的 Personal Agent</strong>，服务流动的人——承接个人意图与岗位视角，跨模块排查时按需寻址并 <code>@</code> 相关业务域节点拉起会诊、汇总答复；<strong>底层在关键业务单元铺开常驻的业务域 Agent</strong>，守住各自的产品、国家市场、渠道或核心模块地盘，承担全天盯盘、异动巡检、告警折叠收敛与上下游联合归因的<strong>分工</strong>，许多纯值守节点甚至不必开放闲聊输入框。人员轮岗时带走的是个人侧习惯，留在业务域节点里的口径标准与历史异动脉络则原地延续，两层长期并存、互不替代。</p>
 
-        <p>业务域 Agent 拿到订阅真实数据完结水位（上游算完即唤醒）、积累本域异动上下文、顺着业务关系网发起上下游 <code>A2A</code> 协查会诊的<strong>权利</strong>（如产品域异动时自动找关联国家域与广告网络域核对大盘或请求异常），并由<strong>宿主护栏</strong>锁死三条<strong>义务</strong>：</p>
+        <p>业务域 Agent 拿到订阅真实数据完结水位（上游算完即唤醒）、积累本域异动上下文、顺着业务关系网发起上下游 <code>A2A</code> 协查会诊的<strong>权利</strong>（如产品域异动时自动找关联国家域、支付或流量渠道域核对大盘与链路异常），同时严控底层库表的只读切片<strong>权限</strong>，并由<strong>宿主护栏</strong>锁死三条<strong>义务</strong>：</p>
 
         <ul>
           <li><strong>缺数如实报“未知”，绝不硬凑。</strong> 遇到缺失数据源或分母为空，必须如实上报未知（<code>unknown</code>），严禁自行补零或拿兄弟产品数据凑数；光在回复里打印出查询语句不等于实际查过了库，观测到的统计波动也必须与人工确认过的业务根因分开记录。</li>
-          <li><strong>公共节点按单产品切片严格隔离。</strong> 国家市场或广告渠道这类公共节点虽然连接多款产品，但单次会话必须严守单一产品边界，中途绝不串台。宿主网关在会话启动时硬锁单产品数据切片，关系网连线仅放行结构化协查消息，从底层阻断跨产品读取收件箱、记忆或原始明细的权限。</li>
-          <li><strong>同一场异常顺原事件续查，不乱开重复工单。</strong> 面对持续波动，必须顺着原事件线程归拢异动线索，不在每次唤醒时重开新单；跨业务域合并同类事件时，强制由双方业务域的人类负责人共同确认，担起<strong>最终责任</strong>。</li>
+          <li><strong>公共节点按单产品切片严格隔离。</strong> 国家市场、支付通道或流量渠道这类公共节点虽然同时连接多款产品，但单次会话必须严守单一产品边界，中途绝不串台。宿主网关在会话启动时硬锁单产品数据切片，关系网连线仅放行结构化协查消息，从底层阻断跨产品读取收件箱、记忆或原始明细的权限。</li>
+          <li><strong>同一场异常顺原事件续查，不乱开重复工单。</strong> 面对持续波动，必须顺着原事件线程归拢异动线索，不在每次唤醒时重开新单；跨业务域合并同类事件与采纳归因结论时，强制由相关业务域的人类负责人共同确认，担起<strong>最终责任</strong>。</li>
         </ul>
 
-        <!-- DIAGRAM 2: CONFLATION VS DIFFERENTIATION PRODUCTION SIMULATOR -->
+        <h2 id="axis-governance">自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度</h2>
+
+        <p>同样是常驻在线的企业级节点，<strong>业务域 Agent</strong> 与 <strong>AI 数字员工</strong> 在生产体系里有着截然不同的定位，绝不能混为一谈：<strong>业务域 Agent 是驻守业务地盘的领域节点</strong>，按客观业务单元（产品线、国家市场、支付或流量渠道、核心模块）定界，专职全天候盯住本域数据完结水位、统一指标口径与历史异动上下文，负责<strong>异常吹哨，以及进驻 <code>Team Agent</code> 协作空间跨上下游 <code>A2A</code> 协同分析定位</strong>（严守单产品切片硬隔离与缺数报 <code>unknown</code> 纪律）；<strong>AI 数字员工则是入编纳管的岗位级自治执行与协调者</strong>，按正式组织岗位与治理制度（如应急值班专员、运营执行专员、财务核销员）定界。超越只读盯盘与归因提醒，它获授独立非人类员工工号（绑定人类担保人）、专属 <code>Workspace</code> 作业库与日常预算，承担<strong>跨系统推进完整的分析与处置工作流</strong>的<strong>分工</strong>——如自主建表核算影响面、维护版本化业务规则、按最多四层防环规则跨角色派单协调后续的代码修复与外部 Action 响应、通过本地 <code>Outbox</code> 唯一回执去重跟踪外部动作落地，并汇总正反证据封存哈希结案快照；同时受宿主独占的 <code>Runtime</code> 运行账本与人工签字结案制度严格管束。</p>
+
+        <p>过去一年，国内外企业平台都在做这场内部制度分化：微软 Entra Agent ID 拆开持凭证的“蓝图模板”与无密钥干活的“实例身份”，强制绑定人类担保人并在调岗离职时自动移交主管；ServiceNow 配上逐跳验签的加密通行证（<code>AI Passport</code>）与秒级熔断；国内云平台用微虚拟机隔离，把“操作角色”与“数据范围”拆成独立门禁；Sierra 设下静态检查、仿真、人工审批与灰度回滚四道发布关；Cycles 在客服与工单系统间立起共享风险账本，防住“单平台合规、合起来并发打出两百封催款信、两百条告警和十五张误升级工单”的连环失控。</p>
+
+        <p>摘掉拟人头像，AI 数字员工的内部归位与现代公司制度如出一辙——正式员工有工牌、办公桌和日常预算，但绝不能自己改考勤表、自己批报销单。系统向它放开独立非人类员工身份（绑人类担保人）、专属作业库（<code>Workspace</code>）自由建表读写、受控提交版本化规则修订、按防环规则跨角色派单及配额内支配日常预算的<strong>权利</strong>；绑定配额内串行履职、留齐正反证据、绝不碰运行账本与关单开关的<strong>义务</strong>；再把账本与执法权收归外层<strong>宿主护栏</strong>：</p>
+
+        <ul>
+          <li><strong>作业库放开自建，运行账本归宿主独占（<code>Workspace</code> 与 <code>Runtime</code> 物理分离）。</strong> 数字员工在隔离的 <code>Workspace</code> 库里自由建表核算业务影响面与执行明细；收件箱、对话历史、执行检查点与每日成本账本则锁在宿主独占写入的 <code>Runtime</code> 库里，数字员工没有任何写库权限。岗位记忆与业务规则经受控接口核对版本号更新，任务一旦启动就锁死当时的规则快照，重跑或断点恢复不会被中途新改的规则干扰。</li>
+          <li><strong>内部串行与配额封顶，外部写入靠发件箱唯一回执去重。</strong> 单个数字员工内部严格串行执行，避免自己跟自己并发撞车，单次推理步数、最多四层防环派单、日修订次数与零点重置预算全部硬封顶；遇到上游数据尚未就绪时主动挂起、让出计算槽位，系统繁忙时排队顺延而不丢单。外部写入先在本地发件箱（<code>Outbox</code>）留底、凭唯一回执核销去重——网络丢包只按原回执重发定稿结果，<strong>绝不重跑带随机性的大模型</strong>，跨角色异步派单与通知全程验签。</li>
+          <li><strong>正反证据封存只读快照，定因与关单留给人签字担责。</strong> 申请结案前汇总正反两面证据封存为带哈希校验的只读快照，工具箱里永不设“关单”按钮；异常结案须由指定人类负责人或全体会签人签字担起<strong>最终责任</strong>，等待审批期间一旦冒出新数据、新反馈，或超过七天无人签字，原审批单自动作废重审。</li>
+        </ul>
+
+        <h2 id="warroom">组合形态（虚构推演）：一场跨国业务异动里的多角色接力</h2>
+
+        <p>把六类形态拆开剖析是为了看清各自的边界；放回真实运转的企业现场，它们往往按各自本分咬合在同一条响应链上。下面不妨通过一个<strong>虚构的推演场景</strong>——假设一家跨国数字业务公司“星澜互动”遭遇凌晨突发掉量——看看这六类智能体是如何分工接力的：</p>
+
+        <p><strong>第一棒：凌晨 03:10 至上午 09:00 —— <code>业务域 Agent</code> 常驻吹哨，<code>Personal Agent</code> 私域衔接拉起 Warroom。</strong> 凌晨 03:10，驻守“巴西市场”的 <strong>业务域 Agent</strong> 被上游真实数据完结水位唤醒，监测到主力产品支付净额环比跌去近三成（宿主网关硬锁单产品切片绝不串台，尚未完结的渠道退款账单如实标为 <code>unknown</code>），随即折叠底层碎片告警并触发异常升级。上午 09:00，业务负责人打开个人工作台，一对一绑定的 <strong>Personal Agent</strong> 已在加密私域里把凌晨升级单、她上周记下的“巴西大促备忘”及今日日程整理成简报。她在私聊框里追问核对大促背景（锁在个人租户内，不打扰团队、不乱建后台任务），确认需多方联动后点下应急响应，围绕该事件单拉起临时的<strong>事故 Warroom（应急协作群）</strong>。</p>
+
+        <p><strong>第二棒：上午 09:10 —— 进入事故 Warroom，在 <code>Team Agent</code> 公共秩序下联合多个 <code>业务域 Agent</code> 协同分析定位。</strong> 研发、运营、渠道商务、外部支付技术支持，连同“巴西市场域”“拉美支付渠道域”“客户端版本域”三个 <strong>业务域 Agent</strong> 一并进入 Warroom。在多人共事的公域房间里，<strong>Team Agent</strong> 专管公共秩序与权限边界：平时处于零消耗 <code>waiting</code> 休眠，只有被 <code>@</code> 点名才进指定线程应答；外部支付技术支持 <code>@Team Agent</code> 询问报错分布时，外层<strong>宿主护栏</strong>强制取“提问人与机器权限的最小交集”并核对房间密级脱敏返回，绝不泄露负责人私聊里的营收底牌；群内出现排障指令冲突时，外层状态机严格按事故指挥官（Incident Commander）的指令层级裁决。而在 Warroom 内部承担<strong>协同分析定位</strong>的，正是那三个各守地盘的 <strong>业务域 Agent</strong>：支付渠道域核对通道回执排除外部网关故障，客户端版本域通过 <code>A2A</code> 交叉比对，锁定当晚灰度的新安装包在部分机型上触发了支付回调超时，并将统计波动线索统一归拢在原事件线程下，交由事故指挥官拍板确认根因。</p>
+
+        <p><strong>第三棒：上午 09:35 —— 根因拍板后，<code>AI 数字员工</code> 接棒协调后续代码修复与外部 Action 响应。</strong> 处置方案敲定后，入编纳管的“应急处置 <strong>AI 数字员工</strong>”（持绑定值班负责人担保的独立员工身份）接过统筹执行棒，在内部严格串行、最多四层防环派单与日预算上限内，分头协调研发修复与对外响应，每一步派单与开销均锁入宿主独占的 <code>Runtime</code> 账本：</p>
+
+        <ul>
+          <li><strong>协调代码修复（联动 <code>Coding Agent</code>）：</strong> 数字员工将回调超时堆栈、受影响机型与回归条件整理成修复任务单，派发给研发侧的 <strong>Coding Agent</strong>；Coding Agent 在隔离的 <code>git worktree</code> 分支里复现问题、写出热修补丁并跑通全套单测（<code>exit code 0</code>），经独立审查通过后由研发工程师审阅合入发版，担起代码变更的<strong>最终责任</strong>。</li>
+          <li><strong>协调外部 Action 响应（联动 <code>办公 Agent</code> 与外部工单）：</strong> 数字员工同时在自己的 <code>Workspace</code> 专属作业库里建表算出受影响订单明细，驱动商务侧的 <strong>办公 Agent</strong> 生成致重点渠道合作方的故障说明邮件与对账核销草稿；外层<strong>宿主护栏</strong>强制走 <code>Draft-then-Commit</code> 与锁死对象数额的 <code>Action Gate</code>，外部合作方工单状态更新则经本地 <code>Outbox</code> 唯一回执核销去重（网络闪断只重发定稿结果、绝不重跑随机大模型），由商务负责人核对金额无误后亲手点下发送，担起对外履约的<strong>最终责任</strong>。</li>
+        </ul>
+
+        <p><strong>第四棒：中午 12:00 —— 证据快照封存与人类签字结案。</strong> 热修包放量后，“巴西市场” <strong>业务域 Agent</strong> 监测到数据完结水位恢复正常；负责协调处置的 <strong>AI 数字员工</strong> 随即把异常前后的正反对比证据、补丁合入记录与外部回执汇总封存为带哈希校验的只读结案快照（工具箱里永不设“关单”按钮）。事故指挥官与相关负责人在 Warroom 里核实完整证据链后共同<strong>签字结案</strong>，担起整场事故处置的<strong>最终责任</strong>，临时 Warroom 随之归档收起。</p>
+
+        <p>在这场虚构的接力里，六个角色边界分明：<code>Personal Agent</code> 守私域入口，<code>Team Agent</code> 管公域秩序，<code>业务域 Agent</code> 盯地盘做协同定位，<code>AI 数字员工</code> 按制度统筹推进处置，<code>Coding Agent</code> 在可逆沙盒改代码，<code>办公 Agent</code> 隔着草稿门禁拟外发——谁也不越界包办，合在一起却把一场跨时区事故处理得井井有条。</p>
+
+        <!-- DIAGRAM 2: CONFLATION VS FICTIONAL WARROOM RELAY SIMULATOR -->
         <figure class="stage" id="stage-simulator">
           <div class="stage-header">
-            <span class="stage-title">边界混同 vs 各归其位：三组生产现场推演</span>
+            <span class="stage-title">边界混同 vs 各归其位：跨国异动多角色接力推演（虚构场景）</span>
             <span class="stage-meta-readout" id="s2-readout">CASE 1 / 3 · STEP 1 / 4</span>
           </div>
           <div class="stage-controls stage-top-bar">
             <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s2-case="conflate_env">1. 试错与公私混同（拿沙盒自由度干外发、拿私聊习惯进大群）</button>
             <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="conflate_anchor">2. 动静锚点混同（只靠随人流转的窗口硬扛全天业务地盘）</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="differentiated">3. 各归其位协同（Personal 对接人 + 业务域守地盘 + 数字员工立制）</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="differentiated">3. 跨国异动接力（虚构推演）</button>
           </div>
           <div class="stage-canvas">
-            <svg viewBox="0 0 760 264" role="img" aria-label="边界混同与各归其位三组生产现场的四步运行推演图">
+            <svg viewBox="0 0 760 264" role="img" aria-label="边界混同反例与跨国业务异动多角色接力（虚构推演）的四步运行推演图">
               <defs>
                 <marker id="sim-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                   <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ink-muted)" />
@@ -974,22 +1009,8 @@
             <button type="button" class="btn-ctl" id="s2-auto">▶ 自动演示</button>
             <button type="button" class="btn-ctl" id="s2-reset">重置</button>
           </div>
-          <figcaption class="stage-caption" id="s2-cap">切换三组现场，单步对比“试错与公私混同”“动静锚点混同”如何引发生产事故，以及“各归其位”如何在同一体系内协同运转。</figcaption>
+          <figcaption class="stage-caption" id="s2-cap">切换三组推演，单步对比“试错与公私混同”“动静锚点混同”如何引发事故，以及六类分化形态如何在跨国异动的虚构推演场景里四棒接力。</figcaption>
         </figure>
-
-        <h2 id="axis-governance">自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度</h2>
-
-        <p>同样是常驻在线的智能体，还有一道维度不同的制度分界必须拎清：<strong>业务域 Agent 回答“职责锚定在哪儿”</strong>（锚定客观业务单元而非个人窗口）；<strong>AI 数字员工 回答“自治节点按什么制度纳管”</strong>（放开自主生产工具的同时，管住身份、账本、预算与结案签字）。只要常驻节点还停留在只读巡检与协查提醒，守住地盘与数据切片就够了；可一旦把自主建表深挖、受控修订带版本号的业务规则、调用跨平台连接器与支配日常算力预算的<strong>分工</strong>交出去，零散授权就兜不住了，必须立起正式的组织治理制度。在 <code>mo-agent-swarm</code>（RevPulse）里，那近五百个常驻节点按拓扑职责看是<strong>业务域 Agent</strong>，按运行时治理契约看则是入编纳管的 <strong>AI 数字员工</strong>。</p>
-
-        <p>过去一年，国内外企业平台都在做这场内部制度分化：微软 Entra Agent ID 拆开持凭证的“蓝图模板”与无密钥干活的“实例身份”，强制绑定人类担保人并在调岗离职时自动移交主管；ServiceNow 配上逐跳验签的加密通行证（<code>AI Passport</code>）与秒级熔断；国内云平台用微虚拟机隔离，把“操作角色”与“数据范围”拆成独立门禁；Sierra 设下静态检查、仿真、人工审批与灰度回滚四道发布关；Cycles 在客服与工单系统间立起共享风险账本，防住“单平台合规、合起来并发打出两百封催款信、两百条告警和十五张误升级工单”的连环失控。</p>
-
-        <p>摘掉拟人头像，AI 数字员工的内部归位与现代公司制度如出一辙——正式员工有工牌、办公桌和日常预算，但绝不能自己改考勤表、自己批报销单。系统向它放开独立非人类员工身份（绑人类担保人）、专属分析库（<code>Workspace</code>）自由建表读写、受控提交版本化规则修订及配额内支配日常预算的<strong>权利</strong>；绑定配额内串行履职、留齐正反证据、绝不碰运行账本与关单开关的<strong>义务</strong>；再把账本与执法权收归外层<strong>宿主护栏</strong>：</p>
-
-        <ul>
-          <li><strong>分析库放开自建，运行账本归宿主独占（<code>Workspace</code> 与 <code>Runtime</code> 物理分离）。</strong> 数字员工在隔离的 <code>Workspace</code> 库里自由建表做深度聚合下钻；收件箱、对话历史、执行检查点与每日成本账本则锁在宿主独占写入的 <code>Runtime</code> 库里，数字员工没有任何写库权限。本域记忆与业务规则经受控接口核对版本号更新，任务一旦启动就锁死当时的规则快照，重跑或断点恢复不会被中途新改的规则干扰。</li>
-          <li><strong>内部串行与配额封顶，外部写入靠发件箱唯一回执去重。</strong> 单个数字员工内部严格串行执行，避免自己跟自己并发撞车，单次推理步数、最多四层防环派单、日修订次数与零点重置预算全部硬封顶；遇到上游数据尚未就绪时主动挂起、让出计算槽位，系统繁忙时排队顺延而不丢单。外部写入先在本地发件箱留底、凭唯一回执核销去重——网络丢包只按原回执重发定稿结果，<strong>绝不重跑带随机性的大模型</strong>，跨域异步消息全程验签。</li>
-          <li><strong>正反证据封存只读快照，定因与关单留给人签字担责。</strong> 申请结案前汇总正反两面证据封存为带哈希校验的只读快照，工具箱里永不设“关单”按钮；异常结案须由指定人类负责人或全体会签人签字担起<strong>最终责任</strong>，等待审批期间一旦冒出新数据、新反馈，或超过七天无人签字，原审批单自动作废重审。</li>
-        </ul>
 
         <h2 id="triad">三重归位：上帝的归上帝，凯撒的归凯撒</h2>
 
@@ -1011,7 +1032,7 @@
             <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s3="0">具体的人 · 定义真问题、把经验立成制度、签字承担最终责任</button>
             <button type="button" class="btn-ctl" aria-pressed="false" data-s3="1">大模型 · 概率推演、多步试错、跨系统起草与全天候盯水位</button>
             <button type="button" class="btn-ctl" aria-pressed="false" data-s3="2">宿主护栏 · Draft-then-Commit、最小权限交集、单产品切片与唯一回执去重</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="3">双库分立 · Workspace 专属分析库放开自建 vs Runtime 运行账本宿主独占</button>
+            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="3">双库分立 · Workspace 专属作业库放开自建 vs Runtime 运行账本宿主独占</button>
           </div>
           <div class="stage-canvas">
             <svg viewBox="0 0 760 256" role="img" aria-label="具体的人、大模型、宿主代码护栏与 Workspace/Runtime 双库分立的四层三重归位解剖图">
@@ -1082,7 +1103,7 @@
               <tr>
                 <th scope="row">Team Agent</th>
                 <td>多人共事的团队公域；多人话题流理解 + 多角色状态同步</td>
-                <td>共享频道与看板里的分流、同步、协同排查与初审</td>
+                <td>共享频道、看板与 Warroom 里的公共秩序、分流同步与交叉初审</td>
                 <td>携带提问人与机器双重身份访问受控团队资源，在指定线程读写状态</td>
                 <td>服从指令层级，严守密级且查改审分离，守公共安静义务</td>
                 <td>外层状态机裁决优先级；取提问人与机器权限最小交集并核对房间密级；记忆按“租户 + 个人”隔离，平时 <code>waiting</code> 休眠；采纳由发起人与负责人承担最终责任</td>
@@ -1091,19 +1112,19 @@
               <tr>
                 <th scope="row">业务域 Agent</th>
                 <td>全天候常驻业务地盘；快模型稳定调工具 + 数据水位唤醒 + <code>A2A</code></td>
-                <td>常驻业务地盘盯盘、异动巡检、告警收敛与上下游归因</td>
-                <td>订阅真实完结水位、积累本域异动上下文、发起上下游协查</td>
+                <td>常驻业务地盘盯盘、异常吹哨、告警收敛与跨上下游协同分析定位</td>
+                <td>订阅真实完结水位、积累本域异动上下文、进协作空间发起上下游 <code>A2A</code> 协查</td>
                 <td>缺数如实报 <code>unknown</code>，区分统计波动与业务根因，严守单产品边界并顺原事件续查</td>
-                <td>锚定客观业务域并与顶层 Personal Agent 配合；网关硬锁单产品切片，阻断跨产品读明细权限；跨域合并与结论采纳由业务域负责人确认并承担最终责任</td>
+                <td>锚定客观业务域，与 Personal Agent 及 Team Agent 协作空间配合；网关硬锁单产品切片，阻断跨产品读明细权限；跨域合并与结论采纳由业务域负责人确认并承担最终责任</td>
                 <td>缺数时补零或借兄弟产品凑数，串读其他产品明细，或每次唤醒重开重复工单</td>
               </tr>
               <tr>
                 <th scope="row">AI 数字员工</th>
-                <td>自主经营与制度审计分离；受控自治运行时 + 身份预算风控</td>
-                <td>自主建表深挖、维护版本化规则、汇总正反证据出结案报告</td>
-                <td>独立非人类员工身份（绑定人类担保人）、<code>Workspace</code> 读写、受控修订版本化规则、支配日常预算</td>
+                <td>岗位自治执行与制度审计分离；受控自治运行时 + 身份预算风控</td>
+                <td>自主建表核算、维护版本化规则、跨角色派单协调修复与外部 Action 响应、封存正反证据结案报告</td>
+                <td>独立非人类员工身份（绑定人类担保人）、<code>Workspace</code> 读写、受控修订版本化规则、按防环规则派单与支配日常预算</td>
                 <td>步数、四层防环派单与日预算内串行履职，留齐正反证据，不碰账本与关单</td>
-                <td><code>Workspace</code> 与宿主独占 <code>Runtime</code> 账本分离（员工零写权限）；规则核对版本并锁快照；唯一回执去重（重发不重跑模型）；快照封存由负责人或会签人签字承担最终责任</td>
+                <td><code>Workspace</code> 与宿主独占 <code>Runtime</code> 账本分离（员工零写权限）；规则核对版本并锁快照；本地 <code>Outbox</code> 唯一回执去重（重发不重跑模型）；快照封存由负责人或会签人签字承担最终责任</td>
                 <td>并发误发两百封催款信与告警，断网重跑随机模型重复写入，或覆盖规则破坏审计链</td>
               </tr>
             </tbody>
@@ -1112,9 +1133,9 @@
 
         <h2 id="horizon">往长远看：当人工胶水退场，什么真正归于人？</h2>
 
-        <p>再往后看五到十年，随着长周期规划与“模型—宿主协同演进”（递归自我改进，RSI）成熟，企业组织也会卸下沉重的协调包袱。过去大公司搭那么多层汇报金字塔、开不完的跨部门周会、填不完的流转工单，根源在于单个人脑装不下跨领域实时上下文，只能靠流程层层递摘要。等成百上千个驻守业务域的 AI 数字员工既能常年盯水位，又能在几秒内凭签名契约拉起跨域会诊，围绕具体问题动态聚散的协作网，就会消融掉大半靠人力传话维持的中间层。几位业务负责人带着各自的 Personal Agent，与驻守各业务域的几百名 AI 数字员工协同运转，会变成寻常的组织形态。</p>
+        <p>再往后看五到十年，随着长周期规划与“模型—宿主协同演进”（递归自我改进，RSI）成熟，企业组织也会卸下沉重的协调包袱。过去大公司搭那么多层汇报金字塔、开不完的跨部门周会、填不完的流转工单，根源在于单个人脑装不下跨领域实时上下文，只能靠流程层层递摘要。等成百上千个常驻地盘的业务域 Agent 能全天盯水位、秒级拉起跨域协同定位，入编纳管的 AI 数字员工又能凭签名契约跨角色统筹推进处置，围绕具体问题动态聚散的协作网，就会消融掉大半靠人力传话维持的中间层。几位业务负责人带着各自的 Personal Agent，与守地盘的业务域 Agent 及管处置执行的 AI 数字员工协同运转，会变成寻常的组织形态。</p>
 
-        <p>有人难免会问：当写代码、跨系统起草、群内分流、全天盯盘乃至建表归因都归位到了不同机器手里，人的位置会不会越挤越窄？回看两百年分工史，答案恰恰相反——一旦人不再充当<strong>搬运上下文的人工胶水</strong>，不用整天泡在复制报错、手工对账、催单转话里，<strong>真正属于人的东西，反而以最纯粹的面貌回到了人手里</strong>：</p>
+        <p>有人难免会问：当写代码、跨系统起草、群内分流、全天盯盘乃至跨角色统筹处置都归位到了不同机器手里，人的位置会不会越挤越窄？回看两百年分工史，答案恰恰相反——一旦人不再充当<strong>搬运上下文的人工胶水</strong>，不用整天泡在复制报错、手工对账、催单转话里，<strong>真正属于人的东西，反而以最纯粹的面貌回到了人手里</strong>：</p>
 
         <ol>
           <li><strong>待在真实的物理与商业现场，定义“什么真问题值得解”。</strong> 模型周末能推演上万条路径、算出哪套方案转化率高两个点，但它没有肉身痛感与生活处境，体会不到卡顿流程让人多烦躁，也定不了价值取向。发现真问题、选定大方向，只能由身处现场的人来做。</li>
@@ -1132,7 +1153,7 @@
 
       <footer class="post-footer">
         <div class="end-mark">— END —</div>
-        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview">Claude Cowork Architecture Overview</a>、Harmonic Security <a href="https://www.harmonic.security/resources/securing-claude-cowork-a-security-practitioners-guide">Securing Claude Cowork</a>、Microsoft <a href="https://www.microsoft.com/en-us/copilot/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/">Copilot Wave 3 / Copilot Cowork</a>、OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use">Agents API Computer Use</a>、Noor Yasser <a href="https://nooryasser.com/articles/openai-agents-api-computer-use-architecture/">Trust Architecture</a>、飞书 <a href="https://www.feishu.cn/content/article/7591431268324101337">多维表格 AI Agent 节点</a>、Composio <a href="https://www.sean-weldon.com/blog/2026-09-08-from-coding-to-knowledge-work-agents-karan-vaidya-composio">From Coding to Knowledge Work Agents</a> 与 DevAssure <a href="https://www.devassure.io/blog/inside-the-verification-loop/">SpecBench &amp; Reward Hacking 综述</a>。团队协作与安全边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443">ManyIH-Bench</a>、<a href="https://aclanthology.org/2026.emnlp-main.2261.pdf">MIH-Bench</a>、<a href="https://arxiv.org/html/2502.15851v4">Control Illusion</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09744">MPAC</a>、CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/">Confused Deputy &amp; Cline 复盘</a>、Security Atlas <a href="https://atlasofsecurity.com/learn/topics/agent-tool-identity/">Agent Tool Identity</a> 与 Bigcircle <a href="https://bigcircle.ai/guides/ai-agent-memory-isolation">Memory Isolation</a>。企业数字员工与治理实践部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity">Entra Agent ID / Agent 365 Identity</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/">AI Passport</a>、Salesforce <a href="https://www.salesforce.com/au/news/press-releases/2025/06/23/agentforce-3-announcement/">Agentforce 3</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale">Release Governance</a>、Devin <a href="https://docs.devin.ai/enterprise/features/usage-policies">Usage Policies</a>、<a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow">Cycles Cross-Platform Governance</a>、McKinsey <a href="https://www.mckinsey.com/capabilities/people-and-organization/our-insights/ai-is-changing-work-now-it-has-to-change-the-organization">Organizational Change</a>、PwC <a href="https://www.pwc.com/gx/en/issues/technology/three-governance-shifts-agentic-ai.html">Three Governance Shifts</a>、ooderAgent <a href="https://cloud.tencent.com/developer/article/2763302">双轴域架构</a>、阿里云 <a href="https://developer.aliyun.com/article/1761577">PolarDB Agent Express</a>、腾讯云 <a href="https://cloud.tencent.com/developer/article/2771037">ADP 4.0</a>，并结合了我们在 <code>mo-agent-swarm</code> 与全球变现运营平台 RevPulse 中的业务域 Agent 及 AI 数字员工运行时实践。网页版附有四轴权责分化图谱、边界混同与归位推演及模型·代码·人三重归位交互图解。</em></p>
+        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview">Claude Cowork Architecture Overview</a>、Harmonic Security <a href="https://www.harmonic.security/resources/securing-claude-cowork-a-security-practitioners-guide">Securing Claude Cowork</a>、Microsoft <a href="https://www.microsoft.com/en-us/copilot/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/">Copilot Wave 3 / Copilot Cowork</a>、OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use">Agents API Computer Use</a>、Noor Yasser <a href="https://nooryasser.com/articles/openai-agents-api-computer-use-architecture/">Trust Architecture</a>、飞书 <a href="https://www.feishu.cn/content/article/7591431268324101337">多维表格 AI Agent 节点</a>、Composio <a href="https://www.sean-weldon.com/blog/2026-09-08-from-coding-to-knowledge-work-agents-karan-vaidya-composio">From Coding to Knowledge Work Agents</a> 与 DevAssure <a href="https://www.devassure.io/blog/inside-the-verification-loop/">SpecBench &amp; Reward Hacking 综述</a>。团队协作与安全边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443">ManyIH-Bench</a>、<a href="https://aclanthology.org/2026.emnlp-main.2261.pdf">MIH-Bench</a>、<a href="https://arxiv.org/html/2502.15851v4">Control Illusion</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09744">MPAC</a>、CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/">Confused Deputy &amp; Cline 复盘</a>、Security Atlas <a href="https://atlasofsecurity.com/learn/topics/agent-tool-identity/">Agent Tool Identity</a> 与 Bigcircle <a href="https://bigcircle.ai/guides/ai-agent-memory-isolation">Memory Isolation</a>。企业数字员工与治理实践部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity">Entra Agent ID / Agent 365 Identity</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/">AI Passport</a>、Salesforce <a href="https://www.salesforce.com/au/news/press-releases/2025/06/23/agentforce-3-announcement/">Agentforce 3</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale">Release Governance</a>、Devin <a href="https://docs.devin.ai/enterprise/features/usage-policies">Usage Policies</a>、<a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow">Cycles Cross-Platform Governance</a>、McKinsey <a href="https://www.mckinsey.com/capabilities/people-and-organization/our-insights/ai-is-changing-work-now-it-has-to-change-the-organization">Organizational Change</a>、PwC <a href="https://www.pwc.com/gx/en/issues/technology/three-governance-shifts-agentic-ai.html">Three Governance Shifts</a>、ooderAgent <a href="https://cloud.tencent.com/developer/article/2763302">双轴域架构</a>、阿里云 <a href="https://developer.aliyun.com/article/1761577">PolarDB Agent Express</a> 与腾讯云 <a href="https://cloud.tencent.com/developer/article/2771037">ADP 4.0</a>。网页版附有四轴权责分化图谱、跨国异动多角色接力（虚构推演）及模型·代码·人三重归位交互图解。</em></p>
       </footer>
     </article>
   </main>
@@ -1203,7 +1224,7 @@
       var strip = document.getElementById("reading-strip");
       var bar = document.getElementById("reading-bar");
       var progressLabel = document.getElementById("reading-progress-label");
-      var sections = ["intro", "axis-env", "axis-principal", "axis-anchor", "axis-governance", "triad", "horizon"]
+      var sections = ["intro", "axis-env", "axis-principal", "axis-anchor", "axis-governance", "warroom", "triad", "horizon"]
         .map(function (id) { return document.getElementById(id); })
         .filter(Boolean);
       var tocLinks = document.querySelectorAll("#toc-list a");
@@ -1245,16 +1266,16 @@
           { id: 0, title: "试错与裁判", sub: "可逆沙盒 · 外部交互", y: 23, h: 32, cy: 39 },
           { id: 1, title: "私域与公域", sub: "单人委托 · 多人共事", y: 91, h: 32, cy: 107 },
           { id: 2, title: "动静锚点", sub: "人侧代理 · 常驻地盘", y: 140, h: 32, cy: 156 },
-          { id: 3, title: "自主与立制", sub: "常驻节点 · 制度纳管", y: 178, h: 32, cy: 194 }
+          { id: 3, title: "自主与立制", sub: "日常经营 · 账本执法", y: 178, h: 32, cy: 194 }
         ];
 
         var cardsMeta = [
           { idx: 1, name: "01 Coding Agent", tag: "worktree 沙盒 · 测试裁判 · 合入归人", y: 8, cy: 22, axis: 0 },
           { idx: 2, name: "02 办公 Agent", tag: "Draft-then-Commit · 外发归人", y: 42, cy: 56, axis: 0 },
           { idx: 3, name: "03 Personal Agent", tag: "一对一私域代理 · 本人确认担责", y: 76, cy: 90, axis: 1 },
-          { idx: 4, name: "04 Team Agent", tag: "最小权限交集 · waiting · 负责人担责", y: 110, cy: 124, axis: 1 },
-          { idx: 5, name: "05 业务域 Agent", tag: "水位唤醒 · 单产品切片 · 报 unknown", y: 144, cy: 158, axis: 2 },
-          { idx: 6, name: "06 AI 数字员工", tag: "双库分立 · 回执去重 · 签字结案", y: 178, cy: 192, axis: 3 }
+          { idx: 4, name: "04 Team Agent", tag: "公域秩序 · 最小交集 · waiting", y: 110, cy: 124, axis: 1 },
+          { idx: 5, name: "05 业务域 Agent", tag: "盯盘吹哨 · A2A 协同定位 · 报 unknown", y: 144, cy: 158, axis: 2 },
+          { idx: 6, name: "06 AI 数字员工", tag: "派单协调处置 · 双库分立 · 签字结案", y: 178, cy: 192, axis: 3 }
         ];
 
         var views = [
@@ -1307,33 +1328,33 @@
             tone: "purple",
             activeAxis: 1,
             peers: [3],
-            footer: "进驻多个人类委托人共处一室的公共频道：立起指令裁决、最小权限交集与 waiting 安静规矩。",
-            dim: "多人共事的团队公域（多人话题流理解 + 多角色状态同步）；归位承担共享频道与看板里的分流、进度同步、协同排查与交叉初审分工。",
+            footer: "进驻多人共事的频道与事故 Warroom：专管公共秩序、最小权限交集与 waiting 安静规矩。",
+            dim: "多人共事的团队公域（多人话题流理解 + 多角色状态同步）；归位承担共享频道、看板与 Warroom 里的公共秩序、分流同步与交叉初审分工。",
             rights: "权利：携带“提问人 + 机器”双重身份访问受控团队资源，在指定线程读写协同状态（禁静态全局高权限密钥）；义务：服从层级、查改审分离、守公共安静。",
             guards: "宿主护栏：外层状态机裁决冲突；强制取提问人与机器权限最小交集并核对房间密级；按“租户 + 个人”隔离，平时 waiting 休眠；最终责任：发起人与负责人承担。",
-            cap: "Team Agent 归位团队公域：防住十几个层级指令打架、糊涂代理人泄密与礼貌互回死循环，与每个人的 Personal Agent 并存。"
+            cap: "Team Agent 归位团队公域：在共享频道与 Warroom 维持公共秩序、最小权限交集与指令层级，与私域 Personal Agent 并存。"
           },
           {
             readout: "AXIS 3 · 05 业务域 Agent（动静锚点：常驻地盘）",
             tone: "ok",
             activeAxis: 2,
-            peers: [3, 6],
-            footer: "流动的人配 Personal Agent，全天运转的产品、国家与渠道地盘配近五百个业务域 Agent，上下双层协同。",
-            dim: "全天候常驻业务地盘（快模型稳定调工具 + 数据水位唤醒 + A2A）；归位承担常驻地盘盯盘、异动巡检、告警折叠收敛与上下游联合归因的分工。",
-            rights: "权利：订阅真实完结水位、积累本域异动上下文、顺业务关系网发起上下游 A2A 协查；义务：缺数如实报 unknown，区分波动与根因，严守单产品边界并顺原事件续查。",
-            guards: "宿主护栏：锚定客观业务域且详情页无闲聊框；网关启动硬锁单产品切片，阻断跨产品读明细权限；最终责任：跨域合并与结论采纳由业务域负责人确认承担。",
-            cap: "业务域 Agent 回答“职责锚定在哪儿”：守住全天运转的产品、国家与渠道地盘，与顶层服务流动人员的 Personal Agent 上下配合。"
+            peers: [3, 4],
+            footer: "流动的人配 Personal Agent，常驻地盘配业务域 Agent：全天盯水位吹哨，并进协作空间 A2A 协同定位。",
+            dim: "全天候常驻业务地盘（快模型稳定调工具 + 数据水位唤醒 + A2A）；锚定产品线、国家市场、支付/流量渠道或核心模块，承担常驻盯盘、异常吹哨、告警收敛与跨上下游协同分析定位分工。",
+            rights: "权利：订阅真实完结水位、积累本域异动上下文、进驻协作空间发起上下游 A2A 协查（严控只读切片权限）；义务：缺数如实报 unknown，区分统计波动与业务根因，严守单产品边界并顺原事件续查。",
+            guards: "宿主护栏：锚定客观业务域，与 Personal Agent 及 Team Agent 协作空间配合；网关启动硬锁单产品切片，阻断跨产品读明细权限；最终责任：跨域合并与结论采纳由业务域负责人确认承担。",
+            cap: "业务域 Agent 驻守客观业务地盘：全天候盯住完结水位负责异常吹哨，并进驻协作空间跨上下游 A2A 协同分析定位。"
           },
           {
-            readout: "AXIS 4 · 06 AI 数字员工（自主与立制：制度纳管）",
+            readout: "AXIS 4 · 06 AI 数字员工（自主与立制：岗位自治与宿主制度）",
             tone: "accent",
             activeAxis: 3,
-            peers: [5],
-            footer: "同一批常驻节点按拓扑职责看是业务域 Agent，按身份、双库账本、预算与签字制度看则是 AI 数字员工。",
-            dim: "自主经营与制度审计分离（受控自治运行时 + 身份预算风控）；归位承担自主建表深挖、维护版本化规则、汇总正反证据出具结案报告的分工。",
-            rights: "权利：独立非人类员工身份（绑定人类担保人）、Workspace 自由建表读写、受控修订版本化规则、支配日常预算；义务：配额内串行履职，留齐正反证据，不碰账本与关单。",
-            guards: "宿主护栏：Workspace 与宿主独占 Runtime 账本物理分离（员工零写权限），锁规则快照，唯一回执去重（重发不重跑模型）；最终责任：快照封存由负责人或会签人签字承担。",
-            cap: "AI 数字员工回答“自治节点按什么制度纳管”：放开 Workspace 自主深挖，同时把运行账本、预算封顶与结案签字收归宿主制度与人。"
+            peers: [1, 2, 5],
+            footer: "不同于盯盘吹哨的业务域 Agent：按正式岗位入编纳管，Workspace 自治协调处置，Runtime 归宿主独占。",
+            dim: "岗位自治执行与制度审计分离（受控自治运行时 + 身份预算风控）；按正式岗位入编，承担自主建表核算、维护版本化规则、跨角色派单协调代码修复与外部 Action 响应、封存正反证据结案报告的分工。",
+            rights: "权利：独立非人类员工工号（绑定人类担保人）、专属 Workspace 作业库读写、受控修订版本化规则、按防环规则跨角色派单与支配日常预算；义务：步数、四层防环派单与日预算内串行履职，留齐正反证据，不碰账本与关单。",
+            guards: "宿主护栏：专属 Workspace 作业库与宿主独占 Runtime 账本物理分离（员工零写权限），锁规则快照，本地 Outbox 唯一回执去重（重发不重跑模型）；最终责任：快照封存由负责人或会签人签字承担。",
+            cap: "AI 数字员工归位岗位级自治执行与协调者：推进建表核算、跨角色派单协调修复与外部 Action 响应，账本执法与签字结案归宿主制度与人。"
           }
         ];
 
@@ -1437,10 +1458,8 @@
           html += '</g>';
           html += '<line x1="374" y1="158" x2="432" y2="158" ' + wireAttrs(5, 2) + ' />';
 
-          // Axis 3 (自主与立制) -> governs persistent nodes as Card 6 (AI 数字员工) + vertical tie 5 <-> 6
+          // Axis 3 (自主与立制) -> governs institutionalized autonomous role worker Card 6 (AI 数字员工)
           html += '<line x1="374" y1="192" x2="432" y2="192" ' + wireAttrs(6, 3) + ' />';
-          var tie56 = idx === 5 || idx === 6;
-          html += '<line x1="490" y1="172" x2="490" y2="178" stroke="' + (tie56 ? tv.s : "var(--rule-strong)") + '" stroke-width="' + (tie56 ? "1.8" : "1.2") + '" stroke-dasharray="2 2" opacity="' + (tie56 ? "0.95" : "0.5") + '" />';
 
           // 4. Right 6 Coexisting Agent Cards (all 6 stay visible to show coexistence!)
           cardsMeta.forEach(function (c) {
@@ -1500,7 +1519,7 @@
         render(0);
       })();
 
-      /* 4. Stage 2: Boundary Conflation vs Rightful-Place Production Simulator (3 Cases × 4 Steps) */
+      /* 4. Stage 2: Boundary Conflation vs Warroom Multi-Role Relay Simulator (3 Cases × 4 Steps) */
       (function initStage2() {
         var curCase = "conflate_env";
         var step = 1;
@@ -1561,38 +1580,38 @@
             scaleTone: "warn",
             scaleBadge: "流动窗口硬扛常驻地盘",
             nodes: [
-              { title: "1. 全塞进随人流转窗口", sub: "近五百业务节点挂在个人私聊框" },
-              { title: "2. 凌晨三点掉量漏盯", sub: "运营下班熟睡 · 海外地盘无人守" },
-              { title: "3. 白天十套口径打架", sub: "十人各查各数 · 缺数补零或凑数" },
-              { title: "4. 轮岗断档重复开单", sub: "排障经验散落私聊 · 波动重开新单" }
+              { title: "1. 全塞进随人流转窗口", sub: "百余业务单元全挂在个人私聊框" },
+              { title: "2. 凌晨三点掉量漏盯", sub: "人员下班熟睡 · 海外地盘无人守" },
+              { title: "3. 白天十套口径打架", sub: "十人各写 SQL · 缺数补零或凑数" },
+              { title: "4. 轮岗断档重复开单", sub: "排障脉络散落私聊 · 波动重开新单" }
             ],
             steps: [
               {
                 active: 0,
                 badge: "锚点错位",
-                l1: "Step 1 / 4 · 全球变现横跨九大类近五百个节点，却只靠随人流转的窗口临时提问盯盘",
+                l1: "Step 1 / 4 · 几十条产品线与上百个国家市场、支付/流量渠道，只靠个人窗口临时盯盘",
                 l2: "无论是 Coding、办公、Personal 还是 Team Agent，职责锚点都跟着流动的人与聊天窗口走。",
-                cap: "动静锚点混同：人会下班、休假、轮岗，但产品线、国家市场与广告渠道在全天候运转。"
+                cap: "动静锚点混同：人总会下班、休假、轮岗，但产品线、国家市场与支付/流量渠道在全天候运转。"
               },
               {
                 active: 1,
                 badge: "凌晨漏盯",
-                l1: "Step 2 / 4 · 海外市场凌晨三点突然掉量，运营正在熟睡，缺少按数据完结水位唤醒的节点",
+                l1: "Step 2 / 4 · 海外市场凌晨三点突然掉量，人员正在熟睡，缺少按数据完结水位唤醒的节点",
                 l2: "没有常驻业务地盘的智能体订阅真实完结水位，跨时区异动只能等第二天白天人工发现。",
-                cap: "时间连续性缺口：围着个人白天提问转的助手，守不住全天候运转的全球业务大盘。"
+                cap: "时间连续性缺口：围着个人白天提问转的助手，守不住全天候运转的跨国业务大盘。"
               },
               {
                 active: 2,
                 badge: "口径打架",
-                l1: "Step 3 / 4 · 白天十位运营各带 Personal Agent 查跌因，写出十套互相打架的归因口径",
-                l2: "缺少本域异动上下文与缺数报 unknown 护栏，遇到分母为空易自行补零或借兄弟产品凑数。",
-                cap: "口径与隔离缺口：公共渠道节点若不硬锁单产品数据切片，极易串读其他产品明细或硬凑结论。"
+                l1: "Step 3 / 4 · 白天十位分析师各带 Personal Agent 查跌因，写出十套互相打架的 SQL 口径",
+                l2: "缺少本域统一口径与缺数报 unknown 护栏，遇到分母为空易自行补零或拿兄弟产品凑数。",
+                cap: "口径与隔离缺口：公共市场或渠道节点若不硬锁单产品数据切片，极易串读其他产品明细或硬凑结论。"
               },
               {
                 active: 3,
                 badge: "轮岗断档",
-                l1: "Step 4 / 4 · 半年后同事轮岗交接，散在个人聊天记录里的排障经验随之断档、重复开单",
-                l2: "持续波动无法顺着原事件线程归拢线索，每次异常唤醒都重开重复工单，跨部门反复核对。",
+                l1: "Step 4 / 4 · 半年后人员轮岗调动，散在个人对话记录里的排障脉络随之流失、重复开单",
+                l2: "持续波动无法顺着原事件线程归拢线索，每次异常唤醒都重开重复工单，跨团队反复核对。",
                 cap: "归位解法：顺着“人流转、地盘常驻”拆成顶层 Personal Agent + 底层常驻业务域 Agent 双层配合。"
               }
             ]
@@ -1600,41 +1619,41 @@
           differentiated: {
             idx: 3,
             scaleTone: "ok",
-            scaleBadge: "人侧·地盘·制度各归其位",
+            scaleBadge: "虚构推演：六角色四棒接力",
             nodes: [
-              { title: "1. 顶层 Personal 对接人", sub: "保留 1 个纯粹私域代理 · 按需 @ 会诊" },
-              { title: "2. 底层业务域守地盘", sub: "水位唤醒 · 单产品切片 · 报 unknown" },
-              { title: "3. 数字员工双库立制", sub: "Workspace 自建 · Runtime 宿主独占" },
-              { title: "4. 快照封存人类签字", sub: "唯一回执去重 · 负责人签字担终责" }
+              { title: "03:10–09:00 吹哨与私域拉群", sub: "水位唤醒吹哨 · 私域拉起 Warroom" },
+              { title: "09:10 Warroom 协同定位", sub: "Team 管秩序 · 三业务域 A2A 定位" },
+              { title: "09:35 数字员工统筹处置", sub: "协调 Coding 热修 · 办公外发回执" },
+              { title: "12:00 快照封存与签字结案", sub: "业务域验恢复 · 哈希快照 · 签字" }
             ],
             steps: [
               {
                 active: 0,
-                badge: "对接流动人",
-                l1: "Step 1 / 4 · 顶层为每位运营保留 1 个纯粹的 Personal Agent，专职服务流动的人",
-                l2: "听懂本人意图，跨模块排查时按需 @ 相关业务域节点拉起会诊并汇总答复；域页面不放闲聊框。",
-                cap: "人侧归位：Personal Agent 守住一对一私域代理本分，随口讨论不乱建长线任务。"
+                badge: "吹哨拉群",
+                l1: "第一棒 03:10–09:00 · 巴西市场业务域 Agent 水位唤醒吹哨（单产品切片 + unknown）",
+                l2: "09:00 负责人 Personal Agent 私域梳理简报与大促备忘（不扰团队不乱立项），随后拉起事故 Warroom。",
+                cap: "虚构推演 · 第一棒（星澜互动）：驻守地盘的业务域 Agent 吹哨升级，一对一 Personal Agent 私域衔接后拉起临时事故 Warroom。"
               },
               {
                 active: 1,
-                badge: "常驻守地盘",
-                l1: "Step 2 / 4 · 底层近五百个业务域 Agent 订阅真实完结水位，顺关系网发起 A2A 协查会诊",
-                l2: "宿主网关启动即硬锁单产品切片、阻断跨产品读明细权限；缺数如实报 unknown，顺原事件续查。",
-                cap: "地盘归位：业务域 Agent 死守产品、国家与广告渠道地盘，跨域合并由双方人类负责人共同确认。"
+                badge: "协同定位",
+                l1: "第二棒 09:10 · Team Agent 维持公域秩序（waiting 休眠 + 最小权限交集 + 指挥官层级）",
+                l2: "巴西市场、支付渠道与客户端版本三个业务域 Agent 在群内经 A2A 协同定位回调超时根因，交指挥官拍板。",
+                cap: "虚构推演 · 第二棒：Team Agent 专管 Warroom 公共秩序与权限边界，三个业务域 Agent 承担跨上下游协同分析定位。"
               },
               {
                 active: 2,
-                badge: "双库立制度",
-                l1: "Step 3 / 4 · 按 AI 数字员工制度纳管：Workspace 放开建表深挖，Runtime 账本归宿主独占",
-                l2: "绑人类担保人，内部串行且步数、四层防环派单与日预算硬封顶；唯一回执去重，重发绝不重跑模型。",
-                cap: "制度归位：日常自主分析与规则修订归 AI 数字员工，运行账本、快照锁定与去重执法归宿主代码。"
+                badge: "统筹处置",
+                l1: "第三棒 09:35 · 应急处置 AI 数字员工接棒（Runtime 记账 + 四层防环），统筹协调修复与对外响应",
+                l2: "协调 Coding Agent 隔离分支热修达标；Workspace 核算明细驱动办公 Agent 走 Action Gate 与 Outbox 回执。",
+                cap: "虚构推演 · 第三棒：AI 数字员工跨角色推进处置工作流，工程师审阅合入补丁、商务负责人核对草稿点发送担责。"
               },
               {
                 active: 3,
-                badge: "签字担终责",
-                l1: "Step 4 / 4 · 正反两面证据封存为带哈希校验的只读快照，由人类负责人或会签人签字结案",
-                l2: "工具箱永不设“关单”按钮；等待期一旦冒出新数据、新反馈或超七天无人签字，原单自动作废重审。",
-                cap: "责任归位：模型推演归模型，刚性护栏归宿主代码，最终因果定性与签字担责稳稳留在具体的人手里。"
+                badge: "签字结案",
+                l1: "第四棒 12:00 · 巴西市场业务域 Agent 确认水位恢复；AI 数字员工封存正反证据哈希只读快照",
+                l2: "数字员工工具箱永不设关单按钮；事故指挥官与相关负责人在 Warroom 核实证据链签字担责，归档收起。",
+                cap: "虚构推演 · 第四棒：业务域确认恢复、数字员工封存哈希快照、人类签字承担最终责任——六类角色各守本分、互不越界。"
               }
             ]
           }
@@ -1650,8 +1669,9 @@
 
         function drawGauge(c, toneVar, toneSoft) {
           var g = "";
+          var gaugeHdr = curCase === "differentiated" ? "虚构推演 · CASE 3 / 3" : "现场拓扑 · CASE " + c.idx + " / 3";
           g += '<rect x="20" y="16" width="206" height="164" rx="7" fill="var(--bg-elevated)" stroke="var(--rule)" />';
-          g += '<text x="123" y="36" text-anchor="middle" font-family="var(--font-mono)" font-size="10.2" font-weight="600" fill="var(--ink-muted)">现场拓扑 · CASE ' + c.idx + ' / 3</text>';
+          g += '<text x="123" y="36" text-anchor="middle" font-family="var(--font-mono)" font-size="10.2" font-weight="600" fill="var(--ink-muted)">' + gaugeHdr + '</text>';
 
           if (curCase === "conflate_env") {
             g += '<rect x="40" y="48" width="166" height="36" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5" />';
@@ -1675,17 +1695,20 @@
             g += '<rect x="36" y="102" width="174" height="38" rx="5" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-dasharray="4 3" />';
             g += '<text x="123" y="125" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink-muted)">全天业务地盘（凌晨无人驻守）</text>';
           } else {
-            g += '<rect x="36" y="46" width="174" height="26" rx="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.3" />';
-            g += '<text x="123" y="63" text-anchor="middle" font-family="var(--font-sans)" font-size="10" font-weight="600" fill="var(--blue)">1 个 Personal Agent + 人类签字</text>';
-            g += '<line x1="123" y1="72" x2="123" y2="84" stroke="var(--ok)" stroke-width="1.5" />';
-            g += '<rect x="36" y="84" width="84" height="56" rx="4" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.4" />';
-            g += '<text x="78" y="105" text-anchor="middle" font-family="var(--font-sans)" font-size="10" font-weight="700" fill="var(--ok)">业务域 Agent</text>';
-            g += '<text x="78" y="121" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="var(--ink-secondary)">守地盘 · 盯水位</text>';
-            g += '<text x="78" y="134" text-anchor="middle" font-family="var(--font-mono)" font-size="8.4" fill="var(--ink-muted)">单产品切片</text>';
-            g += '<rect x="126" y="84" width="84" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4" />';
-            g += '<text x="168" y="105" text-anchor="middle" font-family="var(--font-sans)" font-size="10" font-weight="700" fill="var(--accent)">AI 数字员工</text>';
-            g += '<text x="168" y="121" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="var(--ink-secondary)">Workspace 自建</text>';
-            g += '<text x="168" y="134" text-anchor="middle" font-family="var(--font-mono)" font-size="8.4" fill="var(--ink-muted)">Runtime 独占</text>';
+            var s1On = step === 1;
+            var s2On = step === 2;
+            var s3On = step === 3;
+            var s4On = step === 4;
+            g += '<rect x="32" y="44" width="88" height="22" rx="4" fill="' + (s1On ? "var(--ok-soft)" : "var(--bg-paper)") + '" stroke="' + (s1On ? "var(--ok)" : "var(--rule-strong)") + '" stroke-width="' + (s1On ? "1.6" : "1.1") + '" />';
+            g += '<text x="76" y="58.5" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" font-weight="600" fill="' + (s1On ? "var(--ok)" : "var(--ink-secondary)") + '">03:10 业务域吹哨</text>';
+            g += '<rect x="126" y="44" width="88" height="22" rx="4" fill="' + (s1On ? "var(--blue-soft)" : "var(--bg-paper)") + '" stroke="' + (s1On ? "var(--blue)" : "var(--rule-strong)") + '" stroke-width="' + (s1On ? "1.6" : "1.1") + '" />';
+            g += '<text x="170" y="58.5" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" font-weight="600" fill="' + (s1On ? "var(--blue)" : "var(--ink-secondary)") + '">09:00 Personal</text>';
+            g += '<rect x="32" y="70" width="182" height="22" rx="4" fill="' + (s2On ? "var(--purple-soft)" : "var(--bg-paper)") + '" stroke="' + (s2On ? "var(--purple)" : "var(--rule-strong)") + '" stroke-width="' + (s2On ? "1.6" : "1.1") + '" />';
+            g += '<text x="123" y="84.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="600" fill="' + (s2On ? "var(--purple)" : "var(--ink-secondary)") + '">09:10 Team 秩序 + 三业务域定位</text>';
+            g += '<rect x="32" y="96" width="182" height="22" rx="4" fill="' + (s3On ? "var(--warn-soft)" : "var(--bg-paper)") + '" stroke="' + (s3On ? "var(--warn)" : "var(--rule-strong)") + '" stroke-width="' + (s3On ? "1.6" : "1.1") + '" />';
+            g += '<text x="123" y="110.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="600" fill="' + (s3On ? "var(--warn)" : "var(--ink-secondary)") + '">09:35 数字员工 → Coding / 办公</text>';
+            g += '<rect x="32" y="122" width="182" height="22" rx="4" fill="' + (s4On ? "var(--accent-soft)" : "var(--bg-paper)") + '" stroke="' + (s4On ? "var(--accent)" : "var(--rule-strong)") + '" stroke-width="' + (s4On ? "1.6" : "1.1") + '" />';
+            g += '<text x="123" y="136.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="700" fill="' + (s4On ? "var(--accent)" : "var(--ink-secondary)") + '">12:00 水位恢复 · 快照封存签字</text>';
           }
 
           g += '<rect x="32" y="150" width="182" height="22" rx="4" fill="' + toneSoft + '" />';
@@ -1831,8 +1854,8 @@
             badge: "远超单人注意力的吞吐带宽",
             tone: "blue",
             role: "接管高吞吐概率推演、多步假设验证、跨系统资料预演起草，以及全天候不知疲倦盯守海量业务水位与关联协查。",
-            why: "单个人脑装不下跨几十款产品、上百个国家与渠道的实时异动上下文；概率模型擅长在非结构化噪音里快速收敛假设。",
-            across: "隔离分支连跑几十轮单测（Coding Agent）、跨系统拟草稿（办公 Agent）、整理长程记忆（Personal Agent）、群内初审（Team Agent）、A2A 协查与建表归因（业务域 Agent / AI 数字员工）。",
+            why: "单个人脑装不下跨几十条产品线、上百个国家市场与支付/流量渠道的实时异动上下文；概率模型擅长在非结构化噪音里快速收敛假设。",
+            across: "隔离分支连跑单测（Coding Agent）、跨系统拟草稿（办公 Agent）、整理长程记忆（Personal Agent）、群内分流初审（Team Agent）、水位吹哨与 A2A 协同定位（业务域 Agent）、建表核算与跨角色派单协调（AI 数字员工）。",
             cap: "大模型归位：发挥远超单人注意力的概率推演与全天候值守带宽，把确定性门禁留给宿主代码、把最终责任留给人。"
           },
           {
@@ -1843,17 +1866,17 @@
             tone: "warn",
             role: "由外层宿主系统（Harness）用确定性代码维持连续状态、锁死底层读写权限、拦截越界副作用并固化审计证据链。",
             why: "模型底层是无状态概率函数：长上下文必稀释早期约束，同源上下文自写自审必放水（规模每大十倍通过率落差拉大近 30%），提示词挡不住注入。",
-            across: "容器沙盒与测试裁判（Coding Agent）、Draft-then-Commit 与 Action Gate（办公 Agent）、租户加密（Personal Agent）、最小权限交集与 waiting（Team Agent）、单产品切片（业务域 Agent）。",
+            across: "容器沙盒与测试裁判（Coding Agent）、Draft-then-Commit 与 Action Gate（办公 Agent）、租户加密（Personal Agent）、最小权限交集与 waiting（Team Agent）、单产品切片（业务域 Agent）、四层防环与 Outbox 回执去重（AI 数字员工）。",
             cap: "宿主代码（Harness）归位：把提示词守不住的履约义务，铸成代码里绕不过去的确定性宿主护栏。"
           },
           {
             readout: "LAYER 4 / 4 · 双库分立：Workspace 自主经营 vs Runtime 宿主独占",
             split: true,
             tone: "ok",
-            role: "在常驻自治的 AI 数字员工内部，把日常分析生产的专属分析库（Workspace）与治理执法用的运行账本（Runtime）物理拆开。",
-            why: "如同现代公司给员工配办公桌与日常预算，但绝不允许员工自己改考勤表、批报销单；自主深挖与独立审计必须在存储层彻底分立。",
-            across: "Workspace 放开自由建表做深度聚合下钻；Runtime 由宿主独占锁死收件箱、检查点与日成本账本（员工零写权限），配合发件箱唯一回执去重不重跑模型。",
-            cap: "双库物理分立：左边 Workspace 放开手脚让数字员工建表深挖，右边 Runtime 由宿主独占管死账本、规则快照与幂等回执。"
+            role: "在岗位级自治的 AI 数字员工内部，把核算影响面与执行明细的专属作业库（Workspace）与治理执法用的运行账本（Runtime）物理拆开。",
+            why: "如同现代公司给员工配办公桌与日常预算，但绝不允许员工自己改考勤表、批报销单；日常经营执行与独立账本审计必须在存储层分立。",
+            across: "Workspace 放开自由建表核算业务影响面与执行明细；Runtime 由宿主独占锁死收件箱、检查点与日成本账本（员工零写权限），配合本地 Outbox 唯一回执去重不重跑模型。",
+            cap: "双库物理分立：左边 Workspace 放开手脚让数字员工建表核算推进处置，右边 Runtime 由宿主独占管死账本、规则快照与幂等回执。"
           }
         ];
 
@@ -1899,15 +1922,15 @@
               var rightStroke = isCur ? "var(--accent)" : "var(--rule-strong)";
 
               html += '<rect x="24" y="' + y + '" width="338" height="' + rowH + '" rx="6" fill="' + leftFill + '" stroke="' + leftStroke + '" stroke-width="' + sw + '" />';
-              html += '<text x="38" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="11.8" font-weight="700" fill="' + (isCur ? "var(--ok)" : "var(--ink)") + '">Workspace 专属分析库（归模型自主深挖）</text>';
-              html += '<text x="38" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">隔离自由建表跑聚合 · 受控接口核对版本号改规则</text>';
+              html += '<text x="38" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="11.8" font-weight="700" fill="' + (isCur ? "var(--ok)" : "var(--ink)") + '">Workspace 专属作业库（归数字员工自主核算）</text>';
+              html += '<text x="38" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">自由建表核算影响面与明细 · 受控核对版本号改规则</text>';
 
               html += '<circle cx="380" cy="' + (y + 25) + '" r="12" fill="var(--bg-paper)" stroke="' + (isCur ? "var(--accent)" : "var(--rule-strong)") + '" stroke-width="1.3" />';
               html += '<text x="380" y="' + (y + 29) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink-secondary)") + '">≠</text>';
 
               html += '<rect x="398" y="' + y + '" width="338" height="' + rowH + '" rx="6" fill="' + rightFill + '" stroke="' + rightStroke + '" stroke-width="' + sw + '" />';
               html += '<text x="412" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="11.8" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink)") + '">Runtime 运行账本（归宿主独占执法）</text>';
-              html += '<text x="412" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">员工零写权限 · 锁死账本快照 · 唯一回执去重不重跑</text>';
+              html += '<text x="412" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">员工零写权限 · 锁死账本快照 · Outbox 唯一回执去重</text>';
             } else {
               var fill = isCur ? c.fill : "var(--bg-elevated)";
               var stroke = isCur ? c.stroke : "var(--rule-strong)";

@@ -34,31 +34,48 @@
 
 ## 动静锚点：随人流转的归人侧代理，常驻地盘的归业务域 Agent
 
-再看职责锚定在哪儿：企业运转里原本就并存着一动一静两套坐标。无论是写代码的 Coding Agent、拟草稿的办公 Agent，还是一对一的 Personal Agent 与群里的 Team Agent，哪怕给它们挂上云端定时任务，职责锚点依然**跟着流动的人走**；但企业里**人会下班、休假、轮岗，客观存在的业务地盘——产品线、大区、国家市场、广告渠道——却在全天候运转**。
+再看职责锚定在哪儿：现代企业的运转里，原本就并存着一动一静两套坐标。无论是写代码的 Coding Agent、拟草稿的办公 Agent，还是一对一的 Personal Agent 与群里的 Team Agent，哪怕给它们挂上云端定时任务，职责锚点依然**跟着流动的人走**；可不论做跨境应用、电商零售、支付结算，还是管供应链与云服务，企业里**人总会下班、休假、轮岗，客观存在的业务地盘——具体产品线、国家与地区市场、支付或流量渠道、核心履约模块——却在全天候运转**。
 
-随着高性价比快模型稳定调工具（配合强推理模型与快模型在同一轨迹按阶段交接）让几百个节点常年在线算得过账，加上**数据完结水位自动唤醒**与**跨 Agent 协作协议（`A2A`）**普及，原本塞在个人窗口里的盯盘巡检活计，便顺着动静分界分化出了常驻地盘的 **业务域 Agent**。
+随着高性价比快模型稳定调工具（配合强推理模型与快模型在同一轨迹按阶段交接）让成百上千个节点常年在线算得过账，加上**数据完结水位自动唤醒**与**跨 Agent 协作协议（`A2A`）**普及，原本塞在个人窗口里的盯盘巡检活计，便顺着动静分界分化出了常驻地盘的 **业务域 Agent**。
 
-我们在 `mo-agent-swarm`（全球变现运营平台 RevPulse）的实践，正好印证了这种“分化即并存”。全球变现横跨几十款产品、各大区、上百个国家市场、广告网络、聚合平台与版位，同一国家或广告网络下跑着多款产品，交织成九大类、近五百个节点的业务关系网。过去只靠人侧助手时，海外凌晨三点掉量无人盯；白天十位运营各带 Personal Agent 查跌因，能写出十套打架口径；半年后同事轮岗，散在个人记录里的排障经验也跟着断档。
+所谓业务域 Agent，就是把智能体的职责直接锚定在某块客观业务单元上——一个节点守一块地盘，自带本域统一的指标口径、领域记忆与上下游拓扑连线。在中大型业务里，几十条产品线、上百个国家市场与各类支付、流量渠道往往交织成一张密集的业务关系网：同一个国家市场或同一条渠道下同时跑着多款产品，一处指标波动常常牵连上下游好几跳。如果只靠随人走动的个人助手盯盘，马上会撞上三道硬伤：一是**跨时区凌晨盲区**，海外市场或夜间链路在凌晨三点掉量时无人值守；二是**口径各自为政**，白天十位运营或分析师各带 Personal Agent 查跌因，能写出十套互相打架的 `SQL` 口径；三是**轮岗经验断档**，半年后人员调动，散在个人对话记录里的排障脉络也跟着流失。
 
-顺着“人流转、地盘常驻”的结构，`mo-agent-swarm` 切出上下配合的双层架构：**顶层为每位运营保留 1 个纯粹的 Personal Agent**，服务流动的人——听懂意图，跨模块排查时按需 `@` 相关业务域节点拉起会诊并汇总答复；**底层铺开近五百个常驻的业务域 Agent**，死守各自的产品、国家或渠道地盘，承担全天盯盘、异动巡检、告警折叠收敛与上下游联合归因的**分工**，节点详情页干脆不放闲聊输入框。
+顺着“人流转、地盘常驻”的现实结构，企业智能体自然形成上下配合的双层分工：**顶层为每位成员保留一对一的 Personal Agent**，服务流动的人——承接个人意图与岗位视角，跨模块排查时按需寻址并 `@` 相关业务域节点拉起会诊、汇总答复；**底层在关键业务单元铺开常驻的业务域 Agent**，守住各自的产品、国家市场、渠道或核心模块地盘，承担全天盯盘、异动巡检、告警折叠收敛与上下游联合归因的**分工**，许多纯值守节点甚至不必开放闲聊输入框。人员轮岗时带走的是个人侧习惯，留在业务域节点里的口径标准与历史异动脉络则原地延续，两层长期并存、互不替代。
 
-业务域 Agent 拿到订阅真实数据完结水位（上游算完即唤醒）、积累本域异动上下文、顺着业务关系网发起上下游 `A2A` 协查会诊的**权利**（如产品域异动时自动找关联国家域与广告网络域核对大盘或请求异常），并由**宿主护栏**锁死三条**义务**：
+业务域 Agent 拿到订阅真实数据完结水位（上游算完即唤醒）、积累本域异动上下文、顺着业务关系网发起上下游 `A2A` 协查会诊的**权利**（如产品域异动时自动找关联国家域、支付或流量渠道域核对大盘与链路异常），同时严控底层库表的只读切片**权限**，并由**宿主护栏**锁死三条**义务**：
 
 - **缺数如实报“未知”，绝不硬凑。** 遇到缺失数据源或分母为空，必须如实上报未知（`unknown`），严禁自行补零或拿兄弟产品数据凑数；光在回复里打印出查询语句不等于实际查过了库，观测到的统计波动也必须与人工确认过的业务根因分开记录。
-- **公共节点按单产品切片严格隔离。** 国家市场或广告渠道这类公共节点虽然连接多款产品，但单次会话必须严守单一产品边界，中途绝不串台。宿主网关在会话启动时硬锁单产品数据切片，关系网连线仅放行结构化协查消息，从底层阻断跨产品读取收件箱、记忆或原始明细的权限。
-- **同一场异常顺原事件续查，不乱开重复工单。** 面对持续波动，必须顺着原事件线程归拢异动线索，不在每次唤醒时重开新单；跨业务域合并同类事件时，强制由双方业务域的人类负责人共同确认，担起**最终责任**。
+- **公共节点按单产品切片严格隔离。** 国家市场、支付通道或流量渠道这类公共节点虽然同时连接多款产品，但单次会话必须严守单一产品边界，中途绝不串台。宿主网关在会话启动时硬锁单产品数据切片，关系网连线仅放行结构化协查消息，从底层阻断跨产品读取收件箱、记忆或原始明细的权限。
+- **同一场异常顺原事件续查，不乱开重复工单。** 面对持续波动，必须顺着原事件线程归拢异动线索，不在每次唤醒时重开新单；跨业务域合并同类事件与采纳归因结论时，强制由相关业务域的人类负责人共同确认，担起**最终责任**。
 
 ## 自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度
 
-同样是常驻在线的智能体，还有一道维度不同的制度分界必须拎清：**业务域 Agent 回答“职责锚定在哪儿”**（锚定客观业务单元而非个人窗口）；**AI 数字员工 回答“自治节点按什么制度纳管”**（放开自主生产工具的同时，管住身份、账本、预算与结案签字）。只要常驻节点还停留在只读巡检与协查提醒，守住地盘与数据切片就够了；可一旦把自主建表深挖、受控修订带版本号的业务规则、调用跨平台连接器与支配日常算力预算的**分工**交出去，零散授权就兜不住了，必须立起正式的组织治理制度。在 `mo-agent-swarm`（RevPulse）里，那近五百个常驻节点按拓扑职责看是**业务域 Agent**，按运行时治理契约看则是入编纳管的 **AI 数字员工**。
+同样是常驻在线的企业级节点，**业务域 Agent** 与 **AI 数字员工** 在生产体系里有着截然不同的定位，绝不能混为一谈：**业务域 Agent 是驻守业务地盘的领域节点**，按客观业务单元（产品线、国家市场、支付或流量渠道、核心模块）定界，专职全天候盯住本域数据完结水位、统一指标口径与历史异动上下文，负责**异常吹哨，以及进驻 `Team Agent` 协作空间跨上下游 `A2A` 协同分析定位**（严守单产品切片硬隔离与缺数报 `unknown` 纪律）；**AI 数字员工则是入编纳管的岗位级自治执行与协调者**，按正式组织岗位与治理制度（如应急值班专员、运营执行专员、财务核销员）定界。超越只读盯盘与归因提醒，它获授独立非人类员工工号（绑定人类担保人）、专属 `Workspace` 作业库与日常预算，承担**跨系统推进完整的分析与处置工作流**的**分工**——如自主建表核算影响面、维护版本化业务规则、按最多四层防环规则跨角色派单协调后续的代码修复与外部 Action 响应、通过本地 `Outbox` 唯一回执去重跟踪外部动作落地，并汇总正反证据封存哈希结案快照；同时受宿主独占的 `Runtime` 运行账本与人工签字结案制度严格管束。
 
 过去一年，国内外企业平台都在做这场内部制度分化：微软 Entra Agent ID 拆开持凭证的“蓝图模板”与无密钥干活的“实例身份”，强制绑定人类担保人并在调岗离职时自动移交主管；ServiceNow 配上逐跳验签的加密通行证（`AI Passport`）与秒级熔断；国内云平台用微虚拟机隔离，把“操作角色”与“数据范围”拆成独立门禁；Sierra 设下静态检查、仿真、人工审批与灰度回滚四道发布关；Cycles 在客服与工单系统间立起共享风险账本，防住“单平台合规、合起来并发打出两百封催款信、两百条告警和十五张误升级工单”的连环失控。
 
-摘掉拟人头像，AI 数字员工的内部归位与现代公司制度如出一辙——正式员工有工牌、办公桌和日常预算，但绝不能自己改考勤表、自己批报销单。系统向它放开独立非人类员工身份（绑人类担保人）、专属分析库（`Workspace`）自由建表读写、受控提交版本化规则修订及配额内支配日常预算的**权利**；绑定配额内串行履职、留齐正反证据、绝不碰运行账本与关单开关的**义务**；再把账本与执法权收归外层**宿主护栏**：
+摘掉拟人头像，AI 数字员工的内部归位与现代公司制度如出一辙——正式员工有工牌、办公桌和日常预算，但绝不能自己改考勤表、自己批报销单。系统向它放开独立非人类员工身份（绑人类担保人）、专属作业库（`Workspace`）自由建表读写、受控提交版本化规则修订、按防环规则跨角色派单及配额内支配日常预算的**权利**；绑定配额内串行履职、留齐正反证据、绝不碰运行账本与关单开关的**义务**；再把账本与执法权收归外层**宿主护栏**：
 
-- **分析库放开自建，运行账本归宿主独占（`Workspace` 与 `Runtime` 物理分离）。** 数字员工在隔离的 `Workspace` 库里自由建表做深度聚合下钻；收件箱、对话历史、执行检查点与每日成本账本则锁在宿主独占写入的 `Runtime` 库里，数字员工没有任何写库权限。本域记忆与业务规则经受控接口核对版本号更新，任务一旦启动就锁死当时的规则快照，重跑或断点恢复不会被中途新改的规则干扰。
-- **内部串行与配额封顶，外部写入靠发件箱唯一回执去重。** 单个数字员工内部严格串行执行，避免自己跟自己并发撞车，单次推理步数、最多四层防环派单、日修订次数与零点重置预算全部硬封顶；遇到上游数据尚未就绪时主动挂起、让出计算槽位，系统繁忙时排队顺延而不丢单。外部写入先在本地发件箱留底、凭唯一回执核销去重——网络丢包只按原回执重发定稿结果，**绝不重跑带随机性的大模型**，跨域异步消息全程验签。
+- **作业库放开自建，运行账本归宿主独占（`Workspace` 与 `Runtime` 物理分离）。** 数字员工在隔离的 `Workspace` 库里自由建表核算业务影响面与执行明细；收件箱、对话历史、执行检查点与每日成本账本则锁在宿主独占写入的 `Runtime` 库里，数字员工没有任何写库权限。岗位记忆与业务规则经受控接口核对版本号更新，任务一旦启动就锁死当时的规则快照，重跑或断点恢复不会被中途新改的规则干扰。
+- **内部串行与配额封顶，外部写入靠发件箱唯一回执去重。** 单个数字员工内部严格串行执行，避免自己跟自己并发撞车，单次推理步数、最多四层防环派单、日修订次数与零点重置预算全部硬封顶；遇到上游数据尚未就绪时主动挂起、让出计算槽位，系统繁忙时排队顺延而不丢单。外部写入先在本地发件箱（`Outbox`）留底、凭唯一回执核销去重——网络丢包只按原回执重发定稿结果，**绝不重跑带随机性的大模型**，跨角色异步派单与通知全程验签。
 - **正反证据封存只读快照，定因与关单留给人签字担责。** 申请结案前汇总正反两面证据封存为带哈希校验的只读快照，工具箱里永不设“关单”按钮；异常结案须由指定人类负责人或全体会签人签字担起**最终责任**，等待审批期间一旦冒出新数据、新反馈，或超过七天无人签字，原审批单自动作废重审。
+
+## 组合形态（虚构推演）：一场跨国业务异动里的多角色接力
+
+把六类形态拆开剖析是为了看清各自的边界；放回真实运转的企业现场，它们往往按各自本分咬合在同一条响应链上。下面不妨通过一个**虚构的推演场景**——假设一家跨国数字业务公司“星澜互动”遭遇凌晨突发掉量——看看这六类智能体是如何分工接力的：
+
+**第一棒：凌晨 03:10 至上午 09:00 —— `业务域 Agent` 常驻吹哨，`Personal Agent` 私域衔接拉起 Warroom。** 凌晨 03:10，驻守“巴西市场”的 **业务域 Agent** 被上游真实数据完结水位唤醒，监测到主力产品支付净额环比跌去近三成（宿主网关硬锁单产品切片绝不串台，尚未完结的渠道退款账单如实标为 `unknown`），随即折叠底层碎片告警并触发异常升级。上午 09:00，业务负责人打开个人工作台，一对一绑定的 **Personal Agent** 已在加密私域里把凌晨升级单、她上周记下的“巴西大促备忘”及今日日程整理成简报。她在私聊框里追问核对大促背景（锁在个人租户内，不打扰团队、不乱建后台任务），确认需多方联动后点下应急响应，围绕该事件单拉起临时的**事故 Warroom（应急协作群）**。
+
+**第二棒：上午 09:10 —— 进入事故 Warroom，在 `Team Agent` 公共秩序下联合多个 `业务域 Agent` 协同分析定位。** 研发、运营、渠道商务、外部支付技术支持，连同“巴西市场域”“拉美支付渠道域”“客户端版本域”三个 **业务域 Agent** 一并进入 Warroom。在多人共事的公域房间里，**Team Agent** 专管公共秩序与权限边界：平时处于零消耗 `waiting` 休眠，只有被 `@` 点名才进指定线程应答；外部支付技术支持 `@Team Agent` 询问报错分布时，外层**宿主护栏**强制取“提问人与机器权限的最小交集”并核对房间密级脱敏返回，绝不泄露负责人私聊里的营收底牌；群内出现排障指令冲突时，外层状态机严格按事故指挥官（Incident Commander）的指令层级裁决。而在 Warroom 内部承担**协同分析定位**的，正是那三个各守地盘的 **业务域 Agent**：支付渠道域核对通道回执排除外部网关故障，客户端版本域通过 `A2A` 交叉比对，锁定当晚灰度的新安装包在部分机型上触发了支付回调超时，并将统计波动线索统一归拢在原事件线程下，交由事故指挥官拍板确认根因。
+
+**第三棒：上午 09:35 —— 根因拍板后，`AI 数字员工` 接棒协调后续代码修复与外部 Action 响应。** 处置方案敲定后，入编纳管的“应急处置 **AI 数字员工**”（持绑定值班负责人担保的独立员工身份）接过统筹执行棒，在内部严格串行、最多四层防环派单与日预算上限内，分头协调研发修复与对外响应，每一步派单与开销均锁入宿主独占的 `Runtime` 账本：
+
+- **协调代码修复（联动 `Coding Agent`）：** 数字员工将回调超时堆栈、受影响机型与回归条件整理成修复任务单，派发给研发侧的 **Coding Agent**；Coding Agent 在隔离的 `git worktree` 分支里复现问题、写出热修补丁并跑通全套单测（`exit code 0`），经独立审查通过后由研发工程师审阅合入发版，担起代码变更的**最终责任**。
+- **协调外部 Action 响应（联动 `办公 Agent` 与外部工单）：** 数字员工同时在自己的 `Workspace` 专属作业库里建表算出受影响订单明细，驱动商务侧的 **办公 Agent** 生成致重点渠道合作方的故障说明邮件与对账核销草稿；外层**宿主护栏**强制走 `Draft-then-Commit` 与锁死对象数额的 `Action Gate`，外部合作方工单状态更新则经本地 `Outbox` 唯一回执核销去重（网络闪断只重发定稿结果、绝不重跑随机大模型），由商务负责人核对金额无误后亲手点下发送，担起对外履约的**最终责任**。
+
+**第四棒：中午 12:00 —— 证据快照封存与人类签字结案。** 热修包放量后，“巴西市场” **业务域 Agent** 监测到数据完结水位恢复正常；负责协调处置的 **AI 数字员工** 随即把异常前后的正反对比证据、补丁合入记录与外部回执汇总封存为带哈希校验的只读结案快照（工具箱里永不设“关单”按钮）。事故指挥官与相关负责人在 Warroom 里核实完整证据链后共同**签字结案**，担起整场事故处置的**最终责任**，临时 Warroom 随之归档收起。
+
+在这场虚构的接力里，六个角色边界分明：`Personal Agent` 守私域入口，`Team Agent` 管公域秩序，`业务域 Agent` 盯地盘做协同定位，`AI 数字员工` 按制度统筹推进处置，`Coding Agent` 在可逆沙盒改代码，`办公 Agent` 隔着草稿门禁拟外发——谁也不越界包办，合在一起却把一场跨时区事故处理得井井有条。
 
 ## 三重归位：上帝的归上帝，凯撒的归凯撒
 
@@ -75,15 +92,15 @@
 | **Coding Agent** | 可逆且有客观裁判的软件沙盒；推理强化学习 + 多步调工具自修 | 需求明确后到合入前的编码、调试与本地试错 | 读写隔离分支、执行终端命令与开发工具 | 让编译、静态检查与测试真正跑通（`exit code 0`），不改弱验收标准 | 独立 `git worktree` 或容器隔离，测试门禁拦截，合入前由工程师审查并承担最终责任 | 暗中改弱断言凑绿灯，或破坏构建与流水线配置 |
 | **办公 Agent** | 不可逆且无自动裁判的外部交互；MCP + 界面操作（`computer_use`） | 跨文档、邮件、日程与客户系统查资料、预演并拟初稿 | 读取授权上下文、模拟预演、生成草稿（收回直接外发裸权限） | 只拟草稿不擅自外发，敏感变更报批，结果未读回确认前不重复发起请求 | 强制 `Draft-then-Commit` 与锁死对象数额的 `Action Gate`；凭证宿主托管；重连与重试分离；外发与付款由人点击并承担最终责任 | 把查订单当批准付款，金额写错仍直接外发，或受诱导删光两百封邮件 |
 | **Personal Agent** | 单人委托的私域空间；长上下文理解 + 跨会话个人记忆检索 | 整理个人上下文、维护备忘、跨工具替本人跑腿 | 一对一代理本人身份，读本人权限内资料，留存个人记忆 | 严守隐私，随口讨论不乱建后台任务，不越界对外表态 | 记忆与凭证加密锁在个人租户内，跨会话立项与外部写操作经本人确认并承担最终责任 | 把随口讨论当指令乱建后台待办，或越界替本人对外承诺 |
-| **Team Agent** | 多人共事的团队公域；多人话题流理解 + 多角色状态同步 | 共享频道与看板里的分流、同步、协同排查与初审 | 携带提问人与机器双重身份访问受控团队资源，在指定线程读写状态 | 服从指令层级，严守密级且查改审分离，守公共安静义务 | 外层状态机裁决优先级；取提问人与机器权限最小交集并核对房间密级；记忆按“租户 + 个人”隔离，平时 `waiting` 休眠；采纳由发起人与负责人承担最终责任 | 共用高权限密钥让访客套出机密，公开群注入套走纪要，或机器互回烧光预算 |
-| **业务域 Agent** | 全天候常驻业务地盘；快模型稳定调工具 + 数据水位唤醒 + `A2A` | 常驻业务地盘盯盘、异动巡检、告警收敛与上下游归因 | 订阅真实完结水位、积累本域异动上下文、发起上下游协查 | 缺数如实报 `unknown`，区分统计波动与业务根因，严守单产品边界并顺原事件续查 | 锚定客观业务域并与顶层 Personal Agent 配合；网关硬锁单产品切片，阻断跨产品读明细权限；跨域合并与结论采纳由业务域负责人确认并承担最终责任 | 缺数时补零或借兄弟产品凑数，串读其他产品明细，或每次唤醒重开重复工单 |
-| **AI 数字员工** | 自主经营与制度审计分离；受控自治运行时 + 身份预算风控 | 自主建表深挖、维护版本化规则、汇总正反证据出结案报告 | 独立非人类员工身份（绑定人类担保人）、`Workspace` 读写、受控修订版本化规则、支配日常预算 | 步数、四层防环派单与日预算内串行履职，留齐正反证据，不碰账本与关单 | `Workspace` 与宿主独占 `Runtime` 账本分离（员工零写权限）；规则核对版本并锁快照；唯一回执去重（重发不重跑模型）；快照封存由负责人或会签人签字承担最终责任 | 并发误发两百封催款信与告警，断网重跑随机模型重复写入，或覆盖规则破坏审计链 |
+| **Team Agent** | 多人共事的团队公域；多人话题流理解 + 多角色状态同步 | 共享频道、看板与 Warroom 里的公共秩序、分流同步与交叉初审 | 携带提问人与机器双重身份访问受控团队资源，在指定线程读写状态 | 服从指令层级，严守密级且查改审分离，守公共安静义务 | 外层状态机裁决优先级；取提问人与机器权限最小交集并核对房间密级；记忆按“租户 + 个人”隔离，平时 `waiting` 休眠；采纳由发起人与负责人承担最终责任 | 共用高权限密钥让访客套出机密，公开群注入套走纪要，或机器互回烧光预算 |
+| **业务域 Agent** | 全天候常驻业务地盘；快模型稳定调工具 + 数据水位唤醒 + `A2A` | 常驻业务地盘盯盘、异常吹哨、告警收敛与跨上下游协同分析定位 | 订阅真实完结水位、积累本域异动上下文、进协作空间发起上下游 `A2A` 协查 | 缺数如实报 `unknown`，区分统计波动与业务根因，严守单产品边界并顺原事件续查 | 锚定客观业务域，与 Personal Agent 及 Team Agent 协作空间配合；网关硬锁单产品切片，阻断跨产品读明细权限；跨域合并与结论采纳由业务域负责人确认并承担最终责任 | 缺数时补零或借兄弟产品凑数，串读其他产品明细，或每次唤醒重开重复工单 |
+| **AI 数字员工** | 岗位自治执行与制度审计分离；受控自治运行时 + 身份预算风控 | 自主建表核算、维护版本化规则、跨角色派单协调修复与外部 Action 响应、封存正反证据结案报告 | 独立非人类员工身份（绑定人类担保人）、`Workspace` 读写、受控修订版本化规则、按防环规则派单与支配日常预算 | 步数、四层防环派单与日预算内串行履职，留齐正反证据，不碰账本与关单 | `Workspace` 与宿主独占 `Runtime` 账本分离（员工零写权限）；规则核对版本并锁快照；本地 `Outbox` 唯一回执去重（重发不重跑模型）；快照封存由负责人或会签人签字承担最终责任 | 并发误发两百封催款信与告警，断网重跑随机模型重复写入，或覆盖规则破坏审计链 |
 
 ## 往长远看：当人工胶水退场，什么真正归于人？
 
-再往后看五到十年，随着长周期规划与“模型—宿主协同演进”（递归自我改进，RSI）成熟，企业组织也会卸下沉重的协调包袱。过去大公司搭那么多层汇报金字塔、开不完的跨部门周会、填不完的流转工单，根源在于单个人脑装不下跨领域实时上下文，只能靠流程层层递摘要。等成百上千个驻守业务域的 AI 数字员工既能常年盯水位，又能在几秒内凭签名契约拉起跨域会诊，围绕具体问题动态聚散的协作网，就会消融掉大半靠人力传话维持的中间层。几位业务负责人带着各自的 Personal Agent，与驻守各业务域的几百名 AI 数字员工协同运转，会变成寻常的组织形态。
+再往后看五到十年，随着长周期规划与“模型—宿主协同演进”（递归自我改进，RSI）成熟，企业组织也会卸下沉重的协调包袱。过去大公司搭那么多层汇报金字塔、开不完的跨部门周会、填不完的流转工单，根源在于单个人脑装不下跨领域实时上下文，只能靠流程层层递摘要。等成百上千个常驻地盘的业务域 Agent 能全天盯水位、秒级拉起跨域协同定位，入编纳管的 AI 数字员工又能凭签名契约跨角色统筹推进处置，围绕具体问题动态聚散的协作网，就会消融掉大半靠人力传话维持的中间层。几位业务负责人带着各自的 Personal Agent，与守地盘的业务域 Agent 及管处置执行的 AI 数字员工协同运转，会变成寻常的组织形态。
 
-有人难免会问：当写代码、跨系统起草、群内分流、全天盯盘乃至建表归因都归位到了不同机器手里，人的位置会不会越挤越窄？回看两百年分工史，答案恰恰相反——一旦人不再充当**搬运上下文的人工胶水**，不用整天泡在复制报错、手工对账、催单转话里，**真正属于人的东西，反而以最纯粹的面貌回到了人手里**：
+有人难免会问：当写代码、跨系统起草、群内分流、全天盯盘乃至跨角色统筹处置都归位到了不同机器手里，人的位置会不会越挤越窄？回看两百年分工史，答案恰恰相反——一旦人不再充当**搬运上下文的人工胶水**，不用整天泡在复制报错、手工对账、催单转话里，**真正属于人的东西，反而以最纯粹的面貌回到了人手里**：
 
 1. **待在真实的物理与商业现场，定义“什么真问题值得解”。** 模型周末能推演上万条路径、算出哪套方案转化率高两个点，但它没有肉身痛感与生活处境，体会不到卡顿流程让人多烦躁，也定不了价值取向。发现真问题、选定大方向，只能由身处现场的人来做。
 2. **把模糊的行业直觉与品味，拆解成可核验的标尺与宿主制度。** 单打独斗时老手可以凭感觉说“味道不对”；面对上百个日夜运转的常驻智能体，就必须把隐性经验、审美与风控底线拆解清楚，立成自动验收标准、缺数报 `unknown` 的纪律、提问人与机器权限最小交集的门禁与跨平台熔断红线。
@@ -93,4 +110,4 @@
 
 ---
 
-*参考资料：编程与办公智能体部分参考自 Anthropic [Claude Code Worktrees](https://code.claude.com/docs/en/worktrees)、[Claude Cowork Architecture Overview](https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview)、Harmonic Security [Securing Claude Cowork](https://www.harmonic.security/resources/securing-claude-cowork-a-security-practitioners-guide)、Microsoft [Copilot Wave 3 / Copilot Cowork](https://www.microsoft.com/en-us/copilot/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/)、OpenAI [Agents API Computer Use](https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use)、Noor Yasser [Trust Architecture](https://nooryasser.com/articles/openai-agents-api-computer-use-architecture/)、飞书 [多维表格 AI Agent 节点](https://www.feishu.cn/content/article/7591431268324101337)、Composio [From Coding to Knowledge Work Agents](https://www.sean-weldon.com/blog/2026-09-08-from-coding-to-knowledge-work-agents-karan-vaidya-composio) 与 DevAssure [SpecBench & Reward Hacking 综述](https://www.devassure.io/blog/inside-the-verification-loop/)。团队协作与安全边界部分参考自 Slack [Code API](https://slack.com/blog/developers/slack-code-api)、[ManyIH-Bench](https://ar5iv.labs.arxiv.org/html/2604.09443)、[MIH-Bench](https://aclanthology.org/2026.emnlp-main.2261.pdf)、[Control Illusion](https://arxiv.org/html/2502.15851v4)、[MPAC](https://ar5iv.labs.arxiv.org/html/2604.09744)、CSA [Confused Deputy & Cline 复盘](https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/)、Security Atlas [Agent Tool Identity](https://atlasofsecurity.com/learn/topics/agent-tool-identity/) 与 Bigcircle [Memory Isolation](https://bigcircle.ai/guides/ai-agent-memory-isolation)。企业数字员工与治理实践部分参考自 Microsoft [Entra Agent ID / Agent 365 Identity](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity)、ServiceNow [AI Passport](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/)、Salesforce [Agentforce 3](https://www.salesforce.com/au/news/press-releases/2025/06/23/agentforce-3-announcement/)、Sierra [Release Governance](https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale)、Devin [Usage Policies](https://docs.devin.ai/enterprise/features/usage-policies)、[Cycles Cross-Platform Governance](https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow)、McKinsey [Organizational Change](https://www.mckinsey.com/capabilities/people-and-organization/our-insights/ai-is-changing-work-now-it-has-to-change-the-organization)、PwC [Three Governance Shifts](https://www.pwc.com/gx/en/issues/technology/three-governance-shifts-agentic-ai.html)、ooderAgent [双轴域架构](https://cloud.tencent.com/developer/article/2763302)、阿里云 [PolarDB Agent Express](https://developer.aliyun.com/article/1761577)、腾讯云 [ADP 4.0](https://cloud.tencent.com/developer/article/2771037)，并结合了我们在 `mo-agent-swarm` 与全球变现运营平台 RevPulse 中的业务域 Agent 及 AI 数字员工运行时实践。*
+*参考资料：编程与办公智能体部分参考自 Anthropic [Claude Code Worktrees](https://code.claude.com/docs/en/worktrees)、[Claude Cowork Architecture Overview](https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview)、Harmonic Security [Securing Claude Cowork](https://www.harmonic.security/resources/securing-claude-cowork-a-security-practitioners-guide)、Microsoft [Copilot Wave 3 / Copilot Cowork](https://www.microsoft.com/en-us/copilot/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/)、OpenAI [Agents API Computer Use](https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use)、Noor Yasser [Trust Architecture](https://nooryasser.com/articles/openai-agents-api-computer-use-architecture/)、飞书 [多维表格 AI Agent 节点](https://www.feishu.cn/content/article/7591431268324101337)、Composio [From Coding to Knowledge Work Agents](https://www.sean-weldon.com/blog/2026-09-08-from-coding-to-knowledge-work-agents-karan-vaidya-composio) 与 DevAssure [SpecBench & Reward Hacking 综述](https://www.devassure.io/blog/inside-the-verification-loop/)。团队协作与安全边界部分参考自 Slack [Code API](https://slack.com/blog/developers/slack-code-api)、[ManyIH-Bench](https://ar5iv.labs.arxiv.org/html/2604.09443)、[MIH-Bench](https://aclanthology.org/2026.emnlp-main.2261.pdf)、[Control Illusion](https://arxiv.org/html/2502.15851v4)、[MPAC](https://ar5iv.labs.arxiv.org/html/2604.09744)、CSA [Confused Deputy & Cline 复盘](https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/)、Security Atlas [Agent Tool Identity](https://atlasofsecurity.com/learn/topics/agent-tool-identity/) 与 Bigcircle [Memory Isolation](https://bigcircle.ai/guides/ai-agent-memory-isolation)。企业数字员工与治理实践部分参考自 Microsoft [Entra Agent ID / Agent 365 Identity](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity)、ServiceNow [AI Passport](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/)、Salesforce [Agentforce 3](https://www.salesforce.com/au/news/press-releases/2025/06/23/agentforce-3-announcement/)、Sierra [Release Governance](https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale)、Devin [Usage Policies](https://docs.devin.ai/enterprise/features/usage-policies)、[Cycles Cross-Platform Governance](https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow)、McKinsey [Organizational Change](https://www.mckinsey.com/capabilities/people-and-organization/our-insights/ai-is-changing-work-now-it-has-to-change-the-organization)、PwC [Three Governance Shifts](https://www.pwc.com/gx/en/issues/technology/three-governance-shifts-agentic-ai.html)、ooderAgent [双轴域架构](https://cloud.tencent.com/developer/article/2763302)、阿里云 [PolarDB Agent Express](https://developer.aliyun.com/article/1761577) 与腾讯云 [ADP 4.0](https://cloud.tencent.com/developer/article/2771037)。*
