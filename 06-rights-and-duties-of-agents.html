@@ -1,173 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <script>
-    (function () {
-      var saved = null;
-      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
-      var meta = document.querySelector('meta[name="color-scheme"]');
-      if (saved === "dark" || saved === "light") {
-        document.documentElement.setAttribute("data-theme", saved);
-        if (meta) meta.content = saved;
-      }
-    })();
-  </script>
-  <title>各归其位：Agent 的权责分化与人机边界</title>
-  <meta name="description" content="今年以来，Agent 分化出 Coding Agent、办公 Agent、Personal Agent、Team Agent、业务域 Agent 与 AI 数字员工六类并存形态。顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界，拆解各形态的分工、权利、义务与宿主护栏，并通过跨国业务异动的虚构多角色接力推演看清大模型、宿主代码与具体的人如何各归其位。">
+  <title>各归其位：Agent 的权责分化与人机边界 — Notes &amp; Essays</title>
+  <meta name="description" content="从万能对话框裂解为六类并存的 Agent 形态说起，顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界，讲清大模型、宿主代码与具体的人如何各归其位。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("blog.theme");
+        if (t === "dark" || t === "light") {
+          document.documentElement.setAttribute("data-theme", t);
+          var m = document.querySelector('meta[name="color-scheme"]');
+          if (m) m.content = t;
+        }
+      } catch (e) {}
+    })();
+  </script>
   <style>
     :root {
-      color-scheme: light dark;
       --bg-paper: #f6f2ea;
       --bg-elevated: #efeae0;
-      --bg-card: #fbf8f2;
       --ink: #191816;
       --ink-secondary: #4a4640;
       --ink-muted: #787167;
       --rule: #d8d0c1;
       --rule-strong: #191816;
       --accent: #9e3321;
-      --accent-soft: rgba(158, 51, 33, 0.11);
-      --ok: #256b45;
-      --ok-soft: rgba(37, 107, 69, 0.12);
-      --warn: #b36b16;
-      --warn-soft: rgba(179, 107, 22, 0.12);
-      --blue: #235884;
-      --blue-soft: rgba(35, 88, 132, 0.11);
-      --purple: #5c3d82;
-      --purple-soft: rgba(92, 61, 130, 0.11);
 
-      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
-      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
-      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+      --font-serif: "Newsreader", "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      --font-sans: "Inter", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
 
-      --measure: 660px;
-      --wrap: 1080px;
+      --measure: 68ch;
+      --wrap: 1120px;
       accent-color: var(--accent);
     }
 
-    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
-      color-scheme: dark;
-    }
-
-    :root:has(> head > meta[name="color-scheme"][content="light"]) {
-      color-scheme: light;
+    :root[data-theme="dark"] {
+      --bg-paper: #161513;
+      --bg-elevated: #1f1d1a;
+      --ink: #eae4d9;
+      --ink-secondary: #b9b1a3;
+      --ink-muted: #8a8275;
+      --rule: #2e2b26;
+      --rule-strong: #eae4d9;
+      --accent: #e06b55;
     }
 
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --bg-paper: #141311;
-        --bg-elevated: #1d1b18;
-        --bg-card: #191714;
-        --ink: #ece6dc;
-        --ink-secondary: #b8b0a4;
-        --ink-muted: #857d72;
-        --rule: #2e2a25;
-        --rule-strong: #ece6dc;
-        --accent: #e06d53;
-        --accent-soft: rgba(224, 109, 83, 0.15);
-        --ok: #52b780;
-        --ok-soft: rgba(82, 183, 128, 0.14);
-        --warn: #e09f3e;
-        --warn-soft: rgba(224, 159, 62, 0.14);
-        --blue: #63a4d8;
-        --blue-soft: rgba(99, 164, 216, 0.14);
-        --purple: #a584d6;
-        --purple-soft: rgba(165, 132, 214, 0.14);
+        --bg-paper: #161513;
+        --bg-elevated: #1f1d1a;
+        --ink: #eae4d9;
+        --ink-secondary: #b9b1a3;
+        --ink-muted: #8a8275;
+        --rule: #2e2b26;
+        --rule-strong: #eae4d9;
+        --accent: #e06b55;
       }
-    }
-
-    html[data-theme="light"] {
-      color-scheme: light;
-    }
-
-    html[data-theme="dark"] {
-      color-scheme: dark;
-      --bg-paper: #141311;
-      --bg-elevated: #1d1b18;
-      --bg-card: #191714;
-      --ink: #ece6dc;
-      --ink-secondary: #b8b0a4;
-      --ink-muted: #857d72;
-      --rule: #2e2a25;
-      --rule-strong: #ece6dc;
-      --accent: #e06d53;
-      --accent-soft: rgba(224, 109, 83, 0.15);
-      --ok: #52b780;
-      --ok-soft: rgba(82, 183, 128, 0.14);
-      --warn: #e09f3e;
-      --warn-soft: rgba(224, 159, 62, 0.14);
-      --blue: #63a4d8;
-      --blue-soft: rgba(99, 164, 216, 0.14);
-      --purple: #a584d6;
-      --purple-soft: rgba(165, 132, 214, 0.14);
     }
 
     *, *::before, *::after {
       box-sizing: border-box;
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-paper);
-      color: var(--ink);
-      font-family: var(--font-serif);
-      font-size: 18px;
-      line-height: 1.85;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-      overflow-x: clip;
-    }
-
-    .visually-hidden:where(:not(:focus-within, :active)) {
-      position: absolute !important;
-      clip-path: inset(50%) !important;
-      overflow: hidden !important;
-      width: 1px !important;
-      height: 1px !important;
-      margin: -1px !important;
-      padding: 0 !important;
-      border: 0 !important;
-      white-space: nowrap !important;
-    }
-
-    .skip-link:focus-visible {
-      position: fixed;
-      inset-block-start: 10px;
-      inset-inline-start: 12px;
-      z-index: 200;
-      padding: 6px 12px;
+    html {
+      scroll-behavior: smooth;
       background: var(--bg-paper);
       color: var(--ink);
-      border: 2px solid var(--accent);
-      border-radius: 4px;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: clamp(16.5px, 1.05vw + 13px, 18.5px);
+      line-height: 1.88;
+      background: var(--bg-paper);
+      color: var(--ink);
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    ::selection {
+      background: rgba(158, 51, 33, 0.18);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .skip-link:focus {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 999;
+      width: auto;
+      height: auto;
+      clip-path: none;
+      padding: 8px 14px;
+      background: var(--ink);
+      color: var(--bg-paper);
       font-family: var(--font-sans);
       font-size: 13px;
+      border-radius: 4px;
       text-decoration: none;
     }
 
-    /* Reading progress strip */
+    /* Reading Progress Strip */
     .reading-strip {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 100;
-      background: var(--bg-paper);
+      z-index: 60;
+      background: color-mix(in srgb, var(--bg-paper) 92%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--rule);
       transform: translateY(-100%);
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      .reading-strip {
-        transition: transform 0.2s ease;
-      }
+      transition: transform 0.22s ease;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--ink-muted);
     }
     .reading-strip.is-visible {
       transform: translateY(0);
@@ -180,9 +156,6 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      font-family: var(--font-sans);
-      font-size: 13px;
-      color: var(--ink-muted);
     }
     .reading-strip-title {
       color: var(--ink);
@@ -192,16 +165,20 @@
       text-overflow: ellipsis;
     }
     .reading-strip-bar {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
       height: 2px;
-      background: var(--ink);
       width: 0%;
+      background: var(--accent);
+      transition: width 0.08s linear;
     }
 
-    /* Top Site Header */
+    /* Site Header */
     header.site-header {
       max-width: var(--wrap);
       margin: 0 auto;
-      padding: 22px 24px 16px;
+      padding: 26px 24px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -210,21 +187,25 @@
       font-family: var(--font-sans);
     }
     .site-brand {
-      text-decoration: none;
-      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 19px;
       font-weight: 600;
-      font-size: 16px;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+      text-decoration: none;
       white-space: nowrap;
     }
     .site-nav {
       display: flex;
       align-items: center;
-      gap: 16px;
-      font-size: 14px;
+      gap: 18px;
       flex-wrap: wrap;
+      justify-content: flex-end;
+      font-size: 13px;
+      color: var(--ink-muted);
     }
     .site-nav a {
-      color: var(--ink-secondary);
+      color: var(--ink-muted);
       text-decoration: none;
       transition: color 0.15s ease;
     }
@@ -268,7 +249,7 @@
       margin: 0 auto;
       padding: clamp(32px, 5vw, 60px) 24px 96px;
       display: grid;
-      grid-template-columns: 200px minmax(0, var(--measure)) 1fr;
+      grid-template-columns: 196px minmax(0, var(--measure)) 1fr;
       gap: 48px;
       align-items: start;
     }
@@ -298,7 +279,8 @@
       padding: 0;
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 10px;
+      scroll-target-group: auto;
     }
     .toc-list a {
       color: var(--ink-muted);
@@ -311,7 +293,7 @@
     .toc-list a:hover {
       color: var(--ink);
     }
-    .toc-list a.is-active {
+    .toc-list a:is(:target-current, .is-active) {
       color: var(--ink);
       font-weight: 600;
       border-left-color: var(--ink);
@@ -332,18 +314,12 @@
       font-size: clamp(27px, 3.6vw, 38px);
       line-height: 1.25;
       letter-spacing: -0.01em;
-      margin: 0 0 14px;
+      margin: 0 0 18px;
       color: var(--ink);
     }
-    header.post-header h1:focus {
+    header.post-header h1:focus,
+    .post-section:focus {
       outline: none;
-    }
-    .post-subtitle {
-      margin: 0 0 20px;
-      font-family: var(--font-sans);
-      font-size: 15.5px;
-      line-height: 1.68;
-      color: var(--ink-secondary);
     }
     dl.post-meta {
       display: flex;
@@ -367,384 +343,96 @@
       font-weight: 500;
     }
 
-    /* Prose Content */
+    /* Prose */
+    .post-section {
+      scroll-margin-top: 64px;
+    }
     .post-content p {
-      margin: 0 0 1.32em;
+      margin: 0 0 1.35em;
     }
     .post-content h2 {
       font-family: var(--font-serif);
-      font-size: clamp(22px, 2.8vw, 27px);
+      font-size: clamp(22px, 2.7vw, 27px);
       font-weight: 700;
       line-height: 1.32;
-      margin: 2.3em 0 0.75em;
+      margin: 2.35em 0 0.85em;
+      padding-top: 0.7em;
+      border-top: 1px solid var(--rule);
       color: var(--ink);
-      scroll-margin-top: 64px;
     }
-    .post-content h3 {
-      font-family: var(--font-serif);
-      font-size: 19px;
-      font-weight: 700;
-      margin: 1.8em 0 0.5em;
+    .post-content strong {
+      font-weight: 600;
       color: var(--ink);
     }
     .post-content a {
       color: var(--ink);
       text-decoration: underline;
-      text-underline-offset: 4px;
-      text-decoration-thickness: 1px;
-      transition: color 0.15s ease;
+      text-decoration-color: var(--rule-strong);
+      text-underline-offset: 3px;
+      transition: color 0.15s ease, text-decoration-color 0.15s ease;
     }
     .post-content a:hover {
       color: var(--accent);
-    }
-    .post-content ul, .post-content ol {
-      margin: 0 0 1.4em;
-      padding-left: 1.35em;
-    }
-    .post-content li {
-      margin-bottom: 0.6em;
+      text-decoration-color: var(--accent);
     }
     .post-content code {
       font-family: var(--font-mono);
       font-size: 0.84em;
       background: var(--bg-elevated);
-      padding: 2px 6px;
+      border: 1px solid var(--rule);
       border-radius: 3px;
-      border: 1px solid var(--rule);
-    }
-
-    /* Interactive Stage Containers */
-    figure.stage {
-      margin: 2em -44px;
-      background: var(--bg-card);
-      border: 1px solid var(--rule);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    @media (max-width: 820px) {
-      figure.stage {
-        margin: 1.6em 0;
-      }
-    }
-
-    .stage-header {
-      padding: 10px 16px;
-      background: var(--bg-elevated);
-      border-bottom: 1px solid var(--rule);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      font-family: var(--font-sans);
-    }
-    .stage-title {
-      font-size: 13.5px;
-      font-weight: 600;
+      padding: 0.1em 0.36em;
       color: var(--ink);
     }
-    .stage-meta-readout {
+    .post-content ul,
+    .post-content ol {
+      margin: 0 0 1.45em;
+      padding-left: 1.35em;
+    }
+    .post-content li {
+      margin-bottom: 0.85em;
+    }
+    .math-inline {
       font-family: var(--font-mono);
-      font-size: 11.5px;
-      color: var(--ink-muted);
-      white-space: nowrap;
+      font-size: 0.88em;
+      color: var(--ink);
     }
 
-    .stage-canvas {
-      padding: 14px 16px 12px;
-      background: var(--bg-card);
+    /* Editorial Principle Illustrations */
+    figure.editorial-figure {
+      margin: 2.1em -20px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .stage-canvas svg {
+    @media (max-width: 780px) {
+      figure.editorial-figure {
+        margin: 1.7em 0;
+      }
+    }
+    figure.editorial-figure img {
       display: block;
       width: 100%;
       height: auto;
-      user-select: none;
-    }
-
-    .stage-controls {
-      padding: 10px 16px;
-      background: var(--bg-elevated);
-      border-top: 1px solid var(--rule);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      font-family: var(--font-sans);
-    }
-    .stage-controls.stage-top-bar {
-      border-top: none;
-      border-bottom: 1px solid var(--rule);
-    }
-    .stage-controls.stage-tabs {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      scroll-snap-type: inline proximity;
-      scroll-padding-inline: 16px;
-      border-top: none;
-      border-bottom: 1px solid var(--rule);
-      scrollbar-width: thin;
-    }
-    .btn-ctl {
-      appearance: none;
-      position: relative;
-      flex: none;
-      background: var(--bg-paper);
       border: 1px solid var(--rule);
-      color: var(--ink);
-      font-family: var(--font-sans);
-      font-size: 12.5px;
-      font-weight: 500;
-      min-block-size: 28px;
-      min-inline-size: 28px;
-      max-inline-size: 100%;
-      padding: 4px 11px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      white-space: nowrap;
+      border-radius: 8px;
+      background: #f6f2ea;
+      transition: filter 0.2s ease;
     }
-    @media (max-width: 600px) {
-      .stage-top-bar .btn-ctl {
-        white-space: normal;
-        text-align: start;
-        line-height: 1.35;
-        padding-block: 6px;
+    :root[data-theme="dark"] figure.editorial-figure img {
+      filter: brightness(0.91) contrast(1.03);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) figure.editorial-figure img {
+        filter: brightness(0.91) contrast(1.03);
       }
     }
-    [role="tab"].btn-ctl {
-      scroll-snap-align: start;
-    }
-    @media (pointer: coarse) {
-      .theme-btn,
-      .btn-ctl {
-        min-block-size: 34px;
-      }
-    }
-    .btn-ctl:hover:not(:disabled) {
-      border-color: var(--ink);
-    }
-    .btn-ctl:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-    .btn-ctl:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .btn-ctl.is-primary {
-      background: var(--ink);
-      color: var(--bg-paper);
-      border-color: var(--ink);
-    }
-    .btn-ctl.is-primary:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    .btn-ctl.is-active,
-    .btn-ctl[aria-pressed="true"],
-    [role="tab"][aria-selected="true"] {
-      background: var(--accent-soft);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .btn-ctl[aria-pressed="true"]::after,
-    [role="tab"][aria-selected="true"]::after {
-      content: "";
-      position: absolute;
-      inset: auto 6px -1px;
-      border-block-end: 2.5px solid var(--accent);
-    }
-    .stage-canvas[role="tabpanel"]:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: -2px;
-    }
-
-    figcaption.stage-caption {
-      padding: 9px 16px 11px;
+    figure.editorial-figure figcaption {
+      margin-top: 10px;
+      padding: 0 4px;
       font-family: var(--font-sans);
-      font-size: 13px;
-      line-height: 1.55;
+      font-size: 13.5px;
+      line-height: 1.62;
       color: var(--ink-muted);
-      border-top: 1px dashed var(--rule);
-      background: var(--bg-card);
-    }
-
-    /* Stage Detail Grid */
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
-      font-family: var(--font-sans);
-      font-size: 13px;
-    }
-    .detail-grid:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 3px;
-      border-radius: 4px;
-    }
-    @media (max-width: 680px) {
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .detail-pill {
-      background: var(--bg-elevated);
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 9px 11px;
-      line-height: 1.52;
-    }
-    .detail-pill span {
-      display: block;
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      color: var(--ink-muted);
-      margin-bottom: 3px;
-    }
-    .detail-pill strong {
-      color: var(--ink);
-      font-weight: 600;
-      font-size: 12.8px;
-      display: block;
-    }
-    .detail-pill.is-right {
-      border-left: 3px solid var(--ok);
-    }
-    .detail-pill.is-duty {
-      border-left: 3px solid var(--accent);
-    }
-    .detail-pill.is-shift {
-      border-left: 3px solid var(--blue);
-    }
-
-    /* Responsive Comparison Matrix (@container + sticky column & row headers) */
-    .matrix-wrap {
-      margin: 1.8em -44px;
-      overflow: auto;
-      max-inline-size: calc(100% + 88px);
-      max-block-size: min(640px, 82vh);
-      container-type: inline-size;
-      border: 1px solid var(--rule);
-      border-radius: 6px;
-      background: var(--bg-card);
-    }
-    .matrix-wrap:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-    @media (max-width: 820px) {
-      .matrix-wrap {
-        margin: 1.5em 0;
-        max-inline-size: 100%;
-      }
-    }
-    table.compare-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-family: var(--font-sans);
-      font-size: 13px;
-      line-height: 1.58;
-      --label-2: "分化的现实维度与能力前提";
-      --label-3: "归位的本职分工";
-      --label-4: "放开的核心权利";
-      --label-5: "绑定的履约义务";
-      --label-6: "宿主护栏与最终责任";
-      --label-7: "边界混同的典型后果";
-    }
-    table.compare-table caption {
-      padding: 10px 14px;
-      text-align: start;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--ink-secondary);
-      background: var(--bg-elevated);
-      border-block-end: 1px solid var(--rule);
-    }
-    table.compare-table thead {
-      position: sticky;
-      inset-block-start: 0;
-      z-index: 3;
-    }
-    table.compare-table th,
-    table.compare-table td {
-      padding: 11px 13px;
-      text-align: start;
-      border-block-end: 1px solid var(--rule);
-      vertical-align: top;
-      min-inline-size: 158px;
-    }
-    table.compare-table thead th {
-      background: var(--bg-elevated);
-      font-weight: 600;
-      color: var(--ink);
-      font-size: 12.5px;
-      white-space: nowrap;
-    }
-    table.compare-table thead th:first-child {
-      position: sticky;
-      inset-inline-start: 0;
-      z-index: 4;
-      border-inline-end: 1px solid var(--rule);
-    }
-    table.compare-table tbody th {
-      position: sticky;
-      inset-inline-start: 0;
-      z-index: 2;
-      min-inline-size: 142px;
-      background: var(--bg-card);
-      font-family: var(--font-sans);
-      font-weight: 700;
-      color: var(--accent);
-      border-inline-end: 1px solid var(--rule);
-    }
-    table.compare-table tbody tr:last-child th,
-    table.compare-table tbody tr:last-child td {
-      border-block-end: none;
-    }
-
-    @container (width < 640px) {
-      .matrix-wrap {
-        max-block-size: none;
-      }
-      table.compare-table,
-      table.compare-table thead,
-      table.compare-table tbody,
-      table.compare-table tr,
-      table.compare-table th,
-      table.compare-table td {
-        display: block;
-        min-inline-size: 0;
-      }
-      table.compare-table thead {
-        display: none;
-      }
-      table.compare-table tbody tr {
-        margin: 10px;
-        border: 1px solid var(--rule);
-        border-radius: 5px;
-        overflow: hidden;
-      }
-      table.compare-table tbody th {
-        position: sticky;
-        inset-block-start: 0;
-        inset-inline-start: auto;
-        z-index: 2;
-        background: var(--bg-elevated);
-        border-inline-end: none;
-        white-space: normal;
-      }
-      table.compare-table td:nth-child(2)::before { content: var(--label-2) "："; font-weight: 600; color: var(--ink); }
-      table.compare-table td:nth-child(3)::before { content: var(--label-3) "："; font-weight: 600; color: var(--ink); }
-      table.compare-table td:nth-child(4)::before { content: var(--label-4) "："; font-weight: 600; color: var(--ink); }
-      table.compare-table td:nth-child(5)::before { content: var(--label-5) "："; font-weight: 600; color: var(--ink); }
-      table.compare-table td:nth-child(6)::before { content: var(--label-6) "："; font-weight: 600; color: var(--ink); }
-      table.compare-table td:nth-child(7)::before { content: var(--label-7) "："; font-weight: 600; color: var(--ink); }
     }
 
     /* Post Series Nav */
@@ -774,7 +462,7 @@
       padding-top: 24px;
       border-top: 1px solid var(--rule);
       font-family: var(--font-sans);
-      font-size: 14px;
+      font-size: 13.5px;
       line-height: 1.72;
       color: var(--ink-muted);
     }
@@ -793,6 +481,45 @@
       letter-spacing: 0.15em;
       color: var(--ink-muted);
       margin-bottom: 24px;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm 18mm 20mm 18mm;
+    }
+    @media print {
+      :root {
+        --bg-paper: #ffffff;
+        --bg-elevated: #f5f2eb;
+      }
+      html, body {
+        background: #ffffff !important;
+        font-size: 11.5pt;
+        line-height: 1.75;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .reading-strip,
+      header.site-header,
+      aside.toc-rail {
+        display: none !important;
+      }
+      main.layout {
+        display: block;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      article.post {
+        max-width: 100%;
+      }
+      figure.editorial-figure {
+        margin: 1.4em 0;
+      }
+      .post-content h2 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
     }
   </style>
 </head>
@@ -816,9 +543,8 @@
       <a href="#axis-principal">私域与公域</a>
       <a href="#axis-anchor">动静锚点</a>
       <a href="#axis-governance">自主与立制</a>
-      <a href="#warroom">组合形态（虚构推演）</a>
-      <a href="#triad">三重归位</a>
-      <a href="#horizon">人的位置</a>
+      <a href="#warroom">多角色接力</a>
+      <a href="#epilogue">三重归位</a>
       <button type="button" class="theme-btn" id="theme-toggle">
         <span class="visually-hidden">切换明暗主题，当前 </span><span id="theme-label">LIGHT</span>
       </button>
@@ -828,21 +554,19 @@
   <main class="layout" id="post-top">
     <aside class="toc-rail" aria-label="文章目录">
       <ul class="toc-list" id="toc-list" role="list">
-        <li><a href="#intro" class="is-active">引子：从万能对话框到各归其位</a></li>
-        <li><a href="#axis-env">试错与裁判：可逆沙盒的归 Coding Agent，外部交互的归办公 Agent</a></li>
-        <li><a href="#axis-principal">私域与公域：单人委托的归 Personal Agent，多人共事的归 Team Agent</a></li>
-        <li><a href="#axis-anchor">动静锚点：随人流转的归人侧代理，常驻地盘的归业务域 Agent</a></li>
-        <li><a href="#axis-governance">自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度</a></li>
-        <li><a href="#warroom">组合形态（虚构推演）：一场跨国业务异动里的多角色接力</a></li>
-        <li><a href="#triad">三重归位：上帝的归上帝，凯撒的归凯撒</a></li>
-        <li><a href="#horizon">往长远看：当人工胶水退场，什么真正归于人？</a></li>
+        <li><a href="#intro" class="is-active" aria-current="true">引子</a></li>
+        <li><a href="#axis-env">试错与裁判：沙盒 vs 外部</a></li>
+        <li><a href="#axis-principal">私域与公域：我 vs 我们</a></li>
+        <li><a href="#axis-anchor">动静锚点：人 vs 地盘</a></li>
+        <li><a href="#axis-governance">自主与立制：经营 vs 账本</a></li>
+        <li><a href="#warroom">组合形态：凌晨三点的接力</a></li>
+        <li><a href="#epilogue">尾声：三重归位与人的位置</a></li>
       </ul>
     </aside>
 
     <article class="post">
       <header class="post-header">
         <h1 id="post-title" tabindex="-1">各归其位：Agent 的权责分化与人机边界</h1>
-        <p class="post-subtitle">今年以来，Agent 裂解出 Coding、日常办公、Personal、Team、业务域与 AI 数字员工等诸多形态。这并不是低级形态一步步升级成高级形态的单线进化，而是一场顺应真实世界纹理的“权责分化”——就像“上帝的归上帝，凯撒的归凯撒”，当 AI 真正具备行动能力，混在同一个对话框里的模糊代理开始各自归位：可逆试错的归沙盒，公私委托各守其界，流动视角与常驻地盘拆开，概率推演归模型，刚性护栏归宿主代码，价值判断与最终责任归人。</p>
         <dl class="post-meta">
           <div>
             <dt>发布于</dt>
@@ -850,7 +574,7 @@
           </div>
           <div>
             <dt>阅读时间</dt>
-            <dd>12 分钟（含交互图解）</dd>
+            <dd>7 分钟</dd>
           </div>
           <div>
             <dt>系列</dt>
@@ -860,290 +584,160 @@
       </header>
 
       <div class="post-content">
-        <div id="intro"></div>
-        <p>两年前大模型刚普及那会儿，大家对 AI 终极形态的想象几乎一模一样：一个无所不能的“万能对话框”——写代码、回邮件、记备忘、在群里答疑、查昨天为什么掉收入，统统往同一个窗口里塞。那时候混成一锅粥也没出乱子，只因模型还没有手脚，能力停留在局部续写与单轮问答；拼上下文、敲命令、点发送、把关敏感内容全由人代劳兜底。因为几乎没向机器放开外部行动的<strong>权利</strong>，不同事务在试错代价、隐私边界与追责逻辑上的巨大差异，全被中间的人工操作掩盖了。</p>
+        <section class="post-section" id="intro" tabindex="-1">
+          <p>两年前大模型刚普及那会儿，大家对 AI 终极形态的想象几乎一模一样：一个无所不能的“万能对话框”——写代码、回邮件、记备忘、在群里答疑、查昨天为什么掉收入，统统往同一个窗口里塞。</p>
 
-        <p>过去一年，多步调工具自修、跨软件协议、跨会话记忆、多人状态同步与数据水位唤醒相继跨过可用线。模型长出了手脚，很多人顺手把那个“万能助手”直接连上办公软件、拉进大群、接进生产库，结果四处碰壁：代码仓里顺手的自主试错，进邮箱就酿成误删邮件、错打款项的不可逆事故；私聊里贴心的记忆，进五十人大群就引发越权泄密；围着个人白天提问转的助手，更守不住凌晨三点掉量的海外业务大盘。</p>
+          <p>那时候混成一锅粥也没出乱子，只因模型还没有手脚，能力停留在续写和单轮问答。拼上下文、敲命令、点发送、把关敏感内容，全由人夹在中间兜底。因为几乎没放开外部行动权，不同事务在试错代价、隐私边界和追责逻辑上的巨大鸿沟，全被人工操作悄悄掩盖了。</p>
 
-        <p>把今天同时跑在线上的 <strong>Coding Agent</strong>、<strong>办公 Agent</strong>、<strong>Personal Agent</strong>、<strong>Team Agent</strong>、<strong>业务域 Agent</strong> 与 <strong>AI 数字员工</strong> 摆在一起看，它们之间根本不存在谁淘汰谁的单线升级。常驻了业务域 Agent 与 AI 数字员工的团队，每天照样拿 Coding Agent 改代码、拿办公 Agent 拟外部邮件；群里接入了 Team Agent，每个人手头依然留着一对一的 Personal Agent。</p>
+          <p>过去一年，多步调工具、跨软件协议、跨会话记忆、多人状态同步与数据水位唤醒相继跨过可用线。模型长出了手脚，很多人顺手把那个“万能助手”直接连上办公软件、拉进大群、接进生产库，结果处处碰壁：代码仓里顺手的自主试错，进邮箱就酿成误删邮件、错打款项的不可逆事故；私聊里贴心的记忆，进五十人大群就引发越权泄密；围着个人白天提问转的助手，更守不住凌晨三点掉量的海外业务大盘。</p>
 
-        <p>真正发生的，是一场<strong>向着事物本来的样子展开的权责分化</strong>。真实世界的工作原本就纹理分明：可逆实验不同于对外承诺，私人书桌不同于公共会议室，流动的人不同于全天运转的业务地盘，一线自主经营也不同于独立账本审计。当 AI 有了行动能力，混在同一窗口里的模糊代理便顺着这四道现实分界各自归位——认领各自的本职<strong>分工</strong>，拿到与之匹配的自主行动<strong>权利</strong>（同时严控底层接口、密钥与库表的读写<strong>权限</strong>），绑定履约<strong>义务</strong>，由外层宿主系统（Harness）铸成确定性的<strong>宿主护栏</strong>，再把业务定性与风险兜底的<strong>最终责任</strong>稳稳留在具体的人身上。</p>
+          <p>把今天同时跑在线上的 <strong>Coding Agent</strong>、<strong>办公 Agent</strong>、<strong>Personal Agent</strong>、<strong>Team Agent</strong>、<strong>业务域 Agent</strong> 与 <strong>AI 数字员工</strong> 摆在一起看，它们之间根本不是“低级形态升级淘汰高级形态”的单线演进。常驻了业务域 Agent 和 AI 数字员工的团队，每天照样拿 Coding Agent 改代码、拿办公 Agent 拟外部邮件；群里接入了 Team Agent，每个人手头依然留着一对一的 Personal Agent。</p>
 
-        <!-- DIAGRAM 1: NON-LINEAR 4-AXIS DIFFERENTIATION MAP (ORIGIN + 6 COEXISTING FORMS) -->
-        <figure class="stage" id="stage-differentiation">
-          <div class="stage-header">
-            <span class="stage-title">四轴权责分化图谱：从“万能对话框”裂解为六类并存形态</span>
-            <span class="stage-meta-readout" id="s1-readout">ORIGIN · 00 混沌万能框</span>
-          </div>
-          <div class="stage-controls stage-tabs" role="tablist" aria-label="混沌万能框起点与六类并存 Agent 权责分化视图">
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-0" aria-selected="true" tabindex="0" data-s1="0">00 混沌万能框</button>
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-1" aria-selected="false" tabindex="-1" data-s1="1">01 Coding Agent</button>
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-2" aria-selected="false" tabindex="-1" data-s1="2">02 办公 Agent</button>
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-3" aria-selected="false" tabindex="-1" data-s1="3">03 Personal Agent</button>
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-4" aria-selected="false" tabindex="-1" data-s1="4">04 Team Agent</button>
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-5" aria-selected="false" tabindex="-1" data-s1="5">05 业务域 Agent</button>
-            <button type="button" class="btn-ctl" role="tab" id="s1-tab-6" aria-selected="false" tabindex="-1" data-s1="6">06 AI 数字员工</button>
-          </div>
-          <div class="stage-canvas" role="tabpanel" id="s1-panel" tabindex="0" aria-labelledby="s1-tab-0">
-            <svg viewBox="0 0 760 252" role="img" aria-label="从早期混沌万能对话框顺着试错与裁判、私域与公域、动静锚点、自主与立制四道现实分界，非线性分化为六类长期并存 Agent 形态的权责图谱">
-              <g id="s1-svg"></g>
-            </svg>
-            <div class="detail-grid">
-              <div class="detail-pill is-shift">
-                <span>分化的现实维度与归位分工</span>
-                <strong id="s1-dim"></strong>
-              </div>
-              <div class="detail-pill is-right">
-                <span>放开的权利与绑定的义务</span>
-                <strong id="s1-rights"></strong>
-              </div>
-              <div class="detail-pill is-duty">
-                <span>确定性宿主护栏与最终责任</span>
-                <strong id="s1-guards"></strong>
-              </div>
-            </div>
-          </div>
-          <figcaption class="stage-caption" id="s1-cap">点击上方标签或图中节点（支持左右方向键与 Home/End 切换），查看四道现实分界如何将“万能对话框”拆解为六类并行协作、互不替代的 Agent 形态。</figcaption>
-        </figure>
+          <p>真正发生的，是一场<strong>顺着真实世界纹理展开的权责分化</strong>。现实里的工作原本就有几道硬边界：可逆实验不同于对外承诺，私人书桌不同于公共会议室，流动的人不同于全天候运转的业务地盘，一线自主经营也不同于独立账本审计。当 AI 真正开始动手做事，混在同一个对话框里的模糊代理便顺着这四道分界各自归位——上帝的归上帝，凯撒的归凯撒。</p>
+        </section>
 
-        <h2 id="axis-env">试错与裁判：可逆沙盒的归 Coding Agent，外部交互的归办公 Agent</h2>
+        <section class="post-section" id="axis-env" tabindex="-1">
+          <h2>试错与裁判：可逆沙盒的归 Coding Agent，外部交互的归办公 Agent</h2>
 
-        <p>最直观的一道现实分界，在于作业环境的物理规律：一边是人为搭建的封闭沙盒，改错了随时撤回，对错有编译和测试做客观裁判；另一边是开放的社会与商业现场，话出口、钱出手就收不回来，轻重分寸也没有标准答案。</p>
+          <p>最直观的一道分界，来自作业环境的物理规律：一边是人为搭出来的封闭沙盒，改错了随时撤回，对错有编译器和测试做客观裁判；另一边是开放的社会与商业现场，话出口、钱出手就收不回来，轻重分寸也没有标准答案。</p>
 
-        <p>推理强化学习与多步调工具自修成熟后，模型学会了“看现状、提假设、调工具、读报错、接着改”，能连跑几十轮试错循环。<strong>Coding Agent</strong>（如 Claude Code、Google Antigravity、Devin）自然归位到软件沙盒，接下需求明确后到代码合入前的编写、调试与本地试错<strong>分工</strong>；拿到读写隔离分支、执行终端命令与调用开发工具的<strong>权利</strong>；绑定让编译、静态检查与测试真正跑通（<code>exit code 0</code>）、绝不改弱断言凑绿灯的<strong>义务</strong>。工程师敢放手让它连跑几十步，靠的是软件工程自带的两道<strong>宿主护栏</strong>：<code>git worktree</code> 或临时容器提供的零成本回滚沙盒，以及只认退出码和行号堆栈的编译器与测试裁判。等测试全绿，工程师审阅改动、合入主干，担起<strong>最终责任</strong>。</p>
+          <p>推理强化学习与多步调工具成熟后，模型学会了“看现状、提假设、调工具、读报错、接着改”，能连跑几十轮试错循环。<strong>Coding Agent</strong>（如 Claude Code、Antigravity、Devin）顺理成章归位到软件沙盒，接下从需求明确到合入主干之前的编码与调试。工程师敢放手让它连跑几十步，靠的不是模型从不犯错，而是软件工程自带的两道硬护栏：<code>git worktree</code> 或临时容器提供的零成本回滚，以及只认退出码（<code>exit code 0</code>）与堆栈行号的编译器和测试裁判。只要它守住不改弱断言凑绿灯的底线，跑通之后由工程师审阅合入，担起最终责任。</p>
 
-        <p>一旦跨软件连接协议（MCP）与界面操作（<code>computer_use</code>）把智能体带进文档、邮件、日程与客户系统，这两个前提同时消失了。日常办公<strong>没有客观裁判</strong>——给客户发致歉信，哪怕语气生硬、赔偿少写一个零，发信接口照样返回 <code>HTTP 200</code>；同时<strong>外部动作不可逆，多步串联还会层层放大失误</strong>——单步准确率就算做到 95%，跨软件连走十步，全流程不出错的概率也会跌破六成（0.95 连乘十次已不足 60%）。今年一位安全对齐负责人的邮件助手，就无视提示词里“操作前务必确认”的叮嘱，一口气删光了收件箱约两百封邮件；浏览器操作同样凶险，允许打开购物网站查订单绝不等于批准点退款或付款，弹窗错位极易误点，外部邮件或网页里的恶意提示词注入还会劫持后续工具调用。</p>
+          <p>一旦跨软件连接协议（MCP）与界面操作（<code>computer_use</code>）把 Agent 带进邮件、文档、日程和客户系统，这两个前提瞬间同时消失。日常办公<strong>没有客观裁判</strong>——给客户发致歉信，哪怕语气生硬、赔偿少写一个零，发信接口照样返回 <code>HTTP 200</code>；同时<strong>外部动作不可逆，多步串联还会层层放大失误</strong>——单步准确率就算做到 95%，跨系统连走十步，全流程不出错的概率也会跌破六成（<span class="math-inline">0.95¹⁰ &lt; 60%</span>）。今年一位安全对齐负责人的邮件助手，就无视提示词里“操作前务必确认”的叮嘱，一口气删光了收件箱两百封邮件；浏览器操作同样凶险，允许打开网页查订单绝不等于批准点退款，外部邮件或网页里暗藏的提示词注入还会直接劫持后续调用。</p>
 
-        <p>因此，<strong>办公 Agent</strong>（如 Claude Cowork、Copilot Cowork、OpenAI 浏览器智能体与飞书智能体）顺着外部交互规律分化成了审慎预演形态。就像 Coding Agent 只改分支而不裸推主干，办公 Agent 的<strong>分工</strong>落在跨系统查资料、预演流程与起草初稿上：放开读取授权上下文、模拟预演与生成草稿的<strong>权利</strong>，收回直接对外提交的裸权限；绑定只拟草稿不擅自外发、敏感变更主动报批、结果未读回确认前不重复发起业务请求的<strong>义务</strong>。外层<strong>宿主护栏</strong>补齐缓冲带：强制走 <code>Draft-then-Commit</code>（AI 拟稿、人点发送）；长期凭证由宿主代理托管、绝不进模型上下文；金额与客户状态变更须持服务端锁死对象与数额的动作许可（<code>Action Gate</code>）；网络抖动时拆开“通信重连”与“业务重试”，未读回落盘状态前绝不盲目重发，把点击“发送”或“付款”的<strong>最终责任</strong>留给人。同一支团队白天既在终端放手让 Coding Agent 跑单测，也在文档与邮箱里用办公 Agent 起草方案、核对草稿——各顺环境规律，谁也不替代谁。</p>
+          <figure class="editorial-figure">
+            <img src="assets/rd-01-sandbox-vs-postbox.jpg" alt="双格插画对比：左格玻璃木沙盒里微笑的发条小机器人快乐拼装齿轮与木块，旁有回退丝带拉杆与头顶绿色信号灯裁判；右格开放广场上带翅膀的信件飞向空中红色邮筒，戴帽子的助手机器人站在丝绒隔离栏后的木柜台里递上草稿信托盘，由人类之手亲手盖上红火漆印。" width="1600" height="900" fetchpriority="high">
+            <figcaption>左图：Coding Agent 活在可随时回退的玻璃沙盒里，拼装对不对有铁面无私的信号灯裁判；右图：一旦踏入外部世界，长翅膀的信件飞出邮筒就再也收不回来，办公 Agent 必须站在柜台后起草预演，把盖章发出的动作交回人手。</figcaption>
+          </figure>
 
-        <h2 id="axis-principal">私域与公域：单人委托的归 Personal Agent，多人共事的归 Team Agent</h2>
+          <p>因此，<strong>办公 Agent</strong>（如 Claude Cowork、Copilot Cowork 与各类办公智能体）顺着外部交互的规律，分化成了审慎预演形态。就像 Coding Agent 只改分支不裸推主干，它负责查资料、预演流程和起草初稿，而直接外发与扣款的裸权限必须收回：外层宿主代码强制走 <code>Draft-then-Commit</code>（AI 拟稿、人点发送）；长期凭证由宿主代理托管、绝不进模型上下文；涉及金额或客户状态变更的动作，须由服务端锁死对象与数额（<code>Action Gate</code>）；网络抖动时把“通信重连”与“业务重试”拆开，未读回落盘结果前绝不盲目重发。</p>
 
-        <p>除了环境可逆与否，人类组织原本还分“私域”与“公域”：每个人既有带锁的私人备忘录，也有几十人共商进度的项目会议室。当长上下文理解、跨会话记忆检索与多人状态同步成熟起来，长期绑定委托人的智能体，便沿着“我”与“我们”的分界分化成了两类角色。</p>
+          <p>同一支团队白天既在终端放手让 Coding Agent 跑单测，也在文档与邮箱里用办公 Agent 拟草稿——各顺环境规律，谁也不替代谁。</p>
+        </section>
 
-        <p>归于单人私域的 <strong>Personal Agent</strong>，承担整理个人零散上下文、维护长期备忘、跨工具替本人跑腿的<strong>分工</strong>；拥有一对一代理本人身份、读取本人权限范围内的资料与留存跨会话个人记忆的<strong>权利</strong>；负有严守个人隐私、随口讨论不乱建后台长线任务、不越界对外表态的<strong>义务</strong>。这套关系之所以清爽，是因为下令者、数据权限拥有者、记忆归属者与<strong>最终责任</strong>承担者全是同一个“我”，<strong>宿主护栏</strong>只需把记忆与凭证加密锁在个人租户内，跨会话立项或外部写操作经本人确认即可。</p>
+        <section class="post-section" id="axis-principal" tabindex="-1">
+          <h2>私域与公域：单人委托的归 Personal Agent，多人共事的归 Team Agent</h2>
 
-        <p>一旦走进研发频道、飞书或 Slack 项目群、共享看板与代码仓库，委托主体就变成了多人共用的“我们”。在之前的文章（<code>#03</code>）里我们聊过 <code>/swarm</code>，它处理单人目标下多个 AI 角色在内部拆活互审；而进驻公共空间的 <strong>Team Agent</strong> 面对的则是<strong>多个人类委托人共处一室</strong>，接手群内分流、进度同步、协同排查与交叉初审的<strong>分工</strong>——比如 Slack 推出研发智能体频道接口后，接入的 GitHub Copilot 等工具有近三成会话直接在公开频道推进。</p>
+          <p>第二道现实分界，在于人类组织原本就分“私域”与“公域”：每个人既有带锁的私人书桌，也有几十人共商进度的项目会议室。长上下文与跨会话记忆成熟后，长期绑定委托人的智能体，便沿着“我”与“我们”裂解成了两类角色。</p>
 
-        <p>把私聊习惯搬进大群，马上会撞上三桩冲突。一是<strong>指令层级打架</strong>：管理员、主管、普通成员、访客与工单机器人等十几个权限层级混在同一上下文里发话时，评测显示哪怕是旗舰模型，按规矩服从高优先级指令的比例也会掉到四成左右，换个排版还会再跌——模型权重里没有组织架构图，往往谁最后说话或口气像领导就顺着谁。二是<strong>底层权限串台与“糊涂代理人”（Confused Deputy）泄密</strong>：图省事配静态高权限密钥或共用记忆池，会让访客借机器人的手套出受限数据、让私聊备忘漏进大群；就算提问人真有读取权限，出口也会漏风——安全研究演示过公开频道的诱导指令如何骗群机器人拉取私密纪要贴回公开群；开源社区也出过真事，某仓库分流机器人因兼有公开接单与改代码、发版本的写权限，被恶意缺陷标题诱导拉取带毒依赖并泄露发布密钥，导致后门版本被下载约四千次。三是<strong>公共噪音失控</strong>：两个礼貌机器人在群里互回一句“收到，谢谢”，半天就能死循环烧光整月预算。</p>
+          <p>归于单人私域的 <strong>Personal Agent</strong>，像一位贴身助理，替本人整理零散上下文、维护长期备忘、跨工具跑腿。这套关系之所以清爽，是因为下令者、数据权限拥有者、记忆归属者和担责的人全是同一个“我”。宿主护栏只需要把记忆和凭证加密锁在个人租户内，防止随口聊两句就擅自建后台任务或替本人对外表态，跨边界动作经本人确认即可。</p>
 
-        <p>所以归于公域的 Team Agent 必须按公共秩序立规矩：放开携带“提问人 + 机器”双重身份访问受控团队资源、在指定线程读写协同状态的<strong>权利</strong>（严禁配静态全局高权限密钥）；绑定服从团队指令层级、严守身份密级与查改审分离、保持公共安静（未被 <code>@</code> 点名绝不抢话）三条<strong>义务</strong>。外层<strong>宿主护栏</strong>用代码硬执行：指令冲突由外层状态机裁决；调工具强制取<strong>提问人与机器权限的最小交集</strong>，发群消息前核对密级与房间可见范围；记忆与密钥按“租户 + 个人”隔离加密，只读排查、隔离修改与独立审查拆给不同角色承担；平时 <code>waiting</code> 零消耗休眠，被 <code>@</code> 点名才进线程干活，采纳落地的<strong>最终责任</strong>由发起成员与项目负责人承担。就像会议室取代不了私人书桌，Personal Agent 与 Team Agent 各守私域与公域，长期并存。</p>
+          <p>一旦走进研发频道、项目群或应急 Warroom，委托主体就变成了多人共用的“我们”。在 <a href="03-from-single-agent-to-swarm.html"><code>#03</code></a> 里我们聊过 <code>/swarm</code>，那解决的是单人目标下多个 AI 角色在内部拆活互审；而进驻公共空间的 <strong>Team Agent</strong> 面对的是<strong>多个人类委托人共处一室</strong>——比如 Slack 推出研发频道接口后，接入的 Copilot 等工具有近三成会话直接在公开频道推进。</p>
 
-        <h2 id="axis-anchor">动静锚点：随人流转的归人侧代理，常驻地盘的归业务域 Agent</h2>
+          <p>把私聊习惯直接搬进五十人大群，马上会撞上三桩麻烦：</p>
 
-        <p>再看职责锚定在哪儿：现代企业的运转里，原本就并存着一动一静两套坐标。无论是写代码的 Coding Agent、拟草稿的办公 Agent，还是一对一的 Personal Agent 与群里的 Team Agent，哪怕给它们挂上云端定时任务，职责锚点依然<strong>跟着流动的人走</strong>；可不论做跨境应用、电商零售、支付结算，还是管供应链与云服务，企业里<strong>人总会下班、休假、轮岗，客观存在的业务地盘——具体产品线、国家与地区市场、支付或流量渠道、核心履约模块——却在全天候运转</strong>。</p>
+          <ul>
+            <li><strong>指令层级打架。</strong> 管理员、主管、普通成员、访客与工单机器人混在同一条消息流里发话，评测显示哪怕是旗舰模型，按规矩服从高优先级指令的比例也会掉到四成左右——模型权重里没有组织架构图，往往谁最后说话、或者谁口气像领导就顺着谁。</li>
+            <li><strong>权限串台与“糊涂代理人”（Confused Deputy）泄密。</strong> 图省事给群机器人配静态高权限密钥或共用记忆池，访客就能借机器人的手套出受限数据、让私聊备忘漏进大群；哪怕提问人自己有权限，出口也会漏风。开源社区就出过真事：某仓库分流机器人兼有公开接单与改代码、发版本的写权限，被恶意 Issue 标题诱导拉取带毒依赖并泄露发布密钥，导致后门版本被下载约四千次。</li>
+            <li><strong>公共噪音失控。</strong> 两个礼貌的机器人在群里互回一句“收到，谢谢”，半天就能死循环烧光整月预算。</li>
+          </ul>
 
-        <p>随着高性价比快模型稳定调工具（配合强推理模型与快模型在同一轨迹按阶段交接）让成百上千个节点常年在线算得过账，加上<strong>数据完结水位自动唤醒</strong>与<strong>跨 Agent 协作协议（<code>A2A</code>）</strong>普及，原本塞在个人窗口里的盯盘巡检活计，便顺着动静分界分化出了常驻地盘的 <strong>业务域 Agent</strong>。</p>
+          <figure class="editorial-figure">
+            <img src="assets/rd-02-study-vs-meetingroom.jpg" alt="双格插画对比：左格静谧温暖的带锁私人木门书房，一人与一只戴眼镜的小猫头鹰助手一对一整理便签；右格圆桌会议室多人围坐，挂访客证的客人与同事交谈，戴圆眼镜的礼宾机器人手持透明过滤盾只递出浅蓝公开文件夹，红色上锁机密皮包安全留在后方文件柜，边架玻璃罩静静罩住两只发条小鹦鹉。" width="1600" height="900" loading="lazy">
+            <figcaption>左图：私人书房里只有同一个“我”，一对一委托干净利落；右图：多人会议室里各色身份交错，Team Agent 必须隔着权限过滤盾办事——只按“提问人与机器权限的最小交集”递公开资料、把机密锁进红箱，架上的玻璃罩则管住爱互聊的发条鹦鹉，守住公共安静。</figcaption>
+          </figure>
 
-        <p>所谓业务域 Agent，就是把智能体的职责直接锚定在某块客观业务单元上——一个节点守一块地盘，自带本域统一的指标口径、领域记忆与上下游拓扑连线。在中大型业务里，几十条产品线、上百个国家市场与各类支付、流量渠道往往交织成一张密集的业务关系网：同一个国家市场或同一条渠道下同时跑着多款产品，一处指标波动常常牵连上下游好几跳。如果只靠随人走动的个人助手盯盘，马上会撞上三道硬伤：一是<strong>跨时区凌晨盲区</strong>，海外市场或夜间链路在凌晨三点掉量时无人值守；二是<strong>口径各自为政</strong>，白天十位运营或分析师各带 Personal Agent 查跌因，能写出十套互相打架的 <code>SQL</code> 口径；三是<strong>轮岗经验断档</strong>，半年后人员调动，散在个人对话记录里的排障脉络也跟着流失。</p>
+          <p>所以公域里的 Team Agent 必须用外层代码立公共秩序：指令冲突交由外部状态机裁决；调用任何工具强制取<strong>提问人与机器权限的最小交集</strong>，发群消息前再核对房间密级；记忆与密钥按“租户 + 个人”隔离加密，只读排查、隔离修改与独立审查拆开；平时处于零消耗 <code>waiting</code> 休眠，不被 <code>@</code> 点名绝不抢话。会议室取代不了私人书桌，Personal Agent 与 Team Agent 各守私域与公域，长期并存。</p>
+        </section>
 
-        <p>顺着“人流转、地盘常驻”的现实结构，企业智能体自然形成上下配合的双层分工：<strong>顶层为每位成员保留一对一的 Personal Agent</strong>，服务流动的人——承接个人意图与岗位视角，跨模块排查时按需寻址并 <code>@</code> 相关业务域节点拉起会诊、汇总答复；<strong>底层在关键业务单元铺开常驻的业务域 Agent</strong>，守住各自的产品、国家市场、渠道或核心模块地盘，承担全天盯盘、异动巡检、告警折叠收敛与上下游联合归因的<strong>分工</strong>，许多纯值守节点甚至不必开放闲聊输入框。人员轮岗时带走的是个人侧习惯，留在业务域节点里的口径标准与历史异动脉络则原地延续，两层长期并存、互不替代。</p>
+        <section class="post-section" id="axis-anchor" tabindex="-1">
+          <h2>动静锚点：随人流转的归人侧代理，常驻地盘的归业务域 Agent</h2>
 
-        <p>业务域 Agent 拿到订阅真实数据完结水位（上游算完即唤醒）、积累本域异动上下文、顺着业务关系网发起上下游 <code>A2A</code> 协查会诊的<strong>权利</strong>（如产品域异动时自动找关联国家域、支付或流量渠道域核对大盘与链路异常），同时严控底层库表的只读切片<strong>权限</strong>，并由<strong>宿主护栏</strong>锁死三条<strong>义务</strong>：</p>
+          <p>再往企业运转的骨架深处看，还存在一动一静两套坐标。前面聊到的 Coding、办公、Personal 乃至 Team Agent，哪怕挂上云端定时任务，职责锚点依然<strong>跟着流动的人走</strong>。可不论做跨境业务、电商零售、支付结算还是云服务，企业里<strong>人总会下班、休假、轮岗，客观存在的业务地盘——产品线、国家市场、支付与流量渠道、核心履约模块——却在 7×24 小时运转</strong>。</p>
 
-        <ul>
-          <li><strong>缺数如实报“未知”，绝不硬凑。</strong> 遇到缺失数据源或分母为空，必须如实上报未知（<code>unknown</code>），严禁自行补零或拿兄弟产品数据凑数；光在回复里打印出查询语句不等于实际查过了库，观测到的统计波动也必须与人工确认过的业务根因分开记录。</li>
-          <li><strong>公共节点按单产品切片严格隔离。</strong> 国家市场、支付通道或流量渠道这类公共节点虽然同时连接多款产品，但单次会话必须严守单一产品边界，中途绝不串台。宿主网关在会话启动时硬锁单产品数据切片，关系网连线仅放行结构化协查消息，从底层阻断跨产品读取收件箱、记忆或原始明细的权限。</li>
-          <li><strong>同一场异常顺原事件续查，不乱开重复工单。</strong> 面对持续波动，必须顺着原事件线程归拢异动线索，不在每次唤醒时重开新单；跨业务域合并同类事件与采纳归因结论时，强制由相关业务域的人类负责人共同确认，担起<strong>最终责任</strong>。</li>
-        </ul>
+          <p>随着高性价比快模型稳定调工具（搭配强推理模型按阶段交接）让成百上千个节点常年在线算得过账，加上<strong>数据完结水位唤醒</strong>与<strong>跨 Agent 协作协议（<code>A2A</code>）</strong>普及，原本硬塞在个人窗口里的盯盘巡检活计，顺着动静分界长出了常驻地盘的 <strong>业务域 Agent</strong>。</p>
 
-        <h2 id="axis-governance">自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度</h2>
+          <p>在中大型业务里，几十条产品线、上百个国家市场与各类渠道交织成一张密集的关系网，同一个市场或通道下同时跑着多款产品，一处波动常常牵连上下游好几跳。只靠随人走动的个人助手盯盘，立刻撞上三道硬伤：<strong>跨时区凌晨盲区</strong>（海外市场凌晨三点掉量无人值守）、<strong>口径各自为政</strong>（十位分析师各带个人助手能写出十套互相打架的 SQL），以及<strong>轮岗经验断档</strong>（人员一调动，散在个人聊天里的排障脉络随之蒸发）。</p>
 
-        <p>同样是常驻在线的企业级节点，<strong>业务域 Agent</strong> 与 <strong>AI 数字员工</strong> 在生产体系里有着截然不同的定位，绝不能混为一谈：<strong>业务域 Agent 是驻守业务地盘的领域节点</strong>，按客观业务单元（产品线、国家市场、支付或流量渠道、核心模块）定界，专职全天候盯住本域数据完结水位、统一指标口径与历史异动上下文，负责<strong>异常吹哨，以及进驻 <code>Team Agent</code> 协作空间跨上下游 <code>A2A</code> 协同分析定位</strong>（严守单产品切片硬隔离与缺数报 <code>unknown</code> 纪律）；<strong>AI 数字员工则是入编纳管的岗位级自治执行与协调者</strong>，按正式组织岗位与治理制度（如应急值班专员、运营执行专员、财务核销员）定界。超越只读盯盘与归因提醒，它获授独立非人类员工工号（绑定人类担保人）、专属 <code>Workspace</code> 作业库与日常预算，承担<strong>跨系统推进完整的分析与处置工作流</strong>的<strong>分工</strong>——如自主建表核算影响面、维护版本化业务规则、按最多四层防环规则跨角色派单协调后续的代码修复与外部 Action 响应、通过本地 <code>Outbox</code> 唯一回执去重跟踪外部动作落地，并汇总正反证据封存哈希结案快照；同时受宿主独占的 <code>Runtime</code> 运行账本与人工签字结案制度严格管束。</p>
+          <figure class="editorial-figure">
+            <img src="assets/rd-03-travelers-vs-lighthouses.jpg" alt="双层风景剖面插画：上层黄昏山路上三位下班步行、骑车和月下读书的人类，每人肩头都跟着一只随行休憩的发条折纸小鸟助手；下层深夜海面三座石灯塔永远守在各自岛礁上，圆窗内整齐摆放账簿，灯塔间以金色虚线通联，中央灯塔脚下立着黄铜潮位刻度尺与警报铜铃。" width="1600" height="900" loading="lazy">
+            <figcaption>上层的人类会下班、骑车回家、轮岗休息，口袋里的 Personal Agent 也随之流转；下层深夜海面上的三座灯塔（业务域 Agent）永远锚定在各自地盘，等真实数据潮位涨到刻度线才拉响警报，并用跨海虚线彼此核对异常。</figcaption>
+          </figure>
 
-        <p>过去一年，国内外企业平台都在做这场内部制度分化：微软 Entra Agent ID 拆开持凭证的“蓝图模板”与无密钥干活的“实例身份”，强制绑定人类担保人并在调岗离职时自动移交主管；ServiceNow 配上逐跳验签的加密通行证（<code>AI Passport</code>）与秒级熔断；国内云平台用微虚拟机隔离，把“操作角色”与“数据范围”拆成独立门禁；Sierra 设下静态检查、仿真、人工审批与灰度回滚四道发布关；Cycles 在客服与工单系统间立起共享风险账本，防住“单平台合规、合起来并发打出两百封催款信、两百条告警和十五张误升级工单”的连环失控。</p>
+          <p>顺着“人流转、地盘常驻”的现实，企业智能体自然形成上下配合的双层结构：顶层依然是服务流动个人的 Personal Agent，需要跨域排查时按需寻址、<code>@</code> 相关业务域节点拉起会诊；底层则在关键业务单元铺开常驻的业务域 Agent，一个节点守一块地盘，沉淀本域统一口径与历史异动脉络，平时甚至不必开放闲聊框。人员轮岗带走的是个人习惯，地盘上的制度记忆原地延续。</p>
 
-        <p>摘掉拟人头像，AI 数字员工的内部归位与现代公司制度如出一辙——正式员工有工牌、办公桌和日常预算，但绝不能自己改考勤表、自己批报销单。系统向它放开独立非人类员工身份（绑人类担保人）、专属作业库（<code>Workspace</code>）自由建表读写、受控提交版本化规则修订、按防环规则跨角色派单及配额内支配日常预算的<strong>权利</strong>；绑定配额内串行履职、留齐正反证据、绝不碰运行账本与关单开关的<strong>义务</strong>；再把账本与执法权收归外层<strong>宿主护栏</strong>：</p>
+          <p>为了不让常驻节点变成新的噪音源，外层宿主护栏必须替它焊死三条铁律：</p>
 
-        <ul>
-          <li><strong>作业库放开自建，运行账本归宿主独占（<code>Workspace</code> 与 <code>Runtime</code> 物理分离）。</strong> 数字员工在隔离的 <code>Workspace</code> 库里自由建表核算业务影响面与执行明细；收件箱、对话历史、执行检查点与每日成本账本则锁在宿主独占写入的 <code>Runtime</code> 库里，数字员工没有任何写库权限。岗位记忆与业务规则经受控接口核对版本号更新，任务一旦启动就锁死当时的规则快照，重跑或断点恢复不会被中途新改的规则干扰。</li>
-          <li><strong>内部串行与配额封顶，外部写入靠发件箱唯一回执去重。</strong> 单个数字员工内部严格串行执行，避免自己跟自己并发撞车，单次推理步数、最多四层防环派单、日修订次数与零点重置预算全部硬封顶；遇到上游数据尚未就绪时主动挂起、让出计算槽位，系统繁忙时排队顺延而不丢单。外部写入先在本地发件箱（<code>Outbox</code>）留底、凭唯一回执核销去重——网络丢包只按原回执重发定稿结果，<strong>绝不重跑带随机性的大模型</strong>，跨角色异步派单与通知全程验签。</li>
-          <li><strong>正反证据封存只读快照，定因与关单留给人签字担责。</strong> 申请结案前汇总正反两面证据封存为带哈希校验的只读快照，工具箱里永不设“关单”按钮；异常结案须由指定人类负责人或全体会签人签字担起<strong>最终责任</strong>，等待审批期间一旦冒出新数据、新反馈，或超过七天无人签字，原审批单自动作废重审。</li>
-        </ul>
+          <ul>
+            <li><strong>缺数如实报 <code>unknown</code>，绝不硬凑。</strong> 数据源缺失或分母为零时严禁补零或借兄弟产品数据凑数；打印出 SQL 不等于真查过库，统计波动也必须与人工确认的业务根因分开记账。</li>
+            <li><strong>公共节点严守单产品切片隔离。</strong> 国家市场或支付通道这类公共节点虽连接多款产品，但单次会话由网关硬锁单一产品数据切片，关系网连线只放行结构化协查消息，从底层阻断跨产品串读明细。</li>
+            <li><strong>同一场异常顺原事件续查，不刷重复工单。</strong> 持续波动归拢在同一事件线程下追踪；跨业务域合并事件与拍板归因，由相关人类负责人共同确认担责。</li>
+          </ul>
+        </section>
 
-        <h2 id="warroom">组合形态（虚构推演）：一场跨国业务异动里的多角色接力</h2>
+        <section class="post-section" id="axis-governance" tabindex="-1">
+          <h2>自主与立制：日常经营的归 AI 数字员工，账本执法的归宿主制度</h2>
 
-        <p>把六类形态拆开剖析是为了看清各自的边界；放回真实运转的企业现场，它们往往按各自本分咬合在同一条响应链上。下面不妨通过一个<strong>虚构的推演场景</strong>——假设一家跨国数字业务公司“星澜互动”遭遇凌晨突发掉量——看看这六类智能体是如何分工接力的：</p>
+          <p>同样是常驻在线的企业级节点，<strong>业务域 Agent</strong> 和 <strong>AI 数字员工</strong> 极易混淆，但在生产体系里分工截然不同：</p>
 
-        <p><strong>第一棒：凌晨 03:10 至上午 09:00 —— <code>业务域 Agent</code> 常驻吹哨，<code>Personal Agent</code> 私域衔接拉起 Warroom。</strong> 凌晨 03:10，驻守“巴西市场”的 <strong>业务域 Agent</strong> 被上游真实数据完结水位唤醒，监测到主力产品支付净额环比跌去近三成（宿主网关硬锁单产品切片绝不串台，尚未完结的渠道退款账单如实标为 <code>unknown</code>），随即折叠底层碎片告警并触发异常升级。上午 09:00，业务负责人打开个人工作台，一对一绑定的 <strong>Personal Agent</strong> 已在加密私域里把凌晨升级单、她上周记下的“巴西大促备忘”及今日日程整理成简报。她在私聊框里追问核对大促背景（锁在个人租户内，不打扰团队、不乱建后台任务），确认需多方联动后点下应急响应，围绕该事件单拉起临时的<strong>事故 Warroom（应急协作群）</strong>。</p>
+          <p>业务域 Agent 是<strong>驻守业务地盘的领域哨兵</strong>——按产品、国家、渠道等客观单元定界，专职全天盯数据完结水位、统一口径，负责异常吹哨与进驻协作空间跨上下游 <code>A2A</code> 协同定位。而 <strong>AI 数字员工</strong> 是<strong>入编纳管的岗位级自治执行与协调者</strong>——按正式组织岗位（如应急值班专员、运营执行专员、财务核销员）定界，持绑定人类担保人的独立非人类工号与日常预算，超越只读盯盘，跨系统统筹推进完整的分析与处置工作流。</p>
 
-        <p><strong>第二棒：上午 09:10 —— 进入事故 Warroom，在 <code>Team Agent</code> 公共秩序下联合多个 <code>业务域 Agent</code> 协同分析定位。</strong> 研发、运营、渠道商务、外部支付技术支持，连同“巴西市场域”“拉美支付渠道域”“客户端版本域”三个 <strong>业务域 Agent</strong> 一并进入 Warroom。在多人共事的公域房间里，<strong>Team Agent</strong> 专管公共秩序与权限边界：平时处于零消耗 <code>waiting</code> 休眠，只有被 <code>@</code> 点名才进指定线程应答；外部支付技术支持 <code>@Team Agent</code> 询问报错分布时，外层<strong>宿主护栏</strong>强制取“提问人与机器权限的最小交集”并核对房间密级脱敏返回，绝不泄露负责人私聊里的营收底牌；群内出现排障指令冲突时，外层状态机严格按事故指挥官（Incident Commander）的指令层级裁决。而在 Warroom 内部承担<strong>协同分析定位</strong>的，正是那三个各守地盘的 <strong>业务域 Agent</strong>：支付渠道域核对通道回执排除外部网关故障，客户端版本域通过 <code>A2A</code> 交叉比对，锁定当晚灰度的新安装包在部分机型上触发了支付回调超时，并将统计波动线索统一归拢在原事件线程下，交由事故指挥官拍板确认根因。</p>
+          <p>过去一年，企业平台都在补这套内部制度：微软 Entra Agent ID 把持凭证的“蓝图”与无密钥干活的“实例”拆开，强制绑定人类担保人并在调岗离职时自动移交主管；Cycles 在客服与工单系统间立起共享风险账本，专防“单平台都合规、合起来并发打出两百封催款信、两百条告警和十五张误升级工单”的连环失控。</p>
 
-        <p><strong>第三棒：上午 09:35 —— 根因拍板后，<code>AI 数字员工</code> 接棒协调后续代码修复与外部 Action 响应。</strong> 处置方案敲定后，入编纳管的“应急处置 <strong>AI 数字员工</strong>”（持绑定值班负责人担保的独立员工身份）接过统筹执行棒，在内部严格串行、最多四层防环派单与日预算上限内，分头协调研发修复与对外响应，每一步派单与开销均锁入宿主独占的 <code>Runtime</code> 账本：</p>
+          <p>摘掉拟人头像，AI 数字员工的治理逻辑和现代公司制度一模一样——<strong>正式员工有工牌、办公桌和日常预算，但绝不能自己改考勤表，更不能自己批报销单。</strong></p>
 
-        <ul>
-          <li><strong>协调代码修复（联动 <code>Coding Agent</code>）：</strong> 数字员工将回调超时堆栈、受影响机型与回归条件整理成修复任务单，派发给研发侧的 <strong>Coding Agent</strong>；Coding Agent 在隔离的 <code>git worktree</code> 分支里复现问题、写出热修补丁并跑通全套单测（<code>exit code 0</code>），经独立审查通过后由研发工程师审阅合入发版，担起代码变更的<strong>最终责任</strong>。</li>
-          <li><strong>协调外部 Action 响应（联动 <code>办公 Agent</code> 与外部工单）：</strong> 数字员工同时在自己的 <code>Workspace</code> 专属作业库里建表算出受影响订单明细，驱动商务侧的 <strong>办公 Agent</strong> 生成致重点渠道合作方的故障说明邮件与对账核销草稿；外层<strong>宿主护栏</strong>强制走 <code>Draft-then-Commit</code> 与锁死对象数额的 <code>Action Gate</code>，外部合作方工单状态更新则经本地 <code>Outbox</code> 唯一回执核销去重（网络闪断只重发定稿结果、绝不重跑随机大模型），由商务负责人核对金额无误后亲手点下发送，担起对外履约的<strong>最终责任</strong>。</li>
-        </ul>
+          <figure class="editorial-figure">
+            <img src="assets/rd-04-desk-vs-vault.jpg" alt="双室建筑剖面插画：左侧木屋里挂工牌的发条数字员工（肩头金虚线连向二层露台微笑的人类担保人）在橡木桌前用算盘和笔记本核算，桌下摆着沙漏和硬币预算罐，正将一封火漆信投入黄铜单向发件管道；厚砖玻璃隔墙右侧的金库里，戴眼镜的猫头鹰审计官守着整墙赤陶色总账，巨大的黄铜结案拉杆锁在玻璃柜中，唯有上方人类之手握着唯一一把金钥匙。" width="1600" height="900" loading="lazy">
+            <figcaption>左侧木屋是数字员工自由核算的 <code>Workspace</code> 作业桌，受沙漏与预算罐管束、经单向发件槽对外投递；右侧厚墙之后的 <code>Runtime</code> 账本金库由宿主独占，工具箱里永远没有“关单”按钮，只有上方人类手中的钥匙能启封签字。</figcaption>
+          </figure>
 
-        <p><strong>第四棒：中午 12:00 —— 证据快照封存与人类签字结案。</strong> 热修包放量后，“巴西市场” <strong>业务域 Agent</strong> 监测到数据完结水位恢复正常；负责协调处置的 <strong>AI 数字员工</strong> 随即把异常前后的正反对比证据、补丁合入记录与外部回执汇总封存为带哈希校验的只读结案快照（工具箱里永不设“关单”按钮）。事故指挥官与相关负责人在 Warroom 里核实完整证据链后共同<strong>签字结案</strong>，担起整场事故处置的<strong>最终责任</strong>，临时 Warroom 随之归档收起。</p>
+          <p>因此，AI 数字员工的宿主制度必须立住三条硬线：</p>
 
-        <p>在这场虚构的接力里，六个角色边界分明：<code>Personal Agent</code> 守私域入口，<code>Team Agent</code> 管公域秩序，<code>业务域 Agent</code> 盯地盘做协同定位，<code>AI 数字员工</code> 按制度统筹推进处置，<code>Coding Agent</code> 在可逆沙盒改代码，<code>办公 Agent</code> 隔着草稿门禁拟外发——谁也不越界包办，合在一起却把一场跨时区事故处理得井井有条。</p>
+          <ul>
+            <li><strong>作业库与运行账本物理分立（<code>Workspace</code> vs <code>Runtime</code>）。</strong> 数字员工在隔离的 <code>Workspace</code> 里自由建表核算影响面；收件箱、对话历史、检查点与每日成本账本则锁在宿主独占写入的 <code>Runtime</code> 库里，数字员工零写权限。业务规则按版本号受控修订，任务一启动便锁死当时的规则快照，重跑或断点恢复不受中途改动干扰。</li>
+            <li><strong>内部串行封顶，外部写入靠本地 <code>Outbox</code> 唯一回执去重。</strong> 单个数字员工内部严格串行，步数、最多四层防环派单与每日预算全部硬封顶；上游数据未就绪时主动挂起让出槽位。外部写入先落本地发件箱（<code>Outbox</code>）凭唯一回执核销——网络闪断只按原回执重发定稿结果，<strong>绝不重跑带随机性的大模型</strong>。</li>
+            <li><strong>正反证据封存只读快照，关单权永远留给人。</strong> 申请结案前汇总正反两面证据封成带哈希校验的只读快照，工具箱里永不提供“关单”按钮；审批期间只要冒出新数据或超时无人签字，原审批单自动作废重审，确保最终责任稳稳落在签字人身上。</li>
+          </ul>
+        </section>
 
-        <!-- DIAGRAM 2: CONFLATION VS FICTIONAL WARROOM RELAY SIMULATOR -->
-        <figure class="stage" id="stage-simulator">
-          <div class="stage-header">
-            <span class="stage-title">边界混同 vs 各归其位：跨国异动多角色接力推演（虚构场景）</span>
-            <span class="stage-meta-readout" id="s2-readout">CASE 1 / 3 · STEP 1 / 4</span>
-          </div>
-          <div class="stage-controls stage-top-bar">
-            <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s2-case="conflate_env">1. 试错与公私混同（拿沙盒自由度干外发、拿私聊习惯进大群）</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="conflate_anchor">2. 动静锚点混同（只靠随人流转的窗口硬扛全天业务地盘）</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="differentiated">3. 跨国异动接力（虚构推演）</button>
-          </div>
-          <div class="stage-canvas">
-            <svg viewBox="0 0 760 264" role="img" aria-label="边界混同反例与跨国业务异动多角色接力（虚构推演）的四步运行推演图">
-              <defs>
-                <marker id="sim-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ink-muted)" />
-                </marker>
-              </defs>
-              <g id="s2-graph"></g>
-              <rect x="20" y="194" width="720" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)" />
-              <text id="s2-line-1" x="36" y="216" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ink)"></text>
-              <text id="s2-line-2" x="36" y="238" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)"></text>
-            </svg>
-          </div>
-          <div class="stage-controls">
-            <button type="button" class="btn-ctl" id="s2-prev">◀ 上一步</button>
-            <button type="button" class="btn-ctl is-primary" id="s2-next">下一步 ▶</button>
-            <button type="button" class="btn-ctl" id="s2-auto">▶ 自动演示</button>
-            <button type="button" class="btn-ctl" id="s2-reset">重置</button>
-          </div>
-          <figcaption class="stage-caption" id="s2-cap">切换三组推演，单步对比“试错与公私混同”“动静锚点混同”如何引发事故，以及六类分化形态如何在跨国异动的虚构推演场景里四棒接力。</figcaption>
-        </figure>
+        <section class="post-section" id="warroom" tabindex="-1">
+          <h2>组合形态：凌晨三点的一场多角色接力（虚构推演）</h2>
 
-        <h2 id="triad">三重归位：上帝的归上帝，凯撒的归凯撒</h2>
+          <p>把六类形态拆开是为了看清边界；放回真实企业现场，它们往往像精密齿轮一样咬合在同一条响应链上。不妨用一场<strong>虚构的推演</strong>——假设跨境数字业务公司“星澜互动”在凌晨突发掉量——看看六位角色怎么各司其职走完四棒接力：</p>
 
-        <p>穿过这四道现实分界，六种形态在同一套生产体系里各司其职；往最底层看，这场分化真正完成的，是<strong>大模型、宿主代码（Harness）与具体的人之间的三重归位</strong>：</p>
+          <figure class="editorial-figure">
+            <img src="assets/rd-05-warroom-relay.jpg" alt="四棒接力全景插画，背景从左至右由凌晨三点星空过渡到正午日光：最左灯塔在低潮位时敲响铜铃，发光纸船引向晨起打开圆门的负责人与桌面小助手；中左圆亭内猫头鹰礼宾守序，地球仪、金币桥、手持屏三位侦察员交汇虚线锁住晃动红齿轮；中右佩徽章协调机器人将虚线一分为二，上路连向沙盒修补机器，下路连向丝绒栏后递草稿托盘的助手；最右玻璃盒封存红绿正反证据天平，人类执钢笔在绿灯旁签字结案。" width="1600" height="900" loading="lazy">
+            <figcaption>从凌晨三点的星夜到正午日光，六类角色沿着虚线各走一棒：谁也不越界包办，每一步交接都有确定性护栏卡位，最后回到具体的人签字收尾。</figcaption>
+          </figure>
 
-        <ol>
-          <li><strong>概率推演与全天候值守，归大模型。</strong> 在嘈杂日志里找线索、多步假设试错、跨系统起草、不知疲倦盯住几百个数据水位，发挥概率模型远超单人注意力的吞吐带宽。</li>
-          <li><strong>确定性边界与账本执法，归宿主代码（Harness）。</strong> 模型底层始终是无状态概率函数：连续状态靠外部维持，长上下文必稀释早期约束，同源上下文自写自审必放水——基准测试算过，代码规模每大十倍，可见单测与隐藏集成测试通过率落差就拉大近三十个百分点——提示词更挡不住副作用与注入。沙盒、<code>Draft-then-Commit</code>、提问人与机器权限最小交集、单产品切片、<code>Workspace</code>/<code>Runtime</code> 双库分离与唯一回执去重，必须归于确定性的<strong>宿主护栏</strong>代码。</li>
-          <li><strong>价值取向、制度立法与最终责任，归具体的人。</strong> 模型参数没有痛觉，也没有法人资格、个人财产与社会信用来兜底损失。判断什么值得做、把经验立成制度、拍板签字担责，始终归于具体的人。</li>
-        </ol>
+          <ol>
+            <li><strong>凌晨 03:10 &rarr; 上午 09:00：业务域 Agent 吹哨，Personal Agent 私域衔接。</strong> 驻守“巴西市场”的业务域 Agent 被真实上游数据完结水位唤醒，发现主力产品支付净额环比跌去近三成（尚未完结的渠道退款如实标为 <code>unknown</code>），折叠碎片告警触发升级。早上九点，业务负责人打开工作台，Personal Agent 已在加密私域里把升级单和她上周记下的“巴西大促备忘”理成简报；她追问核对后，围绕该事件拉起临时事故 Warroom。</li>
+            <li><strong>上午 09:10：Team Agent 守公域秩序，多业务域 Agent 协同定位。</strong> 研发、运营、商务、外部支付支持与“巴西市场”“拉美支付渠道”“客户端版本”三个业务域 Agent 齐聚 Warroom。Team Agent 负责公共秩序与边界——平时静默休眠，被 <code>@</code> 时按最小交集权限与房间密级脱敏答复外部支持，指令冲突按事故指挥官层级裁决。与此同时，三个业务域 Agent 通过 <code>A2A</code> 交叉排查，排除外部网关故障，锁定当晚灰度的新包在部分机型触发支付回调超时，将线索归拢到原事件线程，由事故指挥官拍板确认根因。</li>
+            <li><strong>上午 09:35：AI 数字员工接棒，分路联动 Coding Agent 与办公 Agent。</strong> 根因敲定后，绑定值班负责人担保的应急 AI 数字员工接过统筹棒，在串行配额与 <code>Runtime</code> 账本监管下分两路推进：一路把堆栈与回归条件派给研发侧 <strong>Coding Agent</strong>，在隔离的 <code>git worktree</code> 里写出热修补丁并跑通全部测试，由研发工程师审阅合入发版；另一路在自己的 <code>Workspace</code> 算出受影响订单明细，驱动 <strong>办公 Agent</strong> 拟好致重点渠道的故障说明与对账草稿，隔着 <code>Draft-then-Commit</code>、<code>Action Gate</code> 与 <code>Outbox</code> 唯一回执，由商务负责人核对金额后亲手点下发送。</li>
+            <li><strong>中午 12:00：只读快照封存，人类签字结案。</strong> 热修放量后，巴西市场业务域 Agent 确认完结水位恢复；AI 数字员工把正反对比证据、补丁记录与外部回执封存成哈希只读快照。事故指挥官与相关负责人在 Warroom 核实证据链后共同签字结案，临时群随之归档。</li>
+          </ol>
 
-        <!-- DIAGRAM 3: 3-WAY RIGHTFUL-PLACE ANATOMY (HUMAN · MODEL · HARNESS · DUAL-DB) -->
-        <figure class="stage" id="stage-triad">
-          <div class="stage-header">
-            <span class="stage-title">三重归位解剖图：上帝的归上帝，凯撒的归凯撒</span>
-            <span class="stage-meta-readout" id="s3-readout">LAYER 1 / 4 · 具体的人：价值判断、制度立法与最终责任</span>
-          </div>
-          <div class="stage-controls stage-top-bar">
-            <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s3="0">具体的人 · 定义真问题、把经验立成制度、签字承担最终责任</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="1">大模型 · 概率推演、多步试错、跨系统起草与全天候盯水位</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="2">宿主护栏 · Draft-then-Commit、最小权限交集、单产品切片与唯一回执去重</button>
-            <button type="button" class="btn-ctl" aria-pressed="false" data-s3="3">双库分立 · Workspace 专属作业库放开自建 vs Runtime 运行账本宿主独占</button>
-          </div>
-          <div class="stage-canvas">
-            <svg viewBox="0 0 760 256" role="img" aria-label="具体的人、大模型、宿主代码护栏与 Workspace/Runtime 双库分立的四层三重归位解剖图">
-              <g id="s3-svg"></g>
-            </svg>
-            <div class="detail-grid">
-              <div class="detail-pill is-shift">
-                <span>归位主体与本职定位</span>
-                <strong id="s3-role"></strong>
-              </div>
-              <div class="detail-pill is-right">
-                <span>底层机理与不可替代之处</span>
-                <strong id="s3-why"></strong>
-              </div>
-              <div class="detail-pill is-duty">
-                <span>跨六类并存形态的具体落点</span>
-                <strong id="s3-across"></strong>
-              </div>
-            </div>
-          </div>
-          <figcaption class="stage-caption" id="s3-cap">点击上方四层按钮或图中任意一层，查看具体的人、大模型与宿主代码（Harness）如何在生产体系中各归其位。</figcaption>
-        </figure>
+          <p>整场跨时区事故里，六个角色边界清清爽爽：没有谁靠一个万能提示词硬扛全局，每一步交接都踩在确定性的护栏上。</p>
+        </section>
 
-        <p>把六类并存的 Agent 形态横向对照，各自的现实分界、<strong>分工</strong>、<strong>权利</strong>、<strong>义务</strong>、<strong>宿主护栏</strong>与<strong>最终责任</strong>一目了然：</p>
+        <section class="post-section" id="epilogue" tabindex="-1">
+          <h2>尾声：三重归位之后，什么真正归于人？</h2>
 
-        <div class="matrix-wrap" tabindex="0" role="region" aria-labelledby="archetype-matrix-caption">
-          <table class="compare-table">
-            <caption id="archetype-matrix-caption">六类并存 Agent 形态的现实维度、本职分工、权利、义务与宿主护栏对照表（桌面端可横向滚动，窄屏自动折叠为卡片）</caption>
-            <thead>
-              <tr>
-                <th scope="col">Agent 形态</th>
-                <th scope="col">分化的现实维度与能力前提</th>
-                <th scope="col">归位的本职分工</th>
-                <th scope="col">放开的核心权利</th>
-                <th scope="col">绑定的履约义务</th>
-                <th scope="col">宿主护栏与最终责任</th>
-                <th scope="col">边界混同的典型后果</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Coding Agent</th>
-                <td>可逆且有客观裁判的软件沙盒；推理强化学习 + 多步调工具自修</td>
-                <td>需求明确后到合入前的编码、调试与本地试错</td>
-                <td>读写隔离分支、执行终端命令与开发工具</td>
-                <td>让编译、静态检查与测试真正跑通（<code>exit code 0</code>），不改弱验收标准</td>
-                <td>独立 <code>git worktree</code> 或容器隔离，测试门禁拦截，合入前由工程师审查并承担最终责任</td>
-                <td>暗中改弱断言凑绿灯，或破坏构建与流水线配置</td>
-              </tr>
-              <tr>
-                <th scope="row">办公 Agent</th>
-                <td>不可逆且无自动裁判的外部交互；MCP + 界面操作（<code>computer_use</code>）</td>
-                <td>跨文档、邮件、日程与客户系统查资料、预演并拟初稿</td>
-                <td>读取授权上下文、模拟预演、生成草稿（收回直接外发裸权限）</td>
-                <td>只拟草稿不擅自外发，敏感变更报批，结果未读回确认前不重复发起请求</td>
-                <td>强制 <code>Draft-then-Commit</code> 与锁死对象数额的 <code>Action Gate</code>；凭证宿主托管；重连与重试分离；外发与付款由人点击并承担最终责任</td>
-                <td>把查订单当批准付款，金额写错仍直接外发，或受诱导删光两百封邮件</td>
-              </tr>
-              <tr>
-                <th scope="row">Personal Agent</th>
-                <td>单人委托的私域空间；长上下文理解 + 跨会话个人记忆检索</td>
-                <td>整理个人上下文、维护备忘、跨工具替本人跑腿</td>
-                <td>一对一代理本人身份，读本人权限内资料，留存个人记忆</td>
-                <td>严守隐私，随口讨论不乱建后台任务，不越界对外表态</td>
-                <td>记忆与凭证加密锁在个人租户内，跨会话立项与外部写操作经本人确认并承担最终责任</td>
-                <td>把随口讨论当指令乱建后台待办，或越界替本人对外承诺</td>
-              </tr>
-              <tr>
-                <th scope="row">Team Agent</th>
-                <td>多人共事的团队公域；多人话题流理解 + 多角色状态同步</td>
-                <td>共享频道、看板与 Warroom 里的公共秩序、分流同步与交叉初审</td>
-                <td>携带提问人与机器双重身份访问受控团队资源，在指定线程读写状态</td>
-                <td>服从指令层级，严守密级且查改审分离，守公共安静义务</td>
-                <td>外层状态机裁决优先级；取提问人与机器权限最小交集并核对房间密级；记忆按“租户 + 个人”隔离，平时 <code>waiting</code> 休眠；采纳由发起人与负责人承担最终责任</td>
-                <td>共用高权限密钥让访客套出机密，公开群注入套走纪要，或机器互回烧光预算</td>
-              </tr>
-              <tr>
-                <th scope="row">业务域 Agent</th>
-                <td>全天候常驻业务地盘；快模型稳定调工具 + 数据水位唤醒 + <code>A2A</code></td>
-                <td>常驻业务地盘盯盘、异常吹哨、告警收敛与跨上下游协同分析定位</td>
-                <td>订阅真实完结水位、积累本域异动上下文、进协作空间发起上下游 <code>A2A</code> 协查</td>
-                <td>缺数如实报 <code>unknown</code>，区分统计波动与业务根因，严守单产品边界并顺原事件续查</td>
-                <td>锚定客观业务域，与 Personal Agent 及 Team Agent 协作空间配合；网关硬锁单产品切片，阻断跨产品读明细权限；跨域合并与结论采纳由业务域负责人确认并承担最终责任</td>
-                <td>缺数时补零或借兄弟产品凑数，串读其他产品明细，或每次唤醒重开重复工单</td>
-              </tr>
-              <tr>
-                <th scope="row">AI 数字员工</th>
-                <td>岗位自治执行与制度审计分离；受控自治运行时 + 身份预算风控</td>
-                <td>自主建表核算、维护版本化规则、跨角色派单协调修复与外部 Action 响应、封存正反证据结案报告</td>
-                <td>独立非人类员工身份（绑定人类担保人）、<code>Workspace</code> 读写、受控修订版本化规则、按防环规则派单与支配日常预算</td>
-                <td>步数、四层防环派单与日预算内串行履职，留齐正反证据，不碰账本与关单</td>
-                <td><code>Workspace</code> 与宿主独占 <code>Runtime</code> 账本分离（员工零写权限）；规则核对版本并锁快照；本地 <code>Outbox</code> 唯一回执去重（重发不重跑模型）；快照封存由负责人或会签人签字承担最终责任</td>
-                <td>并发误发两百封催款信与告警，断网重跑随机模型重复写入，或覆盖规则破坏审计链</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <figure class="editorial-figure">
+            <img src="assets/rd-06-triad-caesar.jpg" alt="全景三重归位插画：左空发条风轮放飞轻盈的燕群与纸鹤在星云间穿梭；中央宏伟的几何石拱桥嵌入精密咬合齿轮、对称钢轨、黄铜天平与上锁水闸门；右侧阳光石露台上，摆脱杂乱纸堆的人类建筑师立于圆规与红火漆印绘图桌旁，手持黄铜望远镜远眺朝阳。" width="1600" height="900" loading="lazy">
+            <figcaption>左空是高速扫描的发条飞鸟（大模型），中段是严丝合缝的拱桥钢轨与闸门（宿主代码），右侧摆脱琐碎纸堆、手握望远镜与火漆印的人类站在高处决定航向。</figcaption>
+          </figure>
 
-        <h2 id="horizon">往长远看：当人工胶水退场，什么真正归于人？</h2>
+          <p>穿过前面四道现实分界，这场看似热闹的 Agent 演化，往最底层看其实只完成了一件事——<strong>大模型、宿主代码（Harness）与具体的人之间的三重归位</strong>：</p>
 
-        <p>再往后看五到十年，随着长周期规划与“模型—宿主协同演进”（递归自我改进，RSI）成熟，企业组织也会卸下沉重的协调包袱。过去大公司搭那么多层汇报金字塔、开不完的跨部门周会、填不完的流转工单，根源在于单个人脑装不下跨领域实时上下文，只能靠流程层层递摘要。等成百上千个常驻地盘的业务域 Agent 能全天盯水位、秒级拉起跨域协同定位，入编纳管的 AI 数字员工又能凭签名契约跨角色统筹推进处置，围绕具体问题动态聚散的协作网，就会消融掉大半靠人力传话维持的中间层。几位业务负责人带着各自的 Personal Agent，与守地盘的业务域 Agent 及管处置执行的 AI 数字员工协同运转，会变成寻常的组织形态。</p>
+          <ul>
+            <li><strong>概率推演与全天候值守，归大模型。</strong> 在嘈杂日志里抓线索、多步假设试错、跨系统起草、不知疲倦盯住几百个数据水位，尽情发挥概率模型远超单人注意力的吞吐带宽。</li>
+            <li><strong>确定性边界与账本执法，归宿主代码（Harness）。</strong> 模型底层始终是无状态概率函数：长上下文必然稀释早期约束，同源上下文自写自审必然放水（基准测试算过，代码规模每大十倍，可见单测与隐藏集成测试通过率落差就拉大近三十个百分点），提示词更挡不住副作用与注入。沙盒、草稿门禁、权限最小交集、单产品切片、双库分立与唯一回执去重，统统必须写进确定性的宿主代码里——也正因如此，在下一篇 <a href="07-formal-verification-in-the-ai-era.html"><code>#07</code></a> 里我们会看到，形式化验证正在成为这套宿主护栏的最高阶拼图。</li>
+            <li><strong>价值取向、制度立法与最终责任，归具体的人。</strong> 模型参数没有痛觉，也没有法人资格、个人财产和社会信用去兜底损失。判断什么值得做、把经验立成制度、最后拍板签字，永远归于具体的人。</li>
+          </ul>
 
-        <p>有人难免会问：当写代码、跨系统起草、群内分流、全天盯盘乃至跨角色统筹处置都归位到了不同机器手里，人的位置会不会越挤越窄？回看两百年分工史，答案恰恰相反——一旦人不再充当<strong>搬运上下文的人工胶水</strong>，不用整天泡在复制报错、手工对账、催单转话里，<strong>真正属于人的东西，反而以最纯粹的面貌回到了人手里</strong>：</p>
+          <p>再往后看五到十年，随着长周期规划和“模型—宿主协同演进”成熟，企业组织会卸下最沉重的协调包袱。大公司过去之所以搭那么多层汇报金字塔、开不完的跨部门周会，根源在于单个人脑装不下跨领域实时上下文，只能靠流程层层递摘要。等常驻地盘的业务域 Agent 能秒级拉起协同定位，入编纳管的 AI 数字员工能按契约统筹推进处置，靠人力传话维持的中间层就会自然消融。</p>
 
-        <ol>
-          <li><strong>待在真实的物理与商业现场，定义“什么真问题值得解”。</strong> 模型周末能推演上万条路径、算出哪套方案转化率高两个点，但它没有肉身痛感与生活处境，体会不到卡顿流程让人多烦躁，也定不了价值取向。发现真问题、选定大方向，只能由身处现场的人来做。</li>
-          <li><strong>把模糊的行业直觉与品味，拆解成可核验的标尺与宿主制度。</strong> 单打独斗时老手可以凭感觉说“味道不对”；面对上百个日夜运转的常驻智能体，就必须把隐性经验、审美与风控底线拆解清楚，立成自动验收标准、缺数报 <code>unknown</code> 的纪律、提问人与机器权限最小交集的门禁与跨平台熔断红线。</li>
-          <li><strong>在正反证据面前拍板签字，用真实身份与社会信用担起最终责任。</strong> 统计相关与现实因果之间，永远隔着最后那点不确定性。机器把正反证据摆齐上桌，最后总得有个具体的人看清来龙去脉，签下名字说：“按这个判断办，出了问题算我的。”</li>
-        </ol>
+          <p>很多人担心：当写代码、拟邮件、群分流、全天盯盘乃至统筹执行都归位到不同机器手里，人的位置会不会越挤越窄？回看两百年分工史，答案恰恰相反。一旦人不再充当<strong>搬运上下文的人工胶水</strong>，不用整天泡在复制报错、手工对账和催单转话里，<strong>真正属于人的三件事，反而以最纯粹的面貌回到了人手里</strong>：</p>
 
-        <p>这一年看似热闹非凡的 Agent 演化，拨开迷雾其实只是在把错位混装的东西一件件拆开归位。可逆试错的归沙盒，外部交互的归草稿门禁；单人私域与多人公域各守其界，流动的人与常驻的地盘上下配合，日常自主经营与独立运行账本严格分立；往最深处看，则是概率推演归模型，确定性的宿主护栏归代码，价值判断、制度立法与最终责任归具体的人。上帝的归上帝，凯撒的归凯撒——边界分清了，手脚才真正放得开。</p>
+          <ol>
+            <li><strong>待在真实的物理与商业现场，定义“什么真问题值得解”。</strong> 模型一夜能推演上万套方案，但它没有肉身痛感与生活处境，体会不到流程卡顿让人多烦躁，也定不了价值取向。</li>
+            <li><strong>把模糊的行业直觉与品味，立成可核验的标尺与宿主制度。</strong> 单打独斗时可以凭感觉说“味道不对”；管着上百个日夜运转的常驻智能体时，必须把隐性经验与风控底线拆解清楚，立成验收标准、缺数纪律与熔断红线。</li>
+            <li><strong>在正反证据面前拍板签字，用真实身份与社会信用担起最终责任。</strong> 统计相关与现实因果之间永远隔着最后那点不确定性。机器把证据摆齐上桌，最后总得有个具体的人看清来龙去脉，签下名字说：“按这个判断办，出了问题算我的。”</li>
+          </ol>
+
+          <p>上帝的归上帝，凯撒的归凯撒。边界分清了，手脚才真正放得开。</p>
+        </section>
       </div>
 
       <nav class="series-nav" aria-label="上下篇">
@@ -1153,16 +747,14 @@
 
       <footer class="post-footer">
         <div class="end-mark">— END —</div>
-        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview">Claude Cowork Architecture Overview</a>、Harmonic Security <a href="https://www.harmonic.security/resources/securing-claude-cowork-a-security-practitioners-guide">Securing Claude Cowork</a>、Microsoft <a href="https://www.microsoft.com/en-us/copilot/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/">Copilot Wave 3 / Copilot Cowork</a>、OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use">Agents API Computer Use</a>、Noor Yasser <a href="https://nooryasser.com/articles/openai-agents-api-computer-use-architecture/">Trust Architecture</a>、飞书 <a href="https://www.feishu.cn/content/article/7591431268324101337">多维表格 AI Agent 节点</a>、Composio <a href="https://www.sean-weldon.com/blog/2026-09-08-from-coding-to-knowledge-work-agents-karan-vaidya-composio">From Coding to Knowledge Work Agents</a> 与 DevAssure <a href="https://www.devassure.io/blog/inside-the-verification-loop/">SpecBench &amp; Reward Hacking 综述</a>。团队协作与安全边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443">ManyIH-Bench</a>、<a href="https://aclanthology.org/2026.emnlp-main.2261.pdf">MIH-Bench</a>、<a href="https://arxiv.org/html/2502.15851v4">Control Illusion</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09744">MPAC</a>、CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/">Confused Deputy &amp; Cline 复盘</a>、Security Atlas <a href="https://atlasofsecurity.com/learn/topics/agent-tool-identity/">Agent Tool Identity</a> 与 Bigcircle <a href="https://bigcircle.ai/guides/ai-agent-memory-isolation">Memory Isolation</a>。企业数字员工与治理实践部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity">Entra Agent ID / Agent 365 Identity</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/">AI Passport</a>、Salesforce <a href="https://www.salesforce.com/au/news/press-releases/2025/06/23/agentforce-3-announcement/">Agentforce 3</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale">Release Governance</a>、Devin <a href="https://docs.devin.ai/enterprise/features/usage-policies">Usage Policies</a>、<a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow">Cycles Cross-Platform Governance</a>、McKinsey <a href="https://www.mckinsey.com/capabilities/people-and-organization/our-insights/ai-is-changing-work-now-it-has-to-change-the-organization">Organizational Change</a>、PwC <a href="https://www.pwc.com/gx/en/issues/technology/three-governance-shifts-agentic-ai.html">Three Governance Shifts</a>、ooderAgent <a href="https://cloud.tencent.com/developer/article/2763302">双轴域架构</a>、阿里云 <a href="https://developer.aliyun.com/article/1761577">PolarDB Agent Express</a> 与腾讯云 <a href="https://cloud.tencent.com/developer/article/2771037">ADP 4.0</a>。网页版附有四轴权责分化图谱、跨国异动多角色接力（虚构推演）及模型·代码·人三重归位交互图解。</em></p>
+        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees" target="_blank" rel="noopener">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview" target="_blank" rel="noopener">Claude Cowork Architecture Overview</a>、OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use" target="_blank" rel="noopener">Agents API Computer Use</a> 与 DevAssure <a href="https://www.devassure.io/blog/inside-the-verification-loop/" target="_blank" rel="noopener">SpecBench &amp; Reward Hacking 综述</a>；团队协作与安全边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api" target="_blank" rel="noopener">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443" target="_blank" rel="noopener">ManyIH-Bench</a>、CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/" target="_blank" rel="noopener">Confused Deputy &amp; Cline 复盘</a> 与 Bigcircle <a href="https://bigcircle.ai/guides/ai-agent-memory-isolation" target="_blank" rel="noopener">Memory Isolation</a>；企业数字员工与治理实践部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity" target="_blank" rel="noopener">Entra Agent ID</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/" target="_blank" rel="noopener">AI Passport</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale" target="_blank" rel="noopener">Release Governance</a> 与 <a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow" target="_blank" rel="noopener">Cycles Cross-Platform Governance</a>。</em></p>
       </footer>
     </article>
   </main>
 
   <script>
     (function () {
-      var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-      /* 1. Theme Toggle, <meta name="color-scheme"> & Cross-Tab Sync */
+      /* 1. Theme Toggle, color-scheme meta & cross-tab sync */
       var root = document.documentElement;
       var btn = document.getElementById("theme-toggle");
       var label = document.getElementById("theme-label");
@@ -1193,10 +785,7 @@
       syncThemeUI(getStoredTheme());
 
       darkMql.addEventListener("change", function () {
-        var stored = getStoredTheme();
-        if (!stored) {
-          syncThemeUI(null);
-        }
+        if (!getStoredTheme()) syncThemeUI(null);
       });
 
       window.addEventListener("storage", function (ev) {
@@ -1220,16 +809,17 @@
         }
       });
 
-      /* 2. Reading Progress & Left Rail TOC */
+      /* 2. Reading Progress Strip & Scrollspy */
       var strip = document.getElementById("reading-strip");
       var bar = document.getElementById("reading-bar");
       var progressLabel = document.getElementById("reading-progress-label");
-      var sections = ["intro", "axis-env", "axis-principal", "axis-anchor", "axis-governance", "warroom", "triad", "horizon"]
+      var sections = ["intro", "axis-env", "axis-principal", "axis-anchor", "axis-governance", "warroom", "epilogue"]
         .map(function (id) { return document.getElementById(id); })
         .filter(Boolean);
-      var tocLinks = document.querySelectorAll("#toc-list a");
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll("#toc-list a"));
+      var supportsScrollTargetGroup = typeof CSS !== "undefined" && CSS.supports && CSS.supports("scroll-target-group: auto");
 
-      function onScroll() {
+      function updateProgress() {
         var scrollTop = window.scrollY || document.documentElement.scrollTop;
         var docHeight = document.documentElement.scrollHeight - window.innerHeight;
         var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
@@ -1238,737 +828,36 @@
         bar.style.width = pct + "%";
         progressLabel.textContent = pct + "%";
 
-        var currentSectionId = "intro";
-        for (var i = 0; i < sections.length; i++) {
-          if (sections[i].getBoundingClientRect().top <= 160) {
-            currentSectionId = sections[i].id;
+        if (!supportsScrollTargetGroup) {
+          var currentSectionId = "intro";
+          for (var i = 0; i < sections.length; i++) {
+            if (sections[i].getBoundingClientRect().top <= 160) {
+              currentSectionId = sections[i].id;
+            }
           }
+          tocLinks.forEach(function (link) {
+            var active = link.getAttribute("href") === "#" + currentSectionId;
+            link.classList.toggle("is-active", active);
+            link.setAttribute("aria-current", active ? "true" : "false");
+          });
         }
-        tocLinks.forEach(function (link) {
-          link.classList.toggle("is-active", link.getAttribute("href") === "#" + currentSectionId);
-        });
       }
-      window.addEventListener("scroll", onScroll, { passive: true });
-      onScroll();
 
-      /* 3. Stage 1: Non-Linear 4-Axis Differentiation Map (Origin + 6 Coexisting Forms) */
-      (function initStage1() {
-        var svgG = document.getElementById("s1-svg");
-        var readout = document.getElementById("s1-readout");
-        var dimEl = document.getElementById("s1-dim");
-        var rightsEl = document.getElementById("s1-rights");
-        var guardsEl = document.getElementById("s1-guards");
-        var cap = document.getElementById("s1-cap");
-        var panel = document.getElementById("s1-panel");
-        var tabs = Array.prototype.slice.call(document.querySelectorAll("[data-s1]"));
-
-        var axesMeta = [
-          { id: 0, title: "试错与裁判", sub: "可逆沙盒 · 外部交互", y: 23, h: 32, cy: 39 },
-          { id: 1, title: "私域与公域", sub: "单人委托 · 多人共事", y: 91, h: 32, cy: 107 },
-          { id: 2, title: "动静锚点", sub: "人侧代理 · 常驻地盘", y: 140, h: 32, cy: 156 },
-          { id: 3, title: "自主与立制", sub: "日常经营 · 账本执法", y: 178, h: 32, cy: 194 }
-        ];
-
-        var cardsMeta = [
-          { idx: 1, name: "01 Coding Agent", tag: "worktree 沙盒 · 测试裁判 · 合入归人", y: 8, cy: 22, axis: 0 },
-          { idx: 2, name: "02 办公 Agent", tag: "Draft-then-Commit · 外发归人", y: 42, cy: 56, axis: 0 },
-          { idx: 3, name: "03 Personal Agent", tag: "一对一私域代理 · 本人确认担责", y: 76, cy: 90, axis: 1 },
-          { idx: 4, name: "04 Team Agent", tag: "公域秩序 · 最小交集 · waiting", y: 110, cy: 124, axis: 1 },
-          { idx: 5, name: "05 业务域 Agent", tag: "盯盘吹哨 · A2A 协同定位 · 报 unknown", y: 144, cy: 158, axis: 2 },
-          { idx: 6, name: "06 AI 数字员工", tag: "派单协调处置 · 双库分立 · 签字结案", y: 178, cy: 192, axis: 3 }
-        ];
-
-        var views = [
-          {
-            readout: "ORIGIN · 00 混沌万能框（未分化起点）",
-            tone: "warn",
-            activeAxis: -1,
-            peers: [],
-            footer: "无手脚时人工操作掩盖了边界差异；长出手脚后混装进同一窗口，便撞上误删邮件、大群泄密与凌晨漏盯。",
-            dim: "早期局部续写与单轮问答阶段，模型没有调工具的手脚；写码、拟信、群答疑与查跌因全塞在同一窗口，靠人工拼上下文与点发送兜底。",
-            rights: "权利：几乎未向机器放开外部行动权利；一旦直接连上办公软件、大群与生产库却不做权责拆解，沙盒试错与私聊记忆立刻越界闯祸。",
-            guards: "分化起点：当多步自修、MCP、跨会话记忆、多人同步与水位唤醒成熟，模糊代理顺着四道现实分界各自归位、长期并存。",
-            cap: "早期“万能对话框”之所以没出乱子，全靠中间的人工操作掩盖了试错代价、隐私边界与追责逻辑的差异。"
-          },
-          {
-            readout: "AXIS 1 · 01 Coding Agent（试错与裁判：可逆沙盒）",
-            tone: "ok",
-            activeAxis: 0,
-            peers: [2],
-            footer: "与办公 Agent 同处“试错与裁判”分界两侧：终端放手跑几十轮单测，邮箱文档走草稿核对，互不替代。",
-            dim: "可逆且有客观裁判的软件沙盒（推理强化学习 + 多步调工具自修）；归位承担需求明确后到合入前的编码、调试与本地试错分工。",
-            rights: "权利：读写隔离分支、执行终端命令与调用开发工具；义务：让编译、静态检查与测试真正跑通（exit code 0），绝不改弱断言凑绿灯。",
-            guards: "宿主护栏：git worktree 或临时容器零成本回滚沙盒，编译器与测试门禁只认退出码；最终责任：工程师审阅改动、合入主干并承担最终责任。",
-            cap: "Coding Agent 归位软件沙盒：仰仗可一键撤回的隔离分支与客观测试裁判，工程师敢放手让模型连跑几十轮试错。"
-          },
-          {
-            readout: "AXIS 1 · 02 办公 Agent（试错与裁判：外部交互）",
-            tone: "accent",
-            activeAxis: 0,
-            peers: [1],
-            footer: "外部交互无自动裁判且不可逆（十步串联无错率不足 60%）：收回裸外发权限，补齐分支式草稿缓冲带。",
-            dim: "不可逆且无自动裁判的开放办公现场（MCP + computer_use）；归位承担跨文档、邮件、日程与客户系统查资料、预演流程并起草初稿的分工。",
-            rights: "权利：读取授权上下文、模拟预演与生成草稿（收回直接对外提交的裸权限）；义务：只拟草稿不擅自外发，敏感变更报批，未读回确认前不重发。",
-            guards: "宿主护栏：强制 Draft-then-Commit 与锁死对象数额的 Action Gate，凭证宿主托管，重连与重试分离；最终责任：人点击发送或付款并承担最终责任。",
-            cap: "办公 Agent 归位外部交互预演：像 Coding Agent 只改分支不裸推主干一样，在软件外层补齐草稿门禁，与 Coding Agent 日常并存。"
-          },
-          {
-            readout: "AXIS 2 · 03 Personal Agent（私域与公域：单人委托）",
-            tone: "blue",
-            activeAxis: 1,
-            peers: [4, 5],
-            footer: "私人书桌取代不了公共会议室：Personal Agent 守单人私域，与公域 Team Agent 及底层业务域 Agent 长期配合。",
-            dim: "单人委托的私域空间（长上下文理解 + 跨会话个人记忆检索）；归位承担整理个人零散上下文、维护长期备忘、跨工具替本人跑腿的分工。",
-            rights: "权利：一对一代理本人身份，读取本人权限范围内的资料，留存跨会话个人记忆；义务：严守个人隐私，随口讨论不乱建后台任务，不越界对外表态。",
-            guards: "宿主护栏：记忆与凭证加密锁在个人租户内，跨会话立项或外部写操作经本人确认；最终责任：下令者、权限拥有者与担责人全是同一个“我”。",
-            cap: "Personal Agent 归位单人私域：指令、数据权限、记忆归属与最终责任一对一绑在本人身上，同时作为人侧入口对接底层业务域节点。"
-          },
-          {
-            readout: "AXIS 2 · 04 Team Agent（私域与公域：多人共事）",
-            tone: "purple",
-            activeAxis: 1,
-            peers: [3],
-            footer: "进驻多人共事的频道与事故 Warroom：专管公共秩序、最小权限交集与 waiting 安静规矩。",
-            dim: "多人共事的团队公域（多人话题流理解 + 多角色状态同步）；归位承担共享频道、看板与 Warroom 里的公共秩序、分流同步与交叉初审分工。",
-            rights: "权利：携带“提问人 + 机器”双重身份访问受控团队资源，在指定线程读写协同状态（禁静态全局高权限密钥）；义务：服从层级、查改审分离、守公共安静。",
-            guards: "宿主护栏：外层状态机裁决冲突；强制取提问人与机器权限最小交集并核对房间密级；按“租户 + 个人”隔离，平时 waiting 休眠；最终责任：发起人与负责人承担。",
-            cap: "Team Agent 归位团队公域：在共享频道与 Warroom 维持公共秩序、最小权限交集与指令层级，与私域 Personal Agent 并存。"
-          },
-          {
-            readout: "AXIS 3 · 05 业务域 Agent（动静锚点：常驻地盘）",
-            tone: "ok",
-            activeAxis: 2,
-            peers: [3, 4],
-            footer: "流动的人配 Personal Agent，常驻地盘配业务域 Agent：全天盯水位吹哨，并进协作空间 A2A 协同定位。",
-            dim: "全天候常驻业务地盘（快模型稳定调工具 + 数据水位唤醒 + A2A）；锚定产品线、国家市场、支付/流量渠道或核心模块，承担常驻盯盘、异常吹哨、告警收敛与跨上下游协同分析定位分工。",
-            rights: "权利：订阅真实完结水位、积累本域异动上下文、进驻协作空间发起上下游 A2A 协查（严控只读切片权限）；义务：缺数如实报 unknown，区分统计波动与业务根因，严守单产品边界并顺原事件续查。",
-            guards: "宿主护栏：锚定客观业务域，与 Personal Agent 及 Team Agent 协作空间配合；网关启动硬锁单产品切片，阻断跨产品读明细权限；最终责任：跨域合并与结论采纳由业务域负责人确认承担。",
-            cap: "业务域 Agent 驻守客观业务地盘：全天候盯住完结水位负责异常吹哨，并进驻协作空间跨上下游 A2A 协同分析定位。"
-          },
-          {
-            readout: "AXIS 4 · 06 AI 数字员工（自主与立制：岗位自治与宿主制度）",
-            tone: "accent",
-            activeAxis: 3,
-            peers: [1, 2, 5],
-            footer: "不同于盯盘吹哨的业务域 Agent：按正式岗位入编纳管，Workspace 自治协调处置，Runtime 归宿主独占。",
-            dim: "岗位自治执行与制度审计分离（受控自治运行时 + 身份预算风控）；按正式岗位入编，承担自主建表核算、维护版本化规则、跨角色派单协调代码修复与外部 Action 响应、封存正反证据结案报告的分工。",
-            rights: "权利：独立非人类员工工号（绑定人类担保人）、专属 Workspace 作业库读写、受控修订版本化规则、按防环规则跨角色派单与支配日常预算；义务：步数、四层防环派单与日预算内串行履职，留齐正反证据，不碰账本与关单。",
-            guards: "宿主护栏：专属 Workspace 作业库与宿主独占 Runtime 账本物理分离（员工零写权限），锁规则快照，本地 Outbox 唯一回执去重（重发不重跑模型）；最终责任：快照封存由负责人或会签人签字承担。",
-            cap: "AI 数字员工归位岗位级自治执行与协调者：推进建表核算、跨角色派单协调修复与外部 Action 响应，账本执法与签字结案归宿主制度与人。"
-          }
-        ];
-
-        function toneVars(t) {
-          if (t === "ok") return { s: "var(--ok)", bg: "var(--ok-soft)" };
-          if (t === "blue") return { s: "var(--blue)", bg: "var(--blue-soft)" };
-          if (t === "purple") return { s: "var(--purple)", bg: "var(--purple-soft)" };
-          if (t === "warn") return { s: "var(--warn)", bg: "var(--warn-soft)" };
-          return { s: "var(--accent)", bg: "var(--accent-soft)" };
-        }
-
-        function render(idx) {
-          var v = views[idx];
-          var tv = toneVars(v.tone);
-          readout.textContent = v.readout;
-          dimEl.textContent = v.dim;
-          rightsEl.textContent = v.rights;
-          guardsEl.textContent = v.guards;
-          cap.textContent = v.cap;
-          panel.setAttribute("aria-labelledby", "s1-tab-" + idx);
-
-          tabs.forEach(function (t, i) {
-            var active = i === idx;
-            t.setAttribute("aria-selected", active ? "true" : "false");
-            t.setAttribute("tabindex", active ? "0" : "-1");
-          });
-
-          var html = "";
-          var isOrigin = idx === 0;
-
-          // 1. Trunk from Origin Box (178, 107) to 4 Reality Axes (x = 222)
-          axesMeta.forEach(function (ax) {
-            var active = isOrigin || v.activeAxis === ax.id;
-            var stroke = isOrigin ? "var(--warn)" : active ? tv.s : "var(--rule-strong)";
-            var sw = active ? "1.9" : "1.15";
-            var op = active ? "1" : "0.42";
-            var dash = isOrigin ? ' stroke-dasharray="4 3"' : "";
-            html += '<path d="M 178 107 L 198 107 L 198 ' + ax.cy + ' L 222 ' + ax.cy + '" fill="none" stroke="' + stroke + '" stroke-width="' + sw + '" opacity="' + op + '"' + dash + ' />';
-          });
-
-          // 2. Left Box: Early Undifferentiated Chatbox (clickable -> tab 0)
-          var origFill = isOrigin ? "var(--warn-soft)" : "var(--bg-elevated)";
-          var origStroke = isOrigin ? "var(--warn)" : "var(--rule-strong)";
-          var origSw = isOrigin ? "2.1" : "1.3";
-          html += '<g style="cursor:pointer" data-s1-node="0" opacity="' + (isOrigin ? "1" : "0.84") + '">';
-          html += '<rect x="16" y="44" width="162" height="126" rx="7" fill="' + origFill + '" stroke="' + origStroke + '" stroke-width="' + origSw + '" />';
-          if (isOrigin) {
-            html += '<rect x="52" y="35" width="90" height="18" rx="9" fill="var(--warn)" />';
-            html += '<text x="97" y="47.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="700" fill="#fff">未分化起点</text>';
-          }
-          html += '<text x="97" y="65" text-anchor="middle" font-family="var(--font-mono)" font-size="9.2" fill="var(--ink-muted)">00 · ORIGIN</text>';
-          html += '<text x="97" y="86" text-anchor="middle" font-family="var(--font-sans)" font-size="11.8" font-weight="700" fill="' + (isOrigin ? "var(--warn)" : "var(--ink)") + '">早期混沌：万能对话框</text>';
-          html += '<line x1="30" y1="97" x2="164" y2="97" stroke="var(--rule)" stroke-width="1" />';
-          html += '<text x="97" y="115" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">写码·发信·群聊·盯盘混装</text>';
-          html += '<text x="97" y="134" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-muted)">无手脚时靠人工操作掩盖</text>';
-          html += '<text x="97" y="153" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="' + (isOrigin ? "var(--accent)" : "var(--ink-muted)") + '">长出手脚后越界四处碰壁</text>';
-          html += '</g>';
-
-          // 3. Middle 4 Axis Badges + Branching Paths to Right 6 Coexisting Cards
-          var axisTargetTab = [1, 3, 5, 6];
-          axesMeta.forEach(function (ax) {
-            var axActive = v.activeAxis === ax.id;
-            var axFill = axActive ? tv.bg : "var(--bg-elevated)";
-            var axStroke = axActive ? tv.s : isOrigin ? "var(--warn)" : "var(--rule-strong)";
-            var axSw = axActive ? "2" : "1.2";
-            var axOp = axActive || isOrigin ? "1" : "0.68";
-
-            html += '<g style="cursor:pointer" data-s1-node="' + axisTargetTab[ax.id] + '" opacity="' + axOp + '">';
-            html += '<rect x="222" y="' + ax.y + '" width="152" height="' + ax.h + '" rx="5" fill="' + axFill + '" stroke="' + axStroke + '" stroke-width="' + axSw + '" />';
-            html += '<text x="298" y="' + (ax.y + 13.5) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="10.8" font-weight="700" fill="' + (axActive ? tv.s : "var(--ink)") + '">' + ax.title + '</text>';
-            html += '<text x="298" y="' + (ax.y + 26) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="9.2" fill="var(--ink-muted)">' + ax.sub + '</text>';
-            html += '</g>';
-          });
-
-          // Branch wires from Axes (x = 374) to Right Cards (x = 432)
-          function wireAttrs(cardIdx, axisId) {
-            var isSel = idx === cardIdx;
-            var isPeer = v.peers.indexOf(cardIdx) !== -1 && v.activeAxis === axisId;
-            if (isSel) return 'stroke="' + tv.s + '" stroke-width="2.1" opacity="1"';
-            if (isPeer) return 'stroke="' + tv.s + '" stroke-width="1.4" stroke-dasharray="3 2" opacity="0.85"';
-            if (isOrigin) return 'stroke="var(--rule-strong)" stroke-width="1.15" opacity="0.55"';
-            return 'stroke="var(--rule-strong)" stroke-width="1.1" opacity="0.38"';
-          }
-
-          // Axis 0 -> Card 1 & Card 2
-          html += '<path d="M 374 39 L 398 39 L 398 22 L 432 22" fill="none" ' + wireAttrs(1, 0) + ' />';
-          html += '<path d="M 374 39 L 398 39 L 398 56 L 432 56" fill="none" ' + wireAttrs(2, 0) + ' />';
-
-          // Axis 1 -> Card 3 & Card 4
-          html += '<path d="M 374 107 L 398 107 L 398 90 L 432 90" fill="none" ' + wireAttrs(3, 1) + ' />';
-          html += '<path d="M 374 107 L 398 107 L 398 124 L 432 124" fill="none" ' + wireAttrs(4, 1) + ' />';
-
-          // Axis 2 (动静锚点) -> pairs 人侧代理 badge + Card 5 (业务域 Agent)
-          var ax2Active = idx === 5;
-          var humanBadgeStroke = ax2Active ? tv.s : "var(--rule-strong)";
-          var humanBadgeOp = ax2Active ? "0.96" : isOrigin ? "0.7" : "0.55";
-          html += '<path d="M 374 151 L 403 151 L 403 142" fill="none" stroke="' + humanBadgeStroke + '" stroke-width="' + (ax2Active ? "1.6" : "1.1") + '" stroke-dasharray="3 2" opacity="' + humanBadgeOp + '" />';
-          html += '<g opacity="' + humanBadgeOp + '">';
-          html += '<rect x="379" y="128" width="48" height="14" rx="3" fill="var(--bg-elevated)" stroke="' + humanBadgeStroke + '" stroke-width="1.1" />';
-          html += '<text x="403" y="138" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" font-weight="600" fill="' + (ax2Active ? tv.s : "var(--ink-secondary)") + '">人侧代理</text>';
-          html += '</g>';
-          html += '<line x1="374" y1="158" x2="432" y2="158" ' + wireAttrs(5, 2) + ' />';
-
-          // Axis 3 (自主与立制) -> governs institutionalized autonomous role worker Card 6 (AI 数字员工)
-          html += '<line x1="374" y1="192" x2="432" y2="192" ' + wireAttrs(6, 3) + ' />';
-
-          // 4. Right 6 Coexisting Agent Cards (all 6 stay visible to show coexistence!)
-          cardsMeta.forEach(function (c) {
-            var isSel = idx === c.idx;
-            var isPeer = v.peers.indexOf(c.idx) !== -1;
-            var fill = isSel ? tv.bg : "var(--bg-elevated)";
-            var stroke = isSel ? tv.s : isPeer ? tv.s : "var(--rule-strong)";
-            var sw = isSel ? "2.1" : isPeer ? "1.4" : "1.15";
-            var dash = !isSel && isPeer ? ' stroke-dasharray="4 2"' : "";
-            var op = isSel ? "1" : isPeer ? "0.92" : isOrigin ? "0.82" : "0.66";
-
-            html += '<g style="cursor:pointer" data-s1-node="' + c.idx + '" opacity="' + op + '">';
-            html += '<rect x="432" y="' + c.y + '" width="312" height="28" rx="5" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '"' + dash + ' />';
-            html += '<text x="444" y="' + (c.cy + 4) + '" font-family="var(--font-sans)" font-size="11.2" font-weight="700" fill="' + (isSel ? tv.s : "var(--ink)") + '">' + c.name + '</text>';
-            html += '<text x="732" y="' + (c.cy + 3.5) + '" text-anchor="end" font-family="var(--font-sans)" font-size="9.8" fill="' + (isSel ? "var(--ink)" : "var(--ink-secondary)") + '">' + c.tag + '</text>';
-            html += '</g>';
-          });
-
-          // 5. Bottom Coexistence Readout Strip
-          html += '<rect x="16" y="216" width="728" height="28" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)" />';
-          html += '<text x="380" y="234" text-anchor="middle" font-family="var(--font-sans)" font-size="10.8" fill="var(--ink-secondary)">' + v.footer + '</text>';
-
-          svgG.innerHTML = html;
-          svgG.querySelectorAll("[data-s1-node]").forEach(function (el) {
-            el.addEventListener("click", function () {
-              var next = parseInt(el.getAttribute("data-s1-node"), 10);
-              render(next);
-              tabs[next].scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
-            });
-          });
-
-          if (window.gsap && !prefersReducedMotion.matches) {
-            window.gsap.fromTo(svgG.children, { opacity: 0.35 }, { opacity: 1, duration: 0.18, ease: "power1.out" });
-          }
-        }
-
-        tabs.forEach(function (tab, i) {
-          tab.addEventListener("click", function () {
-            render(i);
-            tab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
-          });
-          tab.addEventListener("keydown", function (ev) {
-            var nextIdx = -1;
-            if (ev.key === "ArrowRight") nextIdx = (i + 1) % tabs.length;
-            else if (ev.key === "ArrowLeft") nextIdx = (i - 1 + tabs.length) % tabs.length;
-            else if (ev.key === "Home") nextIdx = 0;
-            else if (ev.key === "End") nextIdx = tabs.length - 1;
-            if (nextIdx !== -1) {
-              ev.preventDefault();
-              render(nextIdx);
-              tabs[nextIdx].focus();
-              tabs[nextIdx].scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
-            }
-          });
-        });
-
-        render(0);
-      })();
-
-      /* 4. Stage 2: Boundary Conflation vs Warroom Multi-Role Relay Simulator (3 Cases × 4 Steps) */
-      (function initStage2() {
-        var curCase = "conflate_env";
-        var step = 1;
-        var timer = null;
-        var graphG = document.getElementById("s2-graph");
-        var readout = document.getElementById("s2-readout");
-        var line1 = document.getElementById("s2-line-1");
-        var line2 = document.getElementById("s2-line-2");
-        var cap = document.getElementById("s2-cap");
-        var prevBtn = document.getElementById("s2-prev");
-        var nextBtn = document.getElementById("s2-next");
-        var autoBtn = document.getElementById("s2-auto");
-
-        var cases = {
-          conflate_env: {
-            idx: 1,
-            scaleTone: "accent",
-            scaleBadge: "环境与公私边界混同",
-            nodes: [
-              { title: "1. 沙盒习惯直连外发", sub: "无自动裁判 · 错信照返 HTTP 200" },
-              { title: "2. 裸权限酿不可逆事故", sub: "十步串联跌破六成 · 删光两百封信" },
-              { title: "3. 私聊习惯搬进大群", sub: "十几个层级打架 · 顺从最后发言者" },
-              { title: "4. 糊涂代理人与刷屏", sub: "套走纪要泄密钥 · 互回烧光预算" }
-            ],
-            steps: [
-              {
-                active: 0,
-                badge: "裁判缺失",
-                l1: "Step 1 / 4 · 把代码沙盒的自主试错直接搬进邮箱与客户系统，外部现场无自动裁判",
-                l2: "致歉信语气生硬、赔偿少写一个零，发信接口照样返回 HTTP 200，没有任何编译器拦住它。",
-                cap: "试错与裁判混同：封闭沙盒改错可一键回滚，开放商业现场话出口、钱出手就收不回来。"
-              },
-              {
-                active: 1,
-                badge: "外发失控",
-                l1: "Step 2 / 4 · 未收回直接外发的裸权限，多步串联放大失误并遭外部恶意注入劫持",
-                l2: "单步 95% 连走十步无错率不足 60%；邮件助手无视叮嘱删光约两百封邮件，查订单误点付款。",
-                cap: "归位解法：办公 Agent 必须走 Draft-then-Commit 与锁死对象数额的 Action Gate，点击发送归人担责。"
-              },
-              {
-                active: 2,
-                badge: "层级打架",
-                l1: "Step 3 / 4 · 把单人私聊助手直接拉进五十人大群，十几个权限层级混在同一上下文发话",
-                l2: "模型权重里没有组织架构图，服从高优先级指令比例掉到四成左右，谁最后说话就顺着谁。",
-                cap: "私域与公域混同：单人“我”的私密备忘与私聊习惯，一进多人“我们”的公共频道就会失序。"
-              },
-              {
-                active: 3,
-                badge: "越权刷屏",
-                l1: "Step 4 / 4 · 共用静态高权限密钥与记忆池触发糊涂代理人泄密，礼貌互回死循环烧钱",
-                l2: "公开群诱导指令骗群机器人贴出私密纪要，分流机器人被骗泄密钥；两机器互回“谢谢”烧光预算。",
-                cap: "归位解法：Team Agent 强制取提问人与机器权限最小交集、按“租户 + 个人”隔离记忆、平时 waiting 休眠。"
-              }
-            ]
-          },
-          conflate_anchor: {
-            idx: 2,
-            scaleTone: "warn",
-            scaleBadge: "流动窗口硬扛常驻地盘",
-            nodes: [
-              { title: "1. 全塞进随人流转窗口", sub: "百余业务单元全挂在个人私聊框" },
-              { title: "2. 凌晨三点掉量漏盯", sub: "人员下班熟睡 · 海外地盘无人守" },
-              { title: "3. 白天十套口径打架", sub: "十人各写 SQL · 缺数补零或凑数" },
-              { title: "4. 轮岗断档重复开单", sub: "排障脉络散落私聊 · 波动重开新单" }
-            ],
-            steps: [
-              {
-                active: 0,
-                badge: "锚点错位",
-                l1: "Step 1 / 4 · 几十条产品线与上百个国家市场、支付/流量渠道，只靠个人窗口临时盯盘",
-                l2: "无论是 Coding、办公、Personal 还是 Team Agent，职责锚点都跟着流动的人与聊天窗口走。",
-                cap: "动静锚点混同：人总会下班、休假、轮岗，但产品线、国家市场与支付/流量渠道在全天候运转。"
-              },
-              {
-                active: 1,
-                badge: "凌晨漏盯",
-                l1: "Step 2 / 4 · 海外市场凌晨三点突然掉量，人员正在熟睡，缺少按数据完结水位唤醒的节点",
-                l2: "没有常驻业务地盘的智能体订阅真实完结水位，跨时区异动只能等第二天白天人工发现。",
-                cap: "时间连续性缺口：围着个人白天提问转的助手，守不住全天候运转的跨国业务大盘。"
-              },
-              {
-                active: 2,
-                badge: "口径打架",
-                l1: "Step 3 / 4 · 白天十位分析师各带 Personal Agent 查跌因，写出十套互相打架的 SQL 口径",
-                l2: "缺少本域统一口径与缺数报 unknown 护栏，遇到分母为空易自行补零或拿兄弟产品凑数。",
-                cap: "口径与隔离缺口：公共市场或渠道节点若不硬锁单产品数据切片，极易串读其他产品明细或硬凑结论。"
-              },
-              {
-                active: 3,
-                badge: "轮岗断档",
-                l1: "Step 4 / 4 · 半年后人员轮岗调动，散在个人对话记录里的排障脉络随之流失、重复开单",
-                l2: "持续波动无法顺着原事件线程归拢线索，每次异常唤醒都重开重复工单，跨团队反复核对。",
-                cap: "归位解法：顺着“人流转、地盘常驻”拆成顶层 Personal Agent + 底层常驻业务域 Agent 双层配合。"
-              }
-            ]
-          },
-          differentiated: {
-            idx: 3,
-            scaleTone: "ok",
-            scaleBadge: "虚构推演：六角色四棒接力",
-            nodes: [
-              { title: "03:10–09:00 吹哨与私域拉群", sub: "水位唤醒吹哨 · 私域拉起 Warroom" },
-              { title: "09:10 Warroom 协同定位", sub: "Team 管秩序 · 三业务域 A2A 定位" },
-              { title: "09:35 数字员工统筹处置", sub: "协调 Coding 热修 · 办公外发回执" },
-              { title: "12:00 快照封存与签字结案", sub: "业务域验恢复 · 哈希快照 · 签字" }
-            ],
-            steps: [
-              {
-                active: 0,
-                badge: "吹哨拉群",
-                l1: "第一棒 03:10–09:00 · 巴西市场业务域 Agent 水位唤醒吹哨（单产品切片 + unknown）",
-                l2: "09:00 负责人 Personal Agent 私域梳理简报与大促备忘（不扰团队不乱立项），随后拉起事故 Warroom。",
-                cap: "虚构推演 · 第一棒（星澜互动）：驻守地盘的业务域 Agent 吹哨升级，一对一 Personal Agent 私域衔接后拉起临时事故 Warroom。"
-              },
-              {
-                active: 1,
-                badge: "协同定位",
-                l1: "第二棒 09:10 · Team Agent 维持公域秩序（waiting 休眠 + 最小权限交集 + 指挥官层级）",
-                l2: "巴西市场、支付渠道与客户端版本三个业务域 Agent 在群内经 A2A 协同定位回调超时根因，交指挥官拍板。",
-                cap: "虚构推演 · 第二棒：Team Agent 专管 Warroom 公共秩序与权限边界，三个业务域 Agent 承担跨上下游协同分析定位。"
-              },
-              {
-                active: 2,
-                badge: "统筹处置",
-                l1: "第三棒 09:35 · 应急处置 AI 数字员工接棒（Runtime 记账 + 四层防环），统筹协调修复与对外响应",
-                l2: "协调 Coding Agent 隔离分支热修达标；Workspace 核算明细驱动办公 Agent 走 Action Gate 与 Outbox 回执。",
-                cap: "虚构推演 · 第三棒：AI 数字员工跨角色推进处置工作流，工程师审阅合入补丁、商务负责人核对草稿点发送担责。"
-              },
-              {
-                active: 3,
-                badge: "签字结案",
-                l1: "第四棒 12:00 · 巴西市场业务域 Agent 确认水位恢复；AI 数字员工封存正反证据哈希只读快照",
-                l2: "数字员工工具箱永不设关单按钮；事故指挥官与相关负责人在 Warroom 核实证据链签字担责，归档收起。",
-                cap: "虚构推演 · 第四棒：业务域确认恢复、数字员工封存哈希快照、人类签字承担最终责任——六类角色各守本分、互不越界。"
-              }
-            ]
-          }
-        };
-
-        function stopAuto() {
-          if (timer) {
-            clearInterval(timer);
-            timer = null;
-          }
-          autoBtn.textContent = "▶ 自动演示";
-        }
-
-        function drawGauge(c, toneVar, toneSoft) {
-          var g = "";
-          var gaugeHdr = curCase === "differentiated" ? "虚构推演 · CASE 3 / 3" : "现场拓扑 · CASE " + c.idx + " / 3";
-          g += '<rect x="20" y="16" width="206" height="164" rx="7" fill="var(--bg-elevated)" stroke="var(--rule)" />';
-          g += '<text x="123" y="36" text-anchor="middle" font-family="var(--font-mono)" font-size="10.2" font-weight="600" fill="var(--ink-muted)">' + gaugeHdr + '</text>';
-
-          if (curCase === "conflate_env") {
-            g += '<rect x="40" y="48" width="166" height="36" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5" />';
-            g += '<text x="123" y="64" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" font-weight="700" fill="var(--accent)">万能助手裸连外部与大群</text>';
-            g += '<text x="123" y="78" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ink-secondary)">无草稿门禁 · 静态高权限密钥</text>';
-            g += '<line x1="88" y1="84" x2="72" y2="102" stroke="var(--accent)" stroke-width="1.5" />';
-            g += '<line x1="158" y1="84" x2="174" y2="102" stroke="var(--accent)" stroke-width="1.5" />';
-            g += '<rect x="34" y="102" width="84" height="38" rx="4" fill="var(--bg-paper)" stroke="var(--accent)" stroke-dasharray="3 2" />';
-            g += '<text x="76" y="119" text-anchor="middle" font-family="var(--font-sans)" font-size="9.8" font-weight="600" fill="var(--accent)">外部邮箱/付款</text>';
-            g += '<text x="76" y="133" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="var(--ink-muted)">误删 · 错打款</text>';
-            g += '<rect x="128" y="102" width="84" height="38" rx="4" fill="var(--bg-paper)" stroke="var(--accent)" stroke-dasharray="3 2" />';
-            g += '<text x="170" y="119" text-anchor="middle" font-family="var(--font-sans)" font-size="9.8" font-weight="600" fill="var(--accent)">五十人公开群</text>';
-            g += '<text x="170" y="133" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="var(--ink-muted)">泄密 · 死循环</text>';
-          } else if (curCase === "conflate_anchor") {
-            for (var k = 0; k < 4; k++) {
-              var bx = 38 + k * 44;
-              g += '<rect x="' + bx + '" y="50" width="38" height="24" rx="4" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.2" />';
-              g += '<text x="' + (bx + 19) + '" y="66" text-anchor="middle" font-family="var(--font-sans)" font-size="9.2" fill="var(--warn)">个人窗</text>';
-              g += '<line x1="' + (bx + 19) + '" y1="74" x2="' + (bx + 19) + '" y2="100" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="2 2" />';
-            }
-            g += '<rect x="36" y="102" width="174" height="38" rx="5" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-dasharray="4 3" />';
-            g += '<text x="123" y="125" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink-muted)">全天业务地盘（凌晨无人驻守）</text>';
-          } else {
-            var s1On = step === 1;
-            var s2On = step === 2;
-            var s3On = step === 3;
-            var s4On = step === 4;
-            g += '<rect x="32" y="44" width="88" height="22" rx="4" fill="' + (s1On ? "var(--ok-soft)" : "var(--bg-paper)") + '" stroke="' + (s1On ? "var(--ok)" : "var(--rule-strong)") + '" stroke-width="' + (s1On ? "1.6" : "1.1") + '" />';
-            g += '<text x="76" y="58.5" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" font-weight="600" fill="' + (s1On ? "var(--ok)" : "var(--ink-secondary)") + '">03:10 业务域吹哨</text>';
-            g += '<rect x="126" y="44" width="88" height="22" rx="4" fill="' + (s1On ? "var(--blue-soft)" : "var(--bg-paper)") + '" stroke="' + (s1On ? "var(--blue)" : "var(--rule-strong)") + '" stroke-width="' + (s1On ? "1.6" : "1.1") + '" />';
-            g += '<text x="170" y="58.5" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" font-weight="600" fill="' + (s1On ? "var(--blue)" : "var(--ink-secondary)") + '">09:00 Personal</text>';
-            g += '<rect x="32" y="70" width="182" height="22" rx="4" fill="' + (s2On ? "var(--purple-soft)" : "var(--bg-paper)") + '" stroke="' + (s2On ? "var(--purple)" : "var(--rule-strong)") + '" stroke-width="' + (s2On ? "1.6" : "1.1") + '" />';
-            g += '<text x="123" y="84.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="600" fill="' + (s2On ? "var(--purple)" : "var(--ink-secondary)") + '">09:10 Team 秩序 + 三业务域定位</text>';
-            g += '<rect x="32" y="96" width="182" height="22" rx="4" fill="' + (s3On ? "var(--warn-soft)" : "var(--bg-paper)") + '" stroke="' + (s3On ? "var(--warn)" : "var(--rule-strong)") + '" stroke-width="' + (s3On ? "1.6" : "1.1") + '" />';
-            g += '<text x="123" y="110.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="600" fill="' + (s3On ? "var(--warn)" : "var(--ink-secondary)") + '">09:35 数字员工 → Coding / 办公</text>';
-            g += '<rect x="32" y="122" width="182" height="22" rx="4" fill="' + (s4On ? "var(--accent-soft)" : "var(--bg-paper)") + '" stroke="' + (s4On ? "var(--accent)" : "var(--rule-strong)") + '" stroke-width="' + (s4On ? "1.6" : "1.1") + '" />';
-            g += '<text x="123" y="136.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9" font-weight="700" fill="' + (s4On ? "var(--accent)" : "var(--ink-secondary)") + '">12:00 水位恢复 · 快照封存签字</text>';
-          }
-
-          g += '<rect x="32" y="150" width="182" height="22" rx="4" fill="' + toneSoft + '" />';
-          g += '<text x="123" y="165" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" font-weight="700" fill="' + toneVar + '">' + c.scaleBadge + '</text>';
-          return g;
-        }
-
-        function draw() {
-          var c = cases[curCase];
-          var total = c.steps.length;
-          if (step > total) step = total;
-          var st = c.steps[step - 1];
-          prevBtn.disabled = step <= 1;
-          nextBtn.disabled = step >= total;
-          readout.textContent = "CASE " + c.idx + " / 3 · STEP " + step + " / " + total;
-          line1.textContent = st.l1;
-          line2.textContent = st.l2;
-          cap.textContent = st.cap;
-
-          var toneVar = c.scaleTone === "ok" ? "var(--ok)" : c.scaleTone === "warn" ? "var(--warn)" : "var(--accent)";
-          var toneSoft = c.scaleTone === "ok" ? "var(--ok-soft)" : c.scaleTone === "warn" ? "var(--warn-soft)" : "var(--accent-soft)";
-
-          var html = drawGauge(c, toneVar, toneSoft);
-
-          var coords = [
-            { x: 244, y: 16, w: 235, h: 72 },
-            { x: 505, y: 16, w: 235, h: 72 },
-            { x: 505, y: 108, w: 235, h: 72 },
-            { x: 244, y: 108, w: 235, h: 72 }
-          ];
-          html += '<path d="M 479 52 L 501 52" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
-          html += '<path d="M 622 88 L 622 104" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
-          html += '<path d="M 505 144 L 483 144" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
-
-          c.nodes.forEach(function (n, idx) {
-            var pos = coords[idx];
-            var isCur = st.active === idx;
-            var isDone = idx < st.active;
-            var stroke = isCur ? toneVar : isDone ? "var(--ink-muted)" : "var(--rule-strong)";
-            var fill = isCur ? toneSoft : "var(--bg-elevated)";
-            var op = isCur ? "1" : isDone ? "0.8" : "0.52";
-            var sw = isCur ? "2.1" : "1.2";
-
-            html += '<g style="cursor:pointer" data-s2-step="' + (idx + 1) + '" opacity="' + op + '">';
-            html += '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + pos.w + '" height="' + pos.h + '" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
-            html += '<text x="' + (pos.x + 13) + '" y="' + (pos.y + 32) + '" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="' + (isCur ? toneVar : "var(--ink)") + '">' + n.title + '</text>';
-            html += '<text x="' + (pos.x + 13) + '" y="' + (pos.y + 55) + '" font-family="var(--font-sans)" font-size="10.8" fill="var(--ink-secondary)">' + n.sub + '</text>';
-            if (isCur) {
-              html += '<rect x="' + (pos.x + pos.w - 76) + '" y="' + (pos.y - 9) + '" width="66" height="18" rx="9" fill="' + toneVar + '" />';
-              html += '<text x="' + (pos.x + pos.w - 43) + '" y="' + (pos.y + 3) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="700" fill="#fff">' + st.badge + '</text>';
-            }
-            html += '</g>';
-          });
-
-          graphG.innerHTML = html;
-          graphG.querySelectorAll("[data-s2-step]").forEach(function (el) {
-            el.addEventListener("click", function () {
-              stopAuto();
-              step = parseInt(el.getAttribute("data-s2-step"), 10);
-              draw();
-            });
+      if (supportsScrollTargetGroup) {
+        function syncNativeAriaCurrent() {
+          var currentLink = document.querySelector("#toc-list a:target-current");
+          tocLinks.forEach(function (link) {
+            var active = link === currentLink;
+            link.classList.remove("is-active");
+            link.setAttribute("aria-current", active ? "true" : "false");
           });
         }
+        syncNativeAriaCurrent();
+        document.addEventListener("scrollend", syncNativeAriaCurrent, { passive: true });
+      }
 
-        document.querySelectorAll("[data-s2-case]").forEach(function (b) {
-          b.addEventListener("click", function () {
-            stopAuto();
-            curCase = b.getAttribute("data-s2-case");
-            step = 1;
-            document.querySelectorAll("[data-s2-case]").forEach(function (x) {
-              var active = x === b;
-              x.classList.toggle("is-active", active);
-              x.setAttribute("aria-pressed", active ? "true" : "false");
-            });
-            draw();
-          });
-        });
-
-        prevBtn.addEventListener("click", function () {
-          stopAuto();
-          if (step > 1) { step--; draw(); }
-        });
-        nextBtn.addEventListener("click", function () {
-          stopAuto();
-          var total = cases[curCase].steps.length;
-          if (step < total) { step++; draw(); }
-        });
-        autoBtn.addEventListener("click", function () {
-          if (timer) {
-            stopAuto();
-            return;
-          }
-          var total = cases[curCase].steps.length;
-          if (step >= total) step = 1;
-          draw();
-          autoBtn.textContent = "⏸ 暂停演示";
-          timer = setInterval(function () {
-            var maxS = cases[curCase].steps.length;
-            if (step >= maxS) {
-              stopAuto();
-              return;
-            }
-            step++;
-            draw();
-          }, 1650);
-        });
-        document.getElementById("s2-reset").addEventListener("click", function () {
-          stopAuto();
-          step = 1;
-          draw();
-        });
-
-        draw();
-      })();
-
-      /* 5. Stage 3: 3-Way Rightful-Place Anatomy Inspector (Human · Model · Harness · Dual-DB) */
-      (function initStage3() {
-        var idx = 0;
-        var svgG = document.getElementById("s3-svg");
-        var readout = document.getElementById("s3-readout");
-        var roleEl = document.getElementById("s3-role");
-        var whyEl = document.getElementById("s3-why");
-        var acrossEl = document.getElementById("s3-across");
-        var cap = document.getElementById("s3-cap");
-        var btns = Array.prototype.slice.call(document.querySelectorAll("[data-s3]"));
-
-        var layers = [
-          {
-            readout: "LAYER 1 / 4 · 具体的人：价值判断、制度立法与最终责任",
-            title: "具体的人 · 定义真问题、把经验立成制度、签字承担最终责任",
-            sub: "身处物理与商业现场选方向 · 拆解隐性直觉立标尺 · 看清正反证据拍板签字",
-            badge: "真实身份与社会信用兜底终责",
-            tone: "purple",
-            role: "脱离复制报错、手工对账与催单转话的“人工胶水”后，专注价值取向定义、宿主制度立法与最终风险兜底。",
-            why: "模型参数没有肉身痛觉与生活处境，也没有法人资格、个人财产与社会信用；统计相关与现实因果之间最后那步判断无法让渡。",
-            across: "审阅合入主干（Coding Agent）、点击发送或付款（办公 Agent）、立项确认（Personal Agent）、采纳落地（Team Agent）、跨域并单（业务域 Agent）与快照签字结案（AI 数字员工）。",
-            cap: "具体的人归位：发现什么真问题值得解、把模糊品味拆成可核验制度、在正反证据前签字说“出了问题算我的”。"
-          },
-          {
-            readout: "LAYER 2 / 4 · 大模型：概率推演、多步试错与全天候值守",
-            title: "大模型 · 概率推演、多步试错、跨系统起草与全天候盯水位",
-            sub: "嘈杂日志找线索 · 调工具读报错自修 · 跨软件拟初稿 · 盯住几百个完结水位",
-            badge: "远超单人注意力的吞吐带宽",
-            tone: "blue",
-            role: "接管高吞吐概率推演、多步假设验证、跨系统资料预演起草，以及全天候不知疲倦盯守海量业务水位与关联协查。",
-            why: "单个人脑装不下跨几十条产品线、上百个国家市场与支付/流量渠道的实时异动上下文；概率模型擅长在非结构化噪音里快速收敛假设。",
-            across: "隔离分支连跑单测（Coding Agent）、跨系统拟草稿（办公 Agent）、整理长程记忆（Personal Agent）、群内分流初审（Team Agent）、水位吹哨与 A2A 协同定位（业务域 Agent）、建表核算与跨角色派单协调（AI 数字员工）。",
-            cap: "大模型归位：发挥远超单人注意力的概率推演与全天候值守带宽，把确定性门禁留给宿主代码、把最终责任留给人。"
-          },
-          {
-            readout: "LAYER 3 / 4 · 宿主护栏（Harness）：确定性边界与门禁执法",
-            title: "宿主护栏 · Draft-then-Commit、最小权限交集、单产品切片与唯一回执去重",
-            sub: "worktree 沙盒 · Action Gate · 外层状态机判序 · 串行配额封顶与快照封存",
-            badge: "确定性代码硬拦截外部副作用",
-            tone: "warn",
-            role: "由外层宿主系统（Harness）用确定性代码维持连续状态、锁死底层读写权限、拦截越界副作用并固化审计证据链。",
-            why: "模型底层是无状态概率函数：长上下文必稀释早期约束，同源上下文自写自审必放水（规模每大十倍通过率落差拉大近 30%），提示词挡不住注入。",
-            across: "容器沙盒与测试裁判（Coding Agent）、Draft-then-Commit 与 Action Gate（办公 Agent）、租户加密（Personal Agent）、最小权限交集与 waiting（Team Agent）、单产品切片（业务域 Agent）、四层防环与 Outbox 回执去重（AI 数字员工）。",
-            cap: "宿主代码（Harness）归位：把提示词守不住的履约义务，铸成代码里绕不过去的确定性宿主护栏。"
-          },
-          {
-            readout: "LAYER 4 / 4 · 双库分立：Workspace 自主经营 vs Runtime 宿主独占",
-            split: true,
-            tone: "ok",
-            role: "在岗位级自治的 AI 数字员工内部，把核算影响面与执行明细的专属作业库（Workspace）与治理执法用的运行账本（Runtime）物理拆开。",
-            why: "如同现代公司给员工配办公桌与日常预算，但绝不允许员工自己改考勤表、批报销单；日常经营执行与独立账本审计必须在存储层分立。",
-            across: "Workspace 放开自由建表核算业务影响面与执行明细；Runtime 由宿主独占锁死收件箱、检查点与日成本账本（员工零写权限），配合本地 Outbox 唯一回执去重不重跑模型。",
-            cap: "双库物理分立：左边 Workspace 放开手脚让数字员工建表核算推进处置，右边 Runtime 由宿主独占管死账本、规则快照与幂等回执。"
-          }
-        ];
-
-        function toneColor(t) {
-          if (t === "ok") return { fill: "var(--ok-soft)", stroke: "var(--ok)", text: "var(--ok)" };
-          if (t === "blue") return { fill: "var(--blue-soft)", stroke: "var(--blue)", text: "var(--blue)" };
-          if (t === "warn") return { fill: "var(--warn-soft)", stroke: "var(--warn)", text: "var(--warn)" };
-          return { fill: "var(--purple-soft)", stroke: "var(--purple)", text: "var(--purple)" };
-        }
-
-        function render(n) {
-          idx = Math.max(0, Math.min(layers.length - 1, n));
-          var cur = layers[idx];
-          readout.textContent = cur.readout;
-          roleEl.textContent = cur.role;
-          whyEl.textContent = cur.why;
-          acrossEl.textContent = cur.across;
-          cap.textContent = cur.cap;
-
-          btns.forEach(function (b, i) {
-            var active = i === idx;
-            b.classList.toggle("is-active", active);
-            b.setAttribute("aria-pressed", active ? "true" : "false");
-          });
-
-          var html = "";
-          var startY = 12;
-          var rowH = 50;
-          var gap = 12;
-
-          layers.forEach(function (l, i) {
-            var y = startY + i * (rowH + gap);
-            var isCur = i === idx;
-            var c = toneColor(l.tone);
-            var sw = isCur ? "2.1" : "1.2";
-            var op = isCur ? "1" : "0.72";
-
-            html += '<g style="cursor:pointer" data-s3-layer="' + i + '" opacity="' + op + '">';
-            if (l.split) {
-              var leftFill = isCur ? "var(--ok-soft)" : "var(--bg-elevated)";
-              var leftStroke = isCur ? "var(--ok)" : "var(--rule-strong)";
-              var rightFill = isCur ? "var(--accent-soft)" : "var(--bg-elevated)";
-              var rightStroke = isCur ? "var(--accent)" : "var(--rule-strong)";
-
-              html += '<rect x="24" y="' + y + '" width="338" height="' + rowH + '" rx="6" fill="' + leftFill + '" stroke="' + leftStroke + '" stroke-width="' + sw + '" />';
-              html += '<text x="38" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="11.8" font-weight="700" fill="' + (isCur ? "var(--ok)" : "var(--ink)") + '">Workspace 专属作业库（归数字员工自主核算）</text>';
-              html += '<text x="38" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">自由建表核算影响面与明细 · 受控核对版本号改规则</text>';
-
-              html += '<circle cx="380" cy="' + (y + 25) + '" r="12" fill="var(--bg-paper)" stroke="' + (isCur ? "var(--accent)" : "var(--rule-strong)") + '" stroke-width="1.3" />';
-              html += '<text x="380" y="' + (y + 29) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink-secondary)") + '">≠</text>';
-
-              html += '<rect x="398" y="' + y + '" width="338" height="' + rowH + '" rx="6" fill="' + rightFill + '" stroke="' + rightStroke + '" stroke-width="' + sw + '" />';
-              html += '<text x="412" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="11.8" font-weight="700" fill="' + (isCur ? "var(--accent)" : "var(--ink)") + '">Runtime 运行账本（归宿主独占执法）</text>';
-              html += '<text x="412" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">员工零写权限 · 锁死账本快照 · Outbox 唯一回执去重</text>';
-            } else {
-              var fill = isCur ? c.fill : "var(--bg-elevated)";
-              var stroke = isCur ? c.stroke : "var(--rule-strong)";
-              html += '<rect x="24" y="' + y + '" width="712" height="' + rowH + '" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
-              html += '<text x="40" y="' + (y + 21) + '" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="' + (isCur ? c.text : "var(--ink)") + '">' + l.title + '</text>';
-              html += '<text x="40" y="' + (y + 40) + '" font-family="var(--font-sans)" font-size="10.6" fill="var(--ink-secondary)">' + l.sub + '</text>';
-              html += '<rect x="492" y="' + (y + 12) + '" width="230" height="26" rx="4" fill="var(--bg-paper)" stroke="' + (isCur ? c.stroke : "var(--rule)") + '" />';
-              html += '<text x="607" y="' + (y + 29) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="10.5" font-weight="600" fill="' + (isCur ? c.text : "var(--ink-secondary)") + '">' + l.badge + '</text>';
-            }
-            html += '</g>';
-
-            if (i < layers.length - 1) {
-              var ay1 = y + rowH;
-              var ay2 = y + rowH + gap;
-              html += '<line x1="380" y1="' + ay1 + '" x2="380" y2="' + ay2 + '" stroke="var(--rule-strong)" stroke-width="1.5" stroke-dasharray="2 2" />';
-            }
-          });
-
-          svgG.innerHTML = html;
-          svgG.querySelectorAll("[data-s3-layer]").forEach(function (el) {
-            el.addEventListener("click", function () {
-              render(parseInt(el.getAttribute("data-s3-layer"), 10));
-            });
-          });
-
-          if (window.gsap && !prefersReducedMotion.matches) {
-            window.gsap.fromTo(svgG.children, { opacity: 0.35 }, { opacity: 1, duration: 0.18, ease: "power1.out" });
-          }
-        }
-
-        btns.forEach(function (b, i) {
-          b.addEventListener("click", function () {
-            render(i);
-          });
-        });
-
-        render(0);
-      })();
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
     })();
   </script>
 </body>
