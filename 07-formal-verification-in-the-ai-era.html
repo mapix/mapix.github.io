@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("blog.theme"); } catch (e) {}
+      var meta = document.querySelector('meta[name="color-scheme"]');
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+        if (meta) meta.content = saved;
+      }
+    })();
+  </script>
+  <title>用数学给概率兜底：AI 时代的形式化验证</title>
+  <meta name="description" content="以布道为主线，循序渐进讲清软件形式化验证的工作原理（PBT、TLA+ 模型检验、Z3 SMT 求解、Lean/Rocq 定理证明）、AI 时代的不对称飞轮与四道硬边界（规约偏差与自证循环），并结合监控与归因系统 Case Study 给出四步务实落地路线图。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <style>
+    @property --fade-start {
+      syntax: "<length>";
+      inherits: false;
+      initial-value: 0px;
+    }
+
+    @property --fade-end {
+      syntax: "<length>";
+      inherits: false;
+      initial-value: 0px;
+    }
+
+    :root {
+      color-scheme: light dark;
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --bg-card: #fbf8f2;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+      --accent-soft: rgba(158, 51, 33, 0.11);
+      --ok: #256b45;
+      --ok-soft: rgba(37, 107, 69, 0.12);
+      --warn: #b36b16;
+      --warn-soft: rgba(179, 107, 22, 0.12);
+      --blue: #235884;
+      --blue-soft: rgba(35, 88, 132, 0.11);
+      --purple: #5c3d82;
+      --purple-soft: rgba(92, 61, 130, 0.11);
+
+      --font-serif: "Literata", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Fira Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+
+      --measure: 660px;
+      --wrap: 1080px;
+      accent-color: var(--accent);
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-paper: #141311;
+        --bg-elevated: #1d1b18;
+        --bg-card: #191714;
+        --ink: #ece6dc;
+        --ink-secondary: #b8b0a4;
+        --ink-muted: #857d72;
+        --rule: #2e2a25;
+        --rule-strong: #ece6dc;
+        --accent: #e06d53;
+        --accent-soft: rgba(224, 109, 83, 0.15);
+        --ok: #52b780;
+        --ok-soft: rgba(82, 183, 128, 0.14);
+        --warn: #e09f3e;
+        --warn-soft: rgba(224, 159, 62, 0.14);
+        --blue: #63a4d8;
+        --blue-soft: rgba(99, 164, 216, 0.14);
+        --purple: #a584d6;
+        --purple-soft: rgba(165, 132, 214, 0.14);
+      }
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-paper: #141311;
+      --bg-elevated: #1d1b18;
+      --bg-card: #191714;
+      --ink: #ece6dc;
+      --ink-secondary: #b8b0a4;
+      --ink-muted: #857d72;
+      --rule: #2e2a25;
+      --rule-strong: #ece6dc;
+      --accent: #e06d53;
+      --accent-soft: rgba(224, 109, 83, 0.15);
+      --ok: #52b780;
+      --ok-soft: rgba(82, 183, 128, 0.14);
+      --warn: #e09f3e;
+      --warn-soft: rgba(224, 159, 62, 0.14);
+      --blue: #63a4d8;
+      --blue-soft: rgba(99, 164, 216, 0.14);
+      --purple: #a584d6;
+      --purple-soft: rgba(165, 132, 214, 0.14);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.85;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: clip;
+    }
+
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    .skip-link:focus-visible {
+      position: fixed;
+      inset-block-start: 10px;
+      inset-inline-start: 12px;
+      z-index: 200;
+      padding: 6px 12px;
+      background: var(--bg-paper);
+      color: var(--ink);
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    /* Reading progress strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--bg-paper);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .reading-strip {
+        transition: transform 0.2s ease;
+      }
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      height: 2px;
+      background: var(--ink);
+      width: 0%;
+    }
+
+    /* Top Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 22px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .site-nav a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .site-nav a:focus-visible,
+    .site-brand:focus-visible,
+    .toc-list a:focus-visible,
+    .post-content a:focus-visible,
+    nav.series-nav a:focus-visible,
+    footer.post-footer a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      min-block-size: 28px;
+      min-inline-size: 28px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+    .theme-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Main Layout Grid */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 200px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Left Rail TOC with native scroll-target-group + JS fallback */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      scroll-target-group: auto;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 10px;
+      border-left: 1.5px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a:is(:target-current, .is-active) {
+      color: var(--ink);
+      font-weight: 600;
+      border-left-color: var(--ink);
+    }
+
+    /* Article Header */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(27px, 3.6vw, 38px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+    header.post-header h1:focus,
+    .post-section:focus {
+      outline: none;
+    }
+    .post-subtitle {
+      margin: 0 0 20px;
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.68;
+      color: var(--ink-secondary);
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 32px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt {
+      color: var(--ink-muted);
+    }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose Content */
+    .post-section {
+      scroll-margin-top: 64px;
+    }
+    .post-content p {
+      margin: 0 0 1.32em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.8vw, 27px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.3em 0 0.75em;
+      color: var(--ink);
+      scroll-margin-top: 64px;
+    }
+    .post-content h3 {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      margin: 1.8em 0 0.55em;
+      color: var(--ink);
+    }
+    .post-content h4 {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 700;
+      margin: 1.5em 0 0.45em;
+      color: var(--ink);
+    }
+    .post-content a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
+      transition: color 0.15s ease;
+    }
+    .post-content a:hover {
+      color: var(--accent);
+    }
+    .post-content ul, .post-content ol {
+      margin: 0 0 1.4em;
+      padding-left: 1.35em;
+    }
+    .post-content li {
+      margin-bottom: 0.6em;
+    }
+    .post-content code {
+      font-family: var(--font-mono);
+      font-size: 0.84em;
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+    }
+    .post-content blockquote {
+      margin: 1.5em 0;
+      padding: 14px 18px;
+      background: var(--bg-elevated);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 5px 5px 0;
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.72;
+      color: var(--ink-secondary);
+    }
+    .post-content blockquote p:last-child {
+      margin-bottom: 0;
+    }
+    .post-content blockquote strong {
+      color: var(--ink);
+    }
+    .math-inline {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      color: var(--ink);
+      background: var(--bg-elevated);
+      padding: 1px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    /* Interactive Stage Containers */
+    figure.stage {
+      margin: 2em -44px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    @media (max-width: 820px) {
+      figure.stage {
+        margin: 1.6em 0;
+      }
+    }
+
+    .stage-header {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .stage-meta-readout {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+    }
+
+    .stage-canvas {
+      padding: 14px 16px 12px;
+      background: var(--bg-card);
+    }
+    .stage-canvas svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+
+    .stage-controls {
+      padding: 10px 16px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-controls.stage-top-bar {
+      border-top: none;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* Single-row scrollable tabs with scroll-driven edge fade + IO fallback */
+    .stage-controls.stage-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: inline proximity;
+      scroll-padding-inline: 2.5rem;
+      border-top: none;
+      border-bottom: 1px solid var(--rule);
+      scrollbar-width: none;
+      --fade-size: 2.5rem;
+      mask:
+        linear-gradient(black, black) no-clip subtract,
+        linear-gradient(to right, black, transparent) 0 0 / var(--fade-start) 100% no-repeat no-clip,
+        linear-gradient(to right, transparent, black) 100% 0 / var(--fade-end) 100% no-repeat no-clip;
+      transition: --fade-start 0.2s, --fade-end 0.2s;
+    }
+    .stage-controls.stage-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    @supports (animation-timeline: scroll()) {
+      .stage-controls.stage-tabs {
+        animation: reveal-fade-start linear both, hide-fade-end linear both;
+        animation-timeline: scroll(self inline);
+        animation-range: 0 var(--fade-size), calc(100% - var(--fade-size)) 100%;
+      }
+    }
+    @keyframes reveal-fade-start {
+      to { --fade-start: var(--fade-size); }
+    }
+    @keyframes hide-fade-end {
+      from { --fade-end: var(--fade-size); }
+    }
+    .stage-controls.stage-tabs.more-start {
+      --fade-start: var(--fade-size);
+    }
+    .stage-controls.stage-tabs.more-end {
+      --fade-end: var(--fade-size);
+    }
+
+    .btn-ctl {
+      appearance: none;
+      position: relative;
+      flex: none;
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      min-block-size: 28px;
+      min-inline-size: 28px;
+      max-inline-size: 100%;
+      padding: 4px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      .stage-top-bar .btn-ctl {
+        white-space: normal;
+        text-align: start;
+        line-height: 1.35;
+        padding-block: 6px;
+      }
+    }
+    [role="tab"].btn-ctl {
+      scroll-snap-align: start;
+    }
+    @media (pointer: coarse) {
+      .theme-btn,
+      .btn-ctl {
+        min-block-size: 34px;
+      }
+    }
+    .btn-ctl:hover:not(:disabled) {
+      border-color: var(--ink);
+    }
+    .btn-ctl:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .btn-ctl:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-ctl.is-primary {
+      background: var(--ink);
+      color: var(--bg-paper);
+      border-color: var(--ink);
+    }
+    .btn-ctl.is-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-ctl.is-active,
+    .btn-ctl[aria-pressed="true"],
+    [role="tab"][aria-selected="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-ctl[aria-pressed="true"]::after,
+    [role="tab"][aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 6px -1px;
+      border-block-end: 2.5px solid var(--accent);
+    }
+    .stage-canvas[role="tabpanel"]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+
+    figcaption.stage-caption {
+      padding: 9px 16px 11px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+      border-top: 1px dashed var(--rule);
+      background: var(--bg-card);
+    }
+
+    /* Stage Detail Grid */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+    @media (max-width: 680px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .detail-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 9px 11px;
+      line-height: 1.52;
+    }
+    .detail-pill span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      margin-bottom: 3px;
+    }
+    .detail-pill strong {
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 12.8px;
+      display: block;
+    }
+    .detail-pill.is-right {
+      border-left: 3px solid var(--ok);
+    }
+    .detail-pill.is-duty {
+      border-left: 3px solid var(--accent);
+    }
+    .detail-pill.is-shift {
+      border-left: 3px solid var(--blue);
+    }
+
+    /* Responsive Comparison Matrix (@container + sticky column & row headers) */
+    .matrix-wrap {
+      margin: 1.8em -44px;
+      overflow: auto;
+      max-inline-size: calc(100% + 88px);
+      max-block-size: min(640px, 82vh);
+      container-type: inline-size;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--bg-card);
+    }
+    .matrix-wrap:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    @media (max-width: 820px) {
+      .matrix-wrap {
+        margin: 1.5em 0;
+        max-inline-size: 100%;
+      }
+    }
+    table.compare-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.58;
+      --label-2: "核心工作原理";
+      --label-3: "覆盖强度";
+      --label-4: "AI 时代的成本变化";
+      --label-5: "最适合切入的工程战场";
+      --label-6: "硬边界与局限";
+    }
+    table.compare-table caption {
+      padding: 10px 14px;
+      text-align: start;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      background: var(--bg-elevated);
+      border-block-end: 1px solid var(--rule);
+    }
+    table.compare-table thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 3;
+    }
+    table.compare-table th,
+    table.compare-table td {
+      padding: 11px 13px;
+      text-align: start;
+      border-block-end: 1px solid var(--rule);
+      vertical-align: top;
+      min-inline-size: 158px;
+    }
+    table.compare-table thead th {
+      background: var(--bg-elevated);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    table.compare-table thead th:first-child {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 4;
+      border-inline-end: 1px solid var(--rule);
+    }
+    table.compare-table tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 2;
+      min-inline-size: 148px;
+      background: var(--bg-card);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      color: var(--accent);
+      border-inline-end: 1px solid var(--rule);
+    }
+    table.compare-table tbody tr:last-child th,
+    table.compare-table tbody tr:last-child td {
+      border-block-end: none;
+    }
+
+    @container (width < 640px) {
+      .matrix-wrap {
+        max-block-size: none;
+      }
+      table.compare-table,
+      table.compare-table caption,
+      table.compare-table thead,
+      table.compare-table tbody,
+      table.compare-table tr,
+      table.compare-table th,
+      table.compare-table td {
+        display: block;
+        min-inline-size: 0;
+      }
+      table.compare-table thead {
+        display: none;
+      }
+      table.compare-table tbody tr {
+        margin: 10px;
+        border: 1px solid var(--rule);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      table.compare-table tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        inset-inline-start: auto;
+        z-index: 2;
+        background: var(--bg-elevated);
+        border-inline-end: none;
+        white-space: normal;
+      }
+      table.compare-table td:nth-child(2)::before { content: var(--label-2) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(3)::before { content: var(--label-3) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(4)::before { content: var(--label-4) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(5)::before { content: var(--label-5) "："; font-weight: 600; color: var(--ink); }
+      table.compare-table td:nth-child(6)::before { content: var(--label-6) "："; font-weight: 600; color: var(--ink); }
+    }
+
+    /* Post Series Nav */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.72;
+      color: var(--ink-muted);
+    }
+    footer.post-footer a {
+      color: var(--ink-secondary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    footer.post-footer a:hover {
+      color: var(--accent);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#post-title" class="skip-link visually-hidden">跳至正文</a>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">用数学给概率兜底：AI 时代的形式化验证</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="站点与章节">
+      <a href="index.html">全部文章</a>
+      <a href="#mechanics">工作原理</a>
+      <a href="#flywheel">AI 飞轮</a>
+      <a href="#boundaries">能力边界</a>
+      <a href="#case-study">监控归因案例</a>
+      <a href="#playbook">四步落地</a>
+      <a href="#epilogue">尾声</a>
+      <button type="button" class="theme-btn" id="theme-toggle">
+        <span class="visually-hidden">切换明暗主题，当前 </span><span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="文章目录">
+      <ul class="toc-list" id="toc-list" role="list">
+        <li><a href="#intro" class="is-active" aria-current="true">引子：17,760 次测试漏过的 Bug</a></li>
+        <li><a href="#mechanics">一、揭开黑盒：怎么“证明”程序？</a></li>
+        <li><a href="#flywheel">二、AI 时代的不对称飞轮</a></li>
+        <li><a href="#boundaries">三、泼一盆冷水：四道硬边界</a></li>
+        <li><a href="#case-study">四、Case Study：监控与归因体检</a></li>
+        <li><a href="#playbook">五、现代 AI 开发四步落地</a></li>
+        <li><a href="#epilogue">尾声：给概率铺上铁轨</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1 id="post-title" tabindex="-1">用数学给概率兜底：AI 时代的形式化验证</h1>
+        <p class="post-subtitle">过去几十年，软件形式化验证像是挂在航天器与操作系统内核上的重型防弹衣——极可靠，却昂贵到绝大多数工程团队碰都不敢碰。进入 AI Agent 时代，局面发生了根本反转：当代码开始以每周上千 PR 的速度喷涌，传统“跑用例抽样找 Bug”的测试网越来越兜不住，而大模型恰恰能把原本昂贵的证明搜索打成白菜价，再用极小的确定性证明内核兜住自身的概率幻觉。本文以布道为主线，循序渐进讲清形式化验证的工作原理、能力边界与实战切入方式，并结合一个“监控与归因系统”的真实评估案例，聊聊现代 AI 驱动的软件开发该如何务实地用上这件武器。</p>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-23">2026 年 11 月 23 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>12 分钟（含交互图解）</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#07</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <section class="post-section" id="intro" tabindex="-1">
+          <p>2026 年 11 月，CertiK 与哥伦比亚大学团队联合公布了一项名为 <strong>TensorLean</strong> 的成果（<a href="https://mp.weixin.qq.com/s/2h3_FMnBI1rxqmmRYTCeSQ">机器之心报道</a>）：全球首次在编译后的 GPU 底层代码（PTX）层面，对 <strong>DeepSeek 的 <code>DeepGEMM</code></strong> 与 <strong>FlashAttention</strong> 等 6 个生产级开源 AI 算子库完成了大规模形式化验证。研究团队横跨多代 GPU 架构，评估了 <strong>149 个</strong>已编译内核实例，用机器可核验的数学证明验通了其中 <strong>83 个</strong>，并一口气揪出了 <strong>38 个此前从未被发现的正确性漏洞</strong>——其中 <code>DeepGEMM</code> 有 2 个，<code>FlashAttention</code> 有 23 个。</p>
+
+          <p>最让人后背发凉的，并不是漏洞的数量，而是它们逃避常规测试的方式：<code>FlashAttention-4</code> 里藏着一处并发数据竞争，<strong>此前跑了 17,760 次常规测试依然毫发无损地漏了过去</strong>；<code>flash_attn_with_kvcache</code> 里还有一处越界读写，在特定位置编码配置下不会导致程序崩溃，只会静默污染 KV Cache，让上层大模型在毫无察觉中算错概率。这并非杞人忧天——早在 2025 年 8 月，Anthropic 就曾因为一项运行时算子优化里的隐蔽错误，导致 Claude 输出概率分布失真，在正常对话里莫名吐出泰文和语法错误。</p>
+
+          <p>这件事把软件工程里一道古老的分水岭重新拉到了聚光灯下。</p>
+
+          <p>传统软件测试本质上是<strong>抽样找 Bug</strong>：你在浩瀚的输入空间和并发时序里挑出几百、几万组样例跑一遍，全绿就放行。计算机科学先驱 Edsger Dijkstra 半个世纪前就留下过一句极冷峻的话：<strong>“测试只能证明 Bug 的存在，永远无法证明 Bug 的不存在。”</strong> 一万七千次测试没撞见那个并发交错点，只说明你的渔网刚好错过了那条鱼。</p>
+
+          <p>而<strong>软件形式化验证（Formal Verification）</strong>走的是一条完全不同的路：它使用严格的数学逻辑和形式化方法，来证明软件系统（一段程序、一个协议或一台状态机）在<strong>所有可能输入与所有可能执行路径</strong>下，是否满足给定的<strong>规约（Specification）</strong>或安全性质。它追求的不是“大概没测出毛病”，而是<strong>穷尽性或数学证明级别的可信度</strong>。</p>
+
+          <p>过去半个世纪里，几乎每个读过计算机教材的工程师都听过形式化验证，但真正把它用进日常项目的不到百分之一——太慢、太贵、太依赖博士级专家。可站在 2026 年底回头看，它正迅速从少数专家的高成本重型工具，演变为 AI 时代提供<strong>“确定性兜底”</strong>的核心基础设施。要搞明白这件武器到底该怎么用，我们得先掀开盖子，看看它究竟是怎么工作的。</p>
+        </section>
+
+        <section class="post-section" id="mechanics" tabindex="-1">
+          <h2>一、揭开黑盒：形式化验证到底是怎么“证明”程序的？</h2>
+
+          <p>很多人一听“形式化验证”就本能打退堂鼓，脑子里立刻浮现出黑板上密密麻麻的希腊字母。其实剥开学术术语，它的底层工作流非常简单，核心只有三件东西：一是<strong>规约（Specification）</strong>，也就是你用无歧义的逻辑写下的“数学契约”——最常见的两类性质叫<strong>安全性（Safety，“坏事永远不能发生”）</strong>与<strong>活性（Liveness，“好事最终一定会发生”）</strong>；二是<strong>系统模型或代码语义（Model / Semantics）</strong>，把状态机、协议逻辑甚至编译后的 PTX / RISC-V 指令翻译成精确的数学对象；三是<strong>确定性检验引擎（Engine / Kernel）</strong>，不用具体样例去跑，而是靠状态穷尽、约束求解或逻辑推导，直接判定“系统是否可能违背规约”。</p>
+
+          <!-- DIAGRAM 1: VERIFICATION MECHANICS & WEAPON SPECTRUM (4-TAB INTERACTIVE) -->
+          <figure class="stage" id="stage-spectrum">
+            <div class="stage-header">
+              <span class="stage-title">工作原理图谱：从“抽样寻错”到“数学证明”的四级引擎</span>
+              <span class="stage-meta-readout" id="s1-readout">TIER 0 · 传统测试（点状抽样）</span>
+            </div>
+            <div class="stage-controls stage-tabs" id="s1-tablist" role="tablist" aria-label="传统测试与三级形式化验证引擎的工作原理视图">
+              <button type="button" class="btn-ctl" role="tab" id="s1-tab-0" aria-selected="true" tabindex="0" data-s1="0">00 传统测试（抽样寻错）</button>
+              <button type="button" class="btn-ctl" role="tab" id="s1-tab-1" aria-selected="false" tabindex="-1" data-s1="1">01 模型检验（TLA+ / Quint）</button>
+              <button type="button" class="btn-ctl" role="tab" id="s1-tab-2" aria-selected="false" tabindex="-1" data-s1="2">02 SMT 求解（Z3 / Dafny / Verus）</button>
+              <button type="button" class="btn-ctl" role="tab" id="s1-tab-3" aria-selected="false" tabindex="-1" data-s1="3">03 定理证明器（Lean 4 / Rocq）</button>
+            </div>
+            <div class="stage-canvas" role="tabpanel" id="s1-panel" tabindex="0" aria-labelledby="s1-tab-0">
+              <svg viewBox="0 0 760 248" role="img" aria-label="传统测试、模型检验、SMT 约束求解与交互式定理证明四类验证引擎的工作原理示意图">
+                <defs>
+                  <marker id="spec-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ink-muted)" />
+                  </marker>
+                  <marker id="spec-arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--accent)" />
+                  </marker>
+                  <marker id="spec-arrow-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ok)" />
+                  </marker>
+                </defs>
+                <g id="s1-svg"></g>
+              </svg>
+              <div class="detail-grid">
+                <div class="detail-pill is-shift">
+                  <span>工作原理与数学机制</span>
+                  <strong id="s1-mech"></strong>
+                </div>
+                <div class="detail-pill is-right">
+                  <span>AI 时代的发力点</span>
+                  <strong id="s1-ai"></strong>
+                </div>
+                <div class="detail-pill is-duty">
+                  <span>代表工具与生产案例</span>
+                  <strong id="s1-cases"></strong>
+                </div>
+              </div>
+            </div>
+            <figcaption class="stage-caption" id="s1-cap">点击上方标签（支持左右方向键与 Home/End 切换），逐级查看从“抽样找 Bug”到“极小内核数学证明”的底层机理。</figcaption>
+          </figure>
+
+          <p>同样是“拿数学逻辑拷问代码”，工程界按自动化程度与证明深度，长出了四级渐进的武器谱系——<strong>你完全不必一上来就啃最重的定理证明器</strong>：</p>
+
+          <h3>1. 入门桥梁：基于属性的测试（PBT / Fuzzing）</h3>
+          <p>严格来说，基于属性的测试（Property-Based Testing，如 Python 的 <code>Hypothesis</code>、Rust 的 <code>proptest</code>、UI 层的 <code>Bombadil</code>）仍属于动态随机抽样，不是数学证明。但它是工程师通向形式化思维最顺滑的台阶。写传统单元测试时，你写的是具体例子：<code>assert sort([3, 1, 2]) == [1, 2, 3]</code>；写属性测试时，你被迫往上一层思考<strong>不变量（Invariant）</strong>：“对于任意整数数组，排序后相邻元素单调不减，且输出的元素多重集与输入完全一致”，然后让框架自动生成成千上万组畸形输入去狂轰滥炸。当你开始习惯把“测几个例子”改写成“提炼不变量”，就已经迈过了形式化验证最难的那道认知门槛。</p>
+
+          <h3>2. 第一把真刀：模型检验（Model Checking，代表：TLA+ / Quint / Kani）</h3>
+          <p>如果你的系统满是异步回调、并发加锁、网络乱序重发或分布式状态切换，最趁手的武器是<strong>模型检验</strong>。它的原理极其直白：<strong>暴力但系统地穷尽状态空间</strong>。你用 <strong>TLA+</strong> 或语法更贴近现代程序员的 <strong>Quint</strong>，花一两百行把系统的核心状态、允许的状态转换和要守的不变量写出来。点击运行后，检验器（如 TLC）会像穷举棋谱一样，把所有节点并发交错、消息乱序、半途宕机和重试组合全部展开成一张庞大的状态图，逐个节点核对不变量有没有被打破。</p>
+          <p>它最迷人的地方在于回报方式：在设定的有界规模内，如果全部状态都守住了不变量，你就拿到了穷尽级的安心；<strong>一旦某条极其刁钻的并发路径撞破了红线，检验器会直接吐出一份最短的“反例 Trace”</strong>——精确告诉你第 1 步发生了什么、第 2 步哪条消息延迟了、第 5 步系统是怎么死锁的。AWS 早在十年前就披露，他们在 DynamoDB 和 S3 上用 TLA+ 抓出了多个扛过了深度设计评审、压力测试和混沌故障注入却依然潜伏的多步并发 Bug；而在 Rust 里，<strong>Kani</strong> 还能直接在代码级别做有界模型检验。</p>
+
+          <h3>3. 第二把真刀：SMT 求解器与自动验证语言（代表：Z3 / Dafny / Verus）</h3>
+          <p>输入空间大到没法枚举状态图（比如 64 位整数、复杂金额计算、上百条权限组合）怎么办？那就把问题交给 <strong>SMT 求解器（Satisfiability Modulo Theories）</strong>，最著名的是微软开源的 <strong>Z3</strong> 和开源的 <strong>cvc5</strong>。SMT 求解器玩的是一手极其漂亮的<strong>反证法</strong>：它把程序里的分支条件、算术运算和<strong>“规约的否定式”</strong>编码成一组一阶逻辑约束公式（<span class="math-inline">Program ∧ ¬Spec</span>），然后问求解器：“存不存在<strong>哪怕一组输入</strong>，能让程序跑出违背规约的结果？”</p>
+          <ul>
+            <li>如果求解器回答 <strong><code>SAT</code>（可满足）</strong>，它会当场把那组触发 Bug 的反例输入算出来给你看；</li>
+            <li>如果求解器回答 <strong><code>UNSAT</code>（不可满足）</strong>，意味着在数学上根本找不到任何反例——等价于<strong>所有合法输入都 100% 满足规约</strong>。</li>
+          </ul>
+          <p>你甚至不需要重写业务系统就能直接用 Z3（Python 装一个 <code>z3-solver</code> 库就能写几十行脚本检验核心定价、路由、排班或权限规则）。AWS 的安全引擎 <strong>Zelkova</strong>（支撑 IAM Access Analyzer 与 S3 Block Public Access）每天就在后台靠 Z3 跑几十亿次求解，用数学证明某条云存储策略绝不可能意外暴露公网。如果想把这种能力直接焊进编程语言，<strong>Dafny</strong> 允许你把 <code>requires</code> / <code>ensures</code> 断言和代码写在一起交给 Z3 自动消解；而 Rust 生态里的 <strong>Verus</strong> 则直接把 <code>spec</code>、<code>proof</code> 和 <code>exec</code> 三种模式嵌进原生 Rust 源码里，验证通过后编译期把证明代码彻底擦除，<strong>生产二进制零性能开销</strong>，已被 AWS 用于验证 Nitro 云隔离内核的底层并发锁与内存操作。</p>
+
+          <h3>4. 终极武器：交互式定理证明器（代表：Lean 4 / Rocq）</h3>
+          <p>模型检验怕状态爆炸，SMT 求解器在面对复杂归纳、非线性算术或大规模元理论证明时容易遇上<strong>证明脆性（Proof Brittleness）</strong>——改了一行无关代码或升级求解器版本，突然就超时卡死。AWS 的开源授权策略引擎 <strong>Cedar</strong> 最早用 Dafny 建模，后来正是为了摆脱 SMT 超时脆性，把核心形式化证明全面迁移到了 <strong>Lean 4</strong>，规格代码量反而缩减了近一半。</p>
+          <p><strong>Lean 4</strong> 与 <strong>Rocq</strong>（原名 Coq）属于<strong>交互式定理证明器（Interactive Theorem Prover）</strong>。它们基于依赖类型论（核心思想是著名的 Curry-Howard 对应：<strong>逻辑命题就是类型，数学证明就是构造出符合该类型的程序</strong>），像数学家写论文一样用归纳法与推理策略（Tactics）一步步搭建证明——因此能覆盖<strong>无限输入空间</strong>，甚至像 TensorLean 那样，分两步先证明理想实数运算无误，再严格框定低精度浮点舍入误差的累积上界。它真正改变游戏规则的设计，在于<strong>极小的可信计算基（TCB，Proof Kernel）</strong>：无论证明过程写了十万行还是上亿行推导脚本，最后负责核验每一步推理是否合法的确定性证明内核只有几千行代码。记住这个特性——它正是 AI 时代引爆形式化验证的火种。</p>
+        </section>
+
+        <section class="post-section" id="flywheel" tabindex="-1">
+          <h2>二、为什么是今天？AI 时代引爆的“不对称飞轮”</h2>
+
+          <p>既然原理早就摆在那儿，为什么过去几十年形式化验证始终是小众屠龙技，到了 2025–2026 年却突然破圈？过去推不开，卡死的从来不是价值，而是<strong>人力成本极其不划算</strong>：给几百行核心代码配齐循环不变量和引理证明，专家往往要花出比写代码本身多 5 到 10 倍的时间；业务一迭代，证明全碎，普通团队根本养不起。进入 AI Agent 时代，供需两端同时翻了盘。分布式系统专家 Martin Kleppmann 在 2025 年底的预言文章（<a href="https://martin.kleppmann.com/2025/12/08/ai-formal-verification.html"><em>Prediction: AI will make formal verification go mainstream</em></a>）精准点透了这场剧变的底层逻辑：</p>
+
+          <h3>1. 供给侧反转：“找证明极难、验证明极易”完美匹配大模型</h3>
+          <p>大模型骨子里是概率预测机器，拿它直接写业务代码，最头疼的问题是它会一本正经地编出“看着极像对的、实则暗藏死角”的幻觉代码。但放在形式化验证的闭环里，情况彻底反过来了：<strong>构造证明（Proof Search）</strong>需要海量试错与灵光一现，这是过去人类最耗时的瓶颈，却恰好是大模型结合搜索循环最擅长的活；<strong>检验证明（Proof Checking）</strong>则完全交给确定性的 Lean / Rocq 内核或 Z3 求解器——哪怕模型满嘴跑火车，只要漏掉一个边界分支、少写一条前置条件，证明内核会冷酷无情地当场拒收，并把精确的逻辑缺口扔回上下文，逼着 Agent 在沙盒里连夜返工，直到数学完全闭合。<strong>AI 吃掉了最昂贵的证明搜索成本，确定性证明内核兜住了 AI 最致命的概率幻觉。</strong></p>
+
+          <h3>2. 需求侧倒逼：当代码论千 PR 喷涌，人肉 Review 彻底失灵</h3>
+          <p>2026 年 11 月的 AI Engineer CODE Summit 上，SpaceX/xAI 负责 Grok Bot 的 Principal Engineer <strong>Lauren Tan（社区常叫“土豆姐” <code>@poteto</code>）</strong>做了一场极具冲击力的分享——<a href="https://www.youtube.com/watch?v=ZZ19zhYnDKY&amp;t=3662s"><em>All Code Is Slop (Except Mine)</em></a>（顺带一提，这场演讲除了形式化验证，她关于有机架构演进、靠结构设计消灭整类错误、以及严控代码注释避免给脏补丁发“通行证”的思考也非常值得完整一看）。</p>
+          <p>她开场甩出了一组数字：在投入半年打造 Agent 开发环境后，团队单月往生产环境合入了大约 <strong>11,000 个 PR</strong>（她个人就贡献了约 <strong>3,000 个</strong>），在保持每日稳定发版的同时，回滚率压在了 <strong>0.5% 左右</strong>。一个月一万多个 PR，靠人眼逐行读 diff 显然是天方夜谭。她的核心方法是<strong>倒置信任金字塔（Inverse Pyramid of Trust）</strong>——不再出了错就往 <code>AGENTS.md</code> 里追加自然语言叮嘱，而是把最多预算投入确定性代码架构、类型系统与静态检查；紧接着的第二层，正是<strong>运行时验证与形式化验证</strong>——他们已经把 <strong>TLA+</strong> 用在了跨设备通知这类复杂有状态用户流上，把 <strong>Lean</strong> 用在了自研 UI 虚拟化库的核心算法证明上，再配合基于属性的 UI 模糊测试（<code>Bombadil</code>）与状态机可视化图谱，让人从“逐行读代码”升级为“审查行为证据与验证工件”。</p>
+          <p>她的经济学判断一针见血：过去不是工程师不想用 TLA+ 和 Lean，而是纯手工创建和维护太贵；<strong>当 Agent 把构建与维护验证工件的成本打下来之后，验证不会消失，反而会吃进更大比例的工程预算，成为高吞吐软件工厂真正的安全带。</strong></p>
+
+          <h3>3. 三块已经落地的 2026 年里程碑</h3>
+          <ul>
+            <li><strong>生产级 AI 算子（TensorLean，2026 年 11 月）：</strong>直接在编译后的 GPU PTX 指令上建 Lean 语义模型并接入 Z3/cvc5，通过“精确实数等价 + 浮点误差上界”两步验证，把张量数学逻辑与内存布局解耦，用 <strong>10,278 行规约管住了 151,285 行算子源码（约 15:1 压缩比）</strong>，在 DeepSeek DeepGEMM 与 FlashAttention 等 6 个库里挖出 38 个真实漏洞，而且每次换新显卡或做激进性能优化后都能一键复验。</li>
+            <li><strong>大规模开源 C 库（Anthropic Frontier Red Team + Theorem，2026 年 10 月）：</strong>让 Claude 接手 Google OSS-Fuzz 里 123 个开源 C 库的 239 个测试入口，直接在编译后的 RISC-V 二进制层面自动生成了累计约 <strong>1.8 亿行</strong> Rocq 证明（单个入口中位数约 1.8 万条指令，对应约 60 万行证明脚本），数学证明 64MB 以内任意输入都不会触发崩溃或内存越界，抓出了数百个躲过多年模糊测试的深层漏洞（包括重现 <code>libexpat</code> 的 <code>CVE-2026-56132</code>）。更关键的是：<strong>人类审计者一行都不用读那 1.8 亿行证明脚本</strong>——信任边界被死死锁在极小的 Rocq 内核、定理声明和处理器语义模型里。</li>
+            <li><strong>从业务代码延伸到 Agent 自身边界：</strong>学术界开始用<strong>“Vericoding（可验证编码）”</strong>对照“Vibe Coding（氛围编程）”；在自带 Z3 自动化的 Dafny 基准上，大模型迭代验证成功率已突破八成以上，TLA+ VS Code 扩展也上线了官方 MCP Server，Quint 则推出了配套的 Agent Skill。呼应上一篇（<code>#06</code>）聊到的“模型推演、宿主护栏、人类担责”三重归位——我们不可能形式化证明千亿参数大模型绝不说胡话，但我们完全可以用 TLA+ 或 Z3 形式化证明包在它外层的确定性宿主系统（Harness）：证明多 Agent 派单图严格无环、日预算硬封顶永不击穿、Outbox 唯一回执绝不重复扣款、以及权限最小交集绝不越权泄密。</li>
+          </ul>
+        </section>
+
+        <section class="post-section" id="boundaries" tabindex="-1">
+          <h2>三、泼一盆冷水：什么能做，什么不能做，边界究竟在哪里？</h2>
+
+          <p>布道一项强大的技术，最忌讳把它吹成包治百病的银弹。如果搞不清形式化验证的边界，强行拿去硬套不适合的场景，非但拿不到确定性，反而会把团队拖进泥潭。要看清它的真实轮廓，必须先划清<strong>四道硬边界</strong>：</p>
+
+          <h3>边界一：它只认“可精确表述的确定性骨架”，碰不了“模糊品味与开放世界”</h3>
+          <ul>
+            <li><strong>高 ROI 甜点区（极其适合）：</strong>① <strong>协议、并发与状态机</strong>（分布式一致性、交易/订单/账务状态流转、重试幂等、告警收敛、多 Agent 编排调度——代码短但并发交错路径动辄百万级）；② <strong>权限、路由与隔离策略</strong>（IAM / Cedar 访问控制、多租户与单产品切片隔离、风控规则组合）；③ <strong>核心算法、数值边界与底层解析器</strong>（AI GPU 算子、密码学、编解码器内存安全、金融分账/定价公式、数据归因守恒算法、UI 虚拟滚动区间计算）。</li>
+            <li><strong>天然禁区（别白费力气）：</strong>① <strong>主观体验与美学品味</strong>（页面是否优雅、动画是否顺手、致歉信语气够不够诚恳）；② <strong>开放世界的经验预测与商业判断</strong>（推荐排序用户爱不爱点、大盘下跌是不是竞品促销所致——归统计回测、A/B 实验与人的判断）；③ <strong>朝令夕改的草稿期 CRUD</strong>（明天就推倒重来的原型页强写数学规约纯属拿高射炮打蚊子）。</li>
+          </ul>
+
+          <h3>边界二：最危险的陷阱——规约偏差与“自证循环（Circular Verification）”</h3>
+          <blockquote>
+            <p><strong>第一条军规：形式化验证只证明“你的实现满足你写下的规约”，绝不保证“你写下的规约对齐了你的真实意图”。</strong></p>
+          </blockquote>
+          <p>这句话在 AI 时代变得比以往任何时候都更致命。今天有了<strong>自动形式化（Autoformalization）</strong>，大模型能直接把自然语言需求翻成 Lean 定理或 TLA+ 规约，大幅降低了门槛。但如果图省事，把<strong>“翻译规约 + 写业务代码 + 构造证明”三件事全丢给同一个 AI 闭环</strong>，就会撞上极其隐蔽的<strong>规约博弈（Formalization Gaming）与自证循环</strong>：</p>
+          <ul>
+            <li><strong>偷偷塞入矛盾假设（空真 <code>vacuously true</code>）：</strong>逻辑学里有一条铁律——只要前提本身恒为假（比如写进了互相矛盾的约束 <span class="math-inline">x &gt; 10 ∧ x &lt; 5</span>），后面不管推导出什么荒谬结论，在数学上都是永远成立的。证明内核只查逻辑自洽，不会提醒你“这组前提在现实里永远不可能触发”。</li>
+            <li><strong>为了过编译而篡改命题或捏造公理：</strong>2026 年的 <a href="https://arxiv.org/html/2604.19459v1"><em>Do LLMs Game Formalization?</em></a> 等前沿研究实测发现，即便前沿模型在 Lean 4 里的代码编译通过率高达 87%~99%，一旦证明受阻，模型依然可能悄悄改歪原始前提、丢掉边界条件，或顺手声明一条未经证明的 <code>axiom</code> 来强行过关——证明器欢天喜地亮绿灯，生产系统却带着致命漏洞上了线。</li>
+          </ul>
+          <p>正如业内一句极精准的概括：<strong>“证明变便宜了，但规约没有。”（The proof got cheap. The specification didn't.）</strong> AI 时代，<strong>人类的核心职责必须上移到把关规约是否对齐真实意图</strong>，并靠三招掐死自证循环：一是<strong>规约与实现拆权、人审规约不审证明</strong>（CI 硬拦截 <code>sorry</code> 与非法 <code>axiom</code>）；二是<strong>空真检验与变异测试（Vacuity &amp; Mutation Check）</strong>——故意往代码里塞几个已知 Bug，看证明器能不能精准翻红；三是<strong>混合验证与差分对拍（Hybrid Verification）</strong>——像 AWS Cedar 那样把 Lean 模型当参考标准，和生产 Rust 代码跑数百万次随机差分测试，互相交叉校准。</p>
+
+          <h3>边界三：模型—现实鸿沟（Model-Reality Gap）与可信计算基（TCB）</h3>
+          <p>形式化验证永远建立在一组“信任假设”之上：TLA+ 证对了分布式锁设计，不代表线上 Go 代码没漏写 <code>defer unlock()</code>；Anthropic 团队也在报告里坦诚划清边界——那 239 份 OSS-Fuzz 证明针对的是单线程、静态链接 <code>musl</code> 的 RISC-V 二进制在 64MB 输入下经特定 fuzz 入口不崩溃，它并不自动等价于多线程动态链接 <code>glibc</code> 的 x86 生产集群万无一失，也不证明没有死循环。此外，编译器 Bug、CPU 硬件缺陷与第三方接口撒谎，全在形式化模型假设之外。</p>
+
+          <h3>边界四：理论与工程天花板</h3>
+          <p>理论上，停机问题与哥德尔不完备定理决定了不存在能自动判定所有程序任意性质的万能机器；工程上，状态空间爆炸、SMT 求解脆性以及初期建模成本，决定了形式化验证必须用在最致命的刀刃上。</p>
+
+          <!-- DIAGRAM 2: 3-CASE × 4-STEP SIMULATOR (FLYWHEEL · CIRCULAR TRAP · MONITORING CASE STUDY) -->
+          <figure class="stage" id="stage-simulator">
+            <div class="stage-header">
+              <span class="stage-title">三组核心推演：AI 不对称飞轮 · 自证循环陷阱 · 监控归因手术刀</span>
+              <span class="stage-meta-readout" id="s2-readout">CASE 1 / 3 · STEP 1 / 4</span>
+            </div>
+            <div class="stage-controls stage-top-bar">
+              <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s2-case="flywheel">1. AI 不对称飞轮（供给与需求双反转）</button>
+              <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="circular">2. 规约偏差与自证循环（怎么骗过证明器与破解）</button>
+              <button type="button" class="btn-ctl" aria-pressed="false" data-s2-case="monitoring">3. Case Study：监控与归因系统的可证边界拆解</button>
+            </div>
+            <div class="stage-canvas">
+              <svg viewBox="0 0 760 264" role="img" aria-label="AI 时代形式化验证不对称飞轮、规约偏差与自证循环防范、以及监控归因系统边界拆解的四步推演图">
+                <defs>
+                  <marker id="sim-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--ink-muted)" />
+                  </marker>
+                </defs>
+                <g id="s2-graph"></g>
+                <rect x="20" y="194" width="720" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)" />
+                <text id="s2-line-1" x="36" y="216" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--ink)"></text>
+                <text id="s2-line-2" x="36" y="238" font-family="var(--font-sans)" font-size="12" fill="var(--ink-secondary)"></text>
+              </svg>
+            </div>
+            <div class="stage-controls">
+              <button type="button" class="btn-ctl" id="s2-prev">◀ 上一步</button>
+              <button type="button" class="btn-ctl is-primary" id="s2-next">下一步 ▶</button>
+              <button type="button" class="btn-ctl" id="s2-auto">▶ 自动演示</button>
+              <button type="button" class="btn-ctl" id="s2-reset">重置</button>
+            </div>
+            <figcaption class="stage-caption" id="s2-cap">切换三组推演，单步拆解 AI 为什么打通了形式化验证的经济性、如何识别并堵死 AI“自证循环”，以及监控归因系统该如何精准切割可证边界。</figcaption>
+          </figure>
+
+          <p>把从传统测试到定理证明的五级验证手段摆在一张表里，各自的定位与边界一目了然：</p>
+
+          <div class="matrix-wrap" tabindex="0" role="region" aria-labelledby="fv-matrix-caption">
+            <table class="compare-table">
+              <caption id="fv-matrix-caption">五级软件验证手段的工作原理、覆盖强度、AI 时代成本变化与硬边界对照表（桌面端可横向滚动，窄屏自动折叠为卡片）</caption>
+              <thead>
+                <tr>
+                  <th scope="col">验证层级</th>
+                  <th scope="col">核心工作原理</th>
+                  <th scope="col">覆盖强度</th>
+                  <th scope="col">AI 时代的成本变化</th>
+                  <th scope="col">最适合切入的工程战场</th>
+                  <th scope="col">硬边界与局限</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">传统单元测试（UT）</th>
+                  <td>人工枚举具体输入输出样例跑断言</td>
+                  <td>极低（点状抽样）</td>
+                  <td>AI 生成极快，但极易顺着同源偏见凑绿灯</td>
+                  <td>常规业务逻辑回归、快速冒烟、接口契约固定</td>
+                  <td>只能证有 Bug，不能证无 Bug；躲不过罕见并发与极端组合</td>
+                </tr>
+                <tr>
+                  <th scope="row">属性测试与模糊测试（PBT / Fuzzing）</th>
+                  <td>写通用不变量，由引擎生成海量随机/变异输入轰炸</td>
+                  <td>中（高密度动态探索）</td>
+                  <td>AI 帮写属性与 fuzz harness，自动开 PR 修 Bug</td>
+                  <td>数据编解码、UI 状态探索、API 边界容错、差分对拍</td>
+                  <td>仍属动态抽样，17,760 次测试漏掉的并发竞态仍可能漏网</td>
+                </tr>
+                <tr>
+                  <th scope="row">模型检验（TLA+ / Quint / Kani）</th>
+                  <td>抽象状态机，在有界规模内穷尽探索全部并发交错路径</td>
+                  <td>高（有界全空间穷尽）</td>
+                  <td>AI 辅助建模型与读反例 Trace；MCP / Skill 接轨代码</td>
+                  <td>分布式协议、状态机流转、异步重试幂等、多 Agent 编排防环</td>
+                  <td>存在状态空间爆炸；验证的是设计模型，需防代码实现漂移</td>
+                </tr>
+                <tr>
+                  <th scope="row">SMT 求解与自动验证（Z3 / Dafny / Verus）</th>
+                  <td>把程序与规约否定式转成逻辑公式，求 <code>UNSAT</code> 反证无反例</td>
+                  <td>极高（逻辑全量覆盖）</td>
+                  <td>Vericoding 进展最快区（Dafny / Z3 自动化极高）</td>
+                  <td>权限策略（IAM）、定价/分账/归因守恒公式、核心 Rust 并发与内存</td>
+                  <td>复杂非线性归纳易遇 SMT 超时脆性；需防范规约写弱</td>
+                </tr>
+                <tr>
+                  <th scope="row">交互式定理证明（Lean 4 / Rocq）</th>
+                  <td>基于依赖类型论逐步推导，由极小确定性 Proof Kernel 核验</td>
+                  <td>最高（无限空间数学证明）</td>
+                  <td>剧变核心区：AI 接手海量证明搜索，人审精炼规约</td>
+                  <td>AI GPU 算子（TensorLean）、密码学、开源安全基础库、核心算法内核</td>
+                  <td>规约对齐成本高，易遭 AI 规约博弈/空真欺骗；不适合高频变动业务</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="post-section" id="case-study" tabindex="-1">
+          <h2>四、Case Study：拿“监控与归因系统”做一次实战体检</h2>
+
+          <p>聊完原理和边界，很多一线工程师心里大概还是会有个问号：“听起来都很有道理，但那些不是 GPU 算子就是云厂商底层协议。<strong>我手头就是一个普普通通的复杂业务系统，除了写 UT 之外，真能用上形式化验证吗？</strong>”</p>
+
+          <p>这里分享一个在 AI 时代<strong>门槛低到不可思议、却经常立刻挖出真金白银</strong>的起手式：<strong>别先去啃半年 TLA+ 或 Lean 教材，直接把你手头正在做的复杂项目交给 AI，让它判断一下——“除了常规单元测试之外，在核心算法、状态机和关键规则上，究竟有没有形式化验证的空间？”</strong> 往往在复杂项目上，一问就能得到意想不到的立即收获。下面我们直接拿一个极其真实的工程提问来做现场解剖：</p>
+
+          <blockquote>
+            <p><strong>提问：“评估一下，我们这个项目做监控和归因，是否有可能通过形式化验证来验证系统的有效性？”</strong></p>
+          </blockquote>
+
+          <p>这道题出得非常刁钻，也非常有代表性。如果按传统思维把“监控和归因系统的有效性”当成一整块铁板来看，你会立刻陷入死胡同——监控满眼都是时序噪音，归因涉及复杂的业务因果，数学怎么可能证明“归因 100% 有效”？但只要挥起前一节磨好的<strong>边界手术刀</strong>，沿着“统计/现实层 vs 确定性骨架层”一刀劈开，整张项目架构立刻会显影出清晰的两半：</p>
+
+          <h3>第一刀：先把“绝不能用形式化验证硬证”的那一半切出去</h3>
+          <ul>
+            <li><strong>现实世界的真因果归属：</strong>昨天巴西市场转化率掉了 30%，究竟是竞品突然降价、本地节假日效应，还是新版本体验变差？真实商业世界存在无数未观测的混杂变量，数学证明不可能替代现场归因与人类定性。</li>
+            <li><strong>检测阈值的业务灵敏度：</strong>异常检测该设 <code>2.5σ</code> 还是 <code>3σ</code>？多大跌幅才值得凌晨三点发电话告警？这是召回率与打扰成本的业务权衡，留给历史数据回测与值班反馈去调优。</li>
+            <li><strong>归因报告的自然语言表达质量：</strong>大模型写出来的排障摘要够不够通俗、有没有切中管理层关切，属于开放语义，留给离线 Eval 与人工评审。</li>
+          </ul>
+
+          <h3>第二刀：立刻收获的四块“高杠杆确定性骨架”</h3>
+          <p>切掉上面那一半后，你会惊喜地发现，监控与归因系统底下压着四块<strong>极其致命、常规 UT 极难兜全、但规约却短得惊人</strong>的确定性核心——每一块都能立刻上形式化验证，且马上就能抓出潜伏 Bug：</p>
+
+          <h4>1. 归因分摊的数学守恒与“缺数纪律”（Z3 / Dafny / Lean）</h4>
+          <p>监控归因系统线上最丢人的事故，往往不是程序报错 500，而是<strong>“报告画得头头是道，把各维度的贡献度加起来却跟总盘对不上”</strong>，或者某条渠道刚好分母为零，被静默补零或让 <code>NaN</code> 传染了整棵归因树。不管底层用的是多维下钻差值分解（LMDI、拉氏/帕氏分解）、漏斗归因还是 Shapley 近似分摊，核心算法都必须死守三条铁律：<strong>加和守恒</strong>（各子维度贡献之和与总指标变化量之差严格落在浮点容差界 <span class="math-inline">|∑ Δᵢ − Δ_total| ≤ ε</span> 内，不重不漏）；<strong>缺数与零分母安全</strong>（基期为零或上游字段缺失时确定性产出 <code>unknown</code>，绝不静默补零或拿兄弟节点凑数）；<strong>无关项零贡献</strong>（某渠道两期指标未动，无论其他渠道如何暴涨暴跌或出现大额负向退款，其归因贡献恒等于 <code>0</code>）。用几十行 Python 调 <code>z3-solver</code> 跑约束反证，几秒钟就能把藏在极端数值与大额退款里的逻辑反例全抖出来。</p>
+
+          <h4>2. 告警收敛、静默与结案状态机（TLA+ / Quint）</h4>
+          <p>监控系统最折磨人的故障往往出在乱序指标、延迟补数、网络重试与人工静默的并发交错：同一场持续异常连开十几张重复告警单、故障恢复后却卡死在 <code>FIRING</code> 僵尸态、或者刚点下“申请结案”就冒出新跌量却照常关单。用一两百行 <strong>TLA+ / Quint</strong> 建出告警生命周期状态机，立下四条不变量——<strong>单事件归并唯一性（Safety）</strong>、<strong>恢复后必退出触发态（Liveness）</strong>、<strong>低级别静默不吞 P0 升级（Safety）</strong>、<strong>等待审批期间若到达新异常或超时则原快照自动作废（Safety）</strong>。模型检验器几分钟就能穷尽上百万种乱序组合，把人脑永远想不到的五步并发竞态 Trace 直接拍在桌上。</p>
+
+          <h4>3. 数据完结水位与时间窗口语义（TLA+ / Z3）</h4>
+          <p>监控误报的一大元凶是“数据还没算完就急着吹哨”。可以对窗口与水位推进引擎证明两条硬边界：<strong>绝不早报</strong>（真实上游完结水位跨越统计窗口右边界前，正式告警状态机绝不触发）与<strong>窗口划分不重不漏</strong>（跨时区、夏令时、零点切日与迟到重算时，每条事件严格不重计、不遗漏）。</p>
+
+          <h4>4. 多产品数据切片隔离与 Agent 归因派单边界（Z3 / TLA+）</h4>
+          <p>在现代 AI 驱动的监控归因体系里（就像上一篇 <code>#06</code> 讨论的业务域 Agent 协作网络），国家市场或支付渠道等公共节点往往同时连接多款产品，背后还有多个 Agent 跨上下游协查。借用 AWS Zelkova 的思路，可以用 Z3 形式化核验查询路由与行级权限策略——证明<strong>任何单产品会话生成的查询计划绝不可能越界命中其他产品明细</strong>；同时用状态机证明多节点协查派单拓扑<strong>严格无环（DAG）、最大跳数与重试预算有硬上界</strong>。</p>
+
+          <p>回头看最初那句提问，答案既不是武断的“不能”，也不是盲目的“全盘证明”，而是精准的外科手术：<strong>把商业因果、阈值体感和报告文笔留给统计回测与人，把归因守恒、告警状态机、水位语义和数据隔离这四块确定性骨架剥出来，用 Z3 和 TLA+ 焊成铁板。</strong> 哪怕不重写一行线上生产语言，当天往往就能挖出几个常规测试永远抓不到的深水隐患。</p>
+        </section>
+
+        <section class="post-section" id="playbook" tabindex="-1">
+          <h2>五、现代 AI 驱动的软件开发：四步务实落地路线图</h2>
+
+          <p>把上面所有原理、边界与案例收束成一条从明天就能开工的工程路线，并对照 Lauren Tan（土豆姐）的<strong>倒置信任金字塔</strong>看清形式化验证在整套研发防线中的准确站位：</p>
+
+          <!-- DIAGRAM 3: INVERSE PYRAMID OF TRUST & FORMAL VERIFICATION ANATOMY (4-LAYER INSPECTOR) -->
+          <figure class="stage" id="stage-pyramid">
+            <div class="stage-header">
+              <span class="stage-title">现代 AI 软件工厂的倒置信任金字塔：形式化验证站在哪一层？</span>
+              <span class="stage-meta-readout" id="s3-readout">LAYER 1 / 4 · 代码架构与静态确定性约束（最宽底座）</span>
+            </div>
+            <div class="stage-controls stage-top-bar">
+              <button type="button" class="btn-ctl is-active" aria-pressed="true" data-s3="0">第一层 · 代码架构与静态约束（最宽）</button>
+              <button type="button" class="btn-ctl" aria-pressed="false" data-s3="1">第二层 · 形式化验证与运行时证据（主力）</button>
+              <button type="button" class="btn-ctl" aria-pressed="false" data-s3="2">第三层 · 自然语言规则与上下文（补充）</button>
+              <button type="button" class="btn-ctl" aria-pressed="false" data-s3="3">第四层 · 人类规约把关与最终责任（底尖）</button>
+            </div>
+            <div class="stage-canvas">
+              <svg viewBox="0 0 760 256" role="img" aria-label="从最宽的静态架构约束、形式化验证与运行时证据、自然语言指令到最窄的人类规约把关的四层倒置信任金字塔解剖图">
+                <g id="s3-svg"></g>
+              </svg>
+              <div class="detail-grid">
+                <div class="detail-pill is-shift">
+                  <span>这一层管什么、投入占比为何如此</span>
+                  <strong id="s3-role"></strong>
+                </div>
+                <div class="detail-pill is-right">
+                  <span>防住什么典型 AI 故障</span>
+                  <strong id="s3-guard"></strong>
+                </div>
+                <div class="detail-pill is-duty">
+                  <span>明天就能落地的工具与动作</span>
+                  <strong id="s3-tools"></strong>
+                </div>
+              </div>
+            </div>
+            <figcaption class="stage-caption" id="s3-cap">点击上方四层按钮或金字塔任意梯层，查看高吞吐 AI 工程团队如何把工程预算从“人肉读万行 Diff”转移到“确定性架构 + 形式化与运行时证据”。</figcaption>
+          </figure>
+
+          <h3>第一步：先把“倒置信任金字塔”的底座打牢</h3>
+          <p>不要把形式化验证当成给烂架构擦屁股的补丁。如果仓库里连基础的强类型、清晰模块边界和有指导意义的 Lint 规则都没立起来，第一步应该先把能靠结构设计消灭的整类错误清干净，并把核心接口的单元测试升级为<strong>基于属性的测试（PBT）</strong>——先让团队和 Agent 习惯思考“什么是系统的不变量”。</p>
+
+          <h3>第二步：对着现有仓库跑一次“AI 形式化体检”</h3>
+          <p>不要等学完一整门新语言再动工。直接打开你的 Coding Agent，挑出项目里最核心、最怕出静默故障的模块，发一段结构化的体检指令：</p>
+          <blockquote>
+            <p>“请通读本仓库的核心模块，<strong>不要急着写代码</strong>，先帮我做一次形式化可验证性评估：（1）把系统拆成‘不适合形式化（主观体验/统计权衡/外部不确定性）’与‘适合形式化（核心算法守恒律、并发状态机、权限隔离策略、协议与水位语义）’两部分；（2）按‘出错代价高 × 规约短小清晰 × 传统 UT 难覆盖’三个维度，列出最值得优先切入的 Top 3 目标；（3）为每个目标写清 3~5 条用自然语言表述的核心不变量（Safety / Liveness），并推荐最轻量的落地工具（Python Z3 / Quint / TLA+ / Verus / Lean）。”</p>
+          </blockquote>
+          <p>仅仅这一步，通常就能逼着团队把过去藏在脑子里的隐性假设全倒到桌面上——哪怕暂时不跑证明器，梳理出这份不变量清单本身就已经值回票价。</p>
+
+          <h3>第三步：按“轻量外挂 → 关键内核”的阶梯推进，让 AI 干证明苦力</h3>
+          <ul>
+            <li><strong>轻量外挂层（零侵入线上代码，推荐绝大多数业务团队起步）：</strong>涉及复杂状态流转、重试幂等与并发协作，让 Agent 抽出一份 <strong>TLA+ 或 Quint</strong> 模型抓并发反例 Trace；涉及计费、分账、归因守恒、权限矩阵与排班约束，让 Agent 写几十行 <strong>Python <code>z3-solver</code></strong> 脚本做约束反证，直接挂进 CI 当确定性检查项。</li>
+            <li><strong>代码级嵌入式验证（高安全/高性能底层模块）：</strong>核心库或系统级 Rust 代码引入 <strong>Kani</strong> 或 <strong>Verus</strong>；AI 算子、密码学、核心调度内核与协议参考模型引入 <strong>Lean 4</strong> 或 <strong>Dafny</strong>，在 <code>AGENTS.md</code> 和 CI 里立死门禁：核心改动必须让证明内核亮绿灯才能合入。</li>
+          </ul>
+
+          <h3>第四步：立死“防规约偏差与自证循环”的三道铁律</h3>
+          <ol>
+            <li><strong>规约冻结与人审边界：</strong>允许 Agent 反复搜索、修改证明脚本，但<strong>严禁修改核心规约文件与前置假设</strong>；人类在 PR Review 时跳过冗长的证明过程，集中精力逐字审查精简后的规约声明，同时在 CI 里硬拦截一切逃生舱关键字（如 Lean 的 <code>sorry</code>、非法 <code>axiom</code> 或 Dafny 的 <code>{:verify false}</code>）。</li>
+            <li><strong>变异测试反查“空真规约”：</strong>新规约合入时，故意对实现注入几处已知逻辑破坏（变异体），验证证明器是否能 100% 翻红报警——只过正例不过反例的规约，比没有规约更危险。</li>
+            <li><strong>混合防线交叉校准：</strong>用形式化证明锁死核心数学不变量，用<strong>差分对拍（Differential Testing）</strong>把形式化参考模型和真实生产代码绑在一起防“模型—代码漂移”，再用运行时断言和线上监控兜住模型边界之外的现实异常。</li>
+          </ol>
+        </section>
+
+        <section class="post-section" id="epilogue" tabindex="-1">
+          <h2>尾声：给飞驰的概率引擎铺上确定性的铁轨</h2>
+
+          <p>回看这一系列文章走过的脉络：在 <code>#01</code> 里我们聊过，面对能力飞升的大模型，必须用边界极窄的大积木去对抗系统爆炸；在 <code>#03</code> 到 <code>#05</code> 里，我们拆解了多 Agent 协作、Loop 时间推进与双模调度；在 <code>#06</code> 里，我们把一切归位成三重分工——概率推演归模型，确定性护栏归宿主代码，价值判断与最终责任归具体的人。</p>
+
+          <p><strong>形式化验证，正是 AI 时代为“确定性护栏”补上的最高阶一块拼图。</strong></p>
+
+          <p>大模型把生成代码和探索方案的速度推到了前所未有的极限；引擎跑得越快，底下越需要一条绝对刚性的铁轨。过去我们总觉得数学证明离日常软件工程太远，是因为搬砖铺铁轨的苦活全得靠专家一锤一锤手敲；如今 AI 把最贵、最磨人的证明搜索接了过去，确定性证明内核把住了幻觉的底线，而人类终于可以站到更高的抽象层上，专注去定义<strong>“这个系统究竟必须守住哪些不可动摇的真理”</strong>。</p>
+
+          <p>不需要把整个世界都塞进定理证明器。但学会在复杂系统里一眼挑出最致命的那 10% 核心骨架，用数学逻辑给它焊死——这大概是 AI 时代，每个软件团队能给自己装上的最踏实的一道护城河。</p>
+        </section>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇">
+        <a href="06-rights-and-duties-of-agents.html">&larr; #06 各归其位：Agent 的权责分化与人机边界</a>
+        <a href="index.html">返回目录 &uarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p><em>参考资料：GPU 算子形式化验证部分参考自机器之心（2026-11-22）<a href="https://mp.weixin.qq.com/s/2h3_FMnBI1rxqmmRYTCeSQ">全球首次！DeepSeek 与 FlashAttention 的多个生产级 AI 算子获得形式化验证</a>（TensorLean，CertiK 与哥伦比亚大学）；高吞吐 Agent 工程与倒置信任金字塔参考自 Lauren Tan（<code>@poteto</code>）在 AI Engineer CODE Summit 2026 的主题演讲 <a href="https://www.youtube.com/watch?v=ZZ19zhYnDKY&amp;t=3662s">All Code Is Slop (Except Mine)（YouTube 演讲片段）</a> 与 <a href="https://ai.engineer/code/2026/talks/lauren-tan">官方图文实录</a>；AI 时代形式化验证趋势与大规模实战参考自 Martin Kleppmann <a href="https://martin.kleppmann.com/2025/12/08/ai-formal-verification.html">Prediction: AI will make formal verification go mainstream</a>、Anthropic Frontier Red Team &amp; Theorem <a href="https://www.anthropic.com/research/formal-verification">LLMs are making formal software verification feasible at a much larger scale</a>、AWS 经典实践 <a href="https://lamport.azurewebsites.net/tla/formal-methods-amazon.pdf">Use of Formal Methods at Amazon Web Services</a> 与 <a href="https://arxiv.org/pdf/2407.01688">How We Built Cedar: A Verification-Guided Approach</a>；Vericoding 基准与规约博弈/自证循环研究参考自 <a href="https://arxiv.org/pdf/2509.22908">A Benchmark for Vericoding</a> 与 <a href="https://arxiv.org/html/2604.19459v1">Do LLMs Game Formalization? Evaluating Faithfulness in Logical Reasoning</a>。网页版附有四级验证武器原理图谱、AI 不对称飞轮/自证循环/监控归因拆解推演器及倒置信任金字塔交互图解。</em></p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      /* 1. Theme Toggle, <meta name="color-scheme"> & Cross-Tab Sync */
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      var darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function getStoredTheme() {
+        try {
+          var v = localStorage.getItem("blog.theme");
+          return v === "dark" || v === "light" ? v : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function syncThemeUI(stored) {
+        var resolved = stored || (darkMql.matches ? "dark" : "light");
+        if (stored) {
+          root.setAttribute("data-theme", stored);
+          if (metaScheme) metaScheme.content = stored;
+        } else {
+          root.removeAttribute("data-theme");
+          if (metaScheme) metaScheme.content = "light dark";
+        }
+        label.textContent = resolved.toUpperCase();
+      }
+
+      syncThemeUI(getStoredTheme());
+
+      darkMql.addEventListener("change", function () {
+        if (!getStoredTheme()) {
+          syncThemeUI(null);
+        }
+      });
+
+      window.addEventListener("storage", function (ev) {
+        if (ev.key === "blog.theme") {
+          var next = ev.newValue === "dark" || ev.newValue === "light" ? ev.newValue : null;
+          syncThemeUI(next);
+        }
+      });
+
+      btn.addEventListener("click", function () {
+        var stored = getStoredTheme();
+        var currentRendered = stored || (darkMql.matches ? "dark" : "light");
+        var target = currentRendered === "dark" ? "light" : "dark";
+        var sysTheme = darkMql.matches ? "dark" : "light";
+        if (target === sysTheme) {
+          try { localStorage.removeItem("blog.theme"); } catch (e) {}
+          syncThemeUI(null);
+        } else {
+          try { localStorage.setItem("blog.theme", target); } catch (e) {}
+          syncThemeUI(target);
+        }
+      });
+
+      /* 2. Reading Progress Strip & Scrollspy (Native scroll-target-group + JS fallback) */
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var sections = ["intro", "mechanics", "flywheel", "boundaries", "case-study", "playbook", "epilogue"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll("#toc-list a"));
+      var supportsScrollTargetGroup = typeof CSS !== "undefined" && CSS.supports && CSS.supports("scroll-target-group: auto");
+
+      function updateProgress() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+        if (scrollTop > 220) strip.classList.add("is-visible");
+        else strip.classList.remove("is-visible");
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+
+        if (!supportsScrollTargetGroup) {
+          var currentSectionId = "intro";
+          for (var i = 0; i < sections.length; i++) {
+            if (sections[i].getBoundingClientRect().top <= 160) {
+              currentSectionId = sections[i].id;
+            }
+          }
+          tocLinks.forEach(function (link) {
+            var active = link.getAttribute("href") === "#" + currentSectionId;
+            link.classList.toggle("is-active", active);
+            link.setAttribute("aria-current", active ? "true" : "false");
+          });
+        }
+      }
+
+      if (supportsScrollTargetGroup) {
+        function syncNativeAriaCurrent() {
+          var currentLink = document.querySelector("#toc-list a:target-current");
+          tocLinks.forEach(function (link) {
+            var active = link === currentLink;
+            link.classList.remove("is-active");
+            link.setAttribute("aria-current", active ? "true" : "false");
+          });
+        }
+        syncNativeAriaCurrent();
+        document.addEventListener("scrollend", syncNativeAriaCurrent, { passive: true });
+      }
+
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
+
+      /* 3. Stage 1: Verification Mechanics & Weapon Spectrum (4-Tab Diagram + Edge Fade Fallback) */
+      (function initStage1() {
+        var svgG = document.getElementById("s1-svg");
+        var readout = document.getElementById("s1-readout");
+        var mechEl = document.getElementById("s1-mech");
+        var aiEl = document.getElementById("s1-ai");
+        var casesEl = document.getElementById("s1-cases");
+        var cap = document.getElementById("s1-cap");
+        var panel = document.getElementById("s1-panel");
+        var tablist = document.getElementById("s1-tablist");
+        var tabs = Array.prototype.slice.call(document.querySelectorAll("[data-s1]"));
+
+        /* Edge-fade IntersectionObserver fallback when scroll-driven animations unsupported */
+        if (tablist && !(typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timeline", "scroll()"))) {
+          var firstTab = tablist.firstElementChild;
+          var lastTab = tablist.lastElementChild;
+          if (firstTab && lastTab && "IntersectionObserver" in window) {
+            var fadeObs = new IntersectionObserver(function (entries) {
+              entries.forEach(function (entry) {
+                tablist.classList.toggle(entry.target === firstTab ? "more-start" : "more-end", entry.intersectionRatio < 1);
+              });
+            }, { root: tablist, threshold: 1, rootMargin: "1px" });
+            fadeObs.observe(firstTab);
+            fadeObs.observe(lastTab);
+          }
+        }
+
+        var tiers = [
+          {
+            readout: "TIER 0 · 传统测试（抽样寻错）",
+            mech: "在庞大输入与并发交错空间里抽取有限样例跑断言。Dijkstra 名言：测试只能证明 Bug 存在，永远无法证明 Bug 不存在。",
+            ai: "Coding Agent 写 UT 极快，但同源上下文下容易顺着自身偏见补样例，甚至改弱断言凑绿灯；升级到 PBT 属性测试才开始提炼不变量。",
+            cases: "JUnit / Pytest / Hypothesis / Bombadil（UI 属性测试）；反面警钟：FlashAttention-4 数据竞争逃过 17,760 次常规测试。",
+            cap: "传统测试像在深海里撒网抽样：渔网空手而归，永远不能证明深海角落里没有藏着静默数据竞争。"
+          },
+          {
+            readout: "TIER 1 · 模型检验（TLA+ / Quint / Kani）",
+            mech: "把并发系统抽成百行状态机，在有界规模内系统穷尽全部交错状态图，逐节点校验 Safety（坏事不发生）与 Liveness（好事终发生）。",
+            ai: "AI 帮写 TLA+/Quint 状态机模型并解读反例 Trace；TLA+ 已内置官方 MCP Server，Quint 推出了面向 Coding Agent 的同步 Skill。",
+            cases: "AWS DynamoDB & S3（抓出扛过混沌工程的并发 Bug）、土豆姐团队用 TLA+ 验证跨设备通知状态流、Rust Kani 有界检验。",
+            cap: "模型检验专克并发时序死角：有界内全通过给确定安心，一旦撞线直接把最短崩溃路径（反例 Trace）拍在桌上。"
+          },
+          {
+            readout: "TIER 2 · SMT 求解器（Z3 / Dafny / Verus）",
+            mech: "走数学反证法：把程序分支与“规约否定式”编码成约束公式（Program ∧ ¬Spec），问求解器是否存在反例；答 UNSAT 即全输入成立！",
+            ai: "Vericoding 进展最快区间：借助 Z3 自动化，AI 在 Dafny 上验证成功率飙升，也能用 Python z3-solver 零侵入外挂检验业务公式与策略。",
+            cases: "AWS Zelkova（Z3 每日跑数十亿次 IAM 权限求解）、Verus（嵌入生产 Rust，编译期擦除证明零开销，验 Nitro 隔离内核）。",
+            cap: "SMT 求解器不靠枚举输入，而是直接用逻辑约束反证“反例不存在”——极适合权限策略、定价分账与归因守恒公式。"
+          },
+          {
+            readout: "TIER 3 · 交互式定理证明器（Lean 4 / Rocq）",
+            mech: "基于依赖类型论逐步归纳推演，覆盖无限输入与浮点误差上界；核心魔力在于极小的确定性 Proof Kernel（TCB，几千行代码）。",
+            ai: "不对称飞轮核心：AI Agent 接手十万步试错与上亿行证明脚本搜索，内核冷酷拦截幻觉；人只需把关 15:1 浓缩的核心数学规约。",
+            cases: "TensorLean（Lean 验 DeepSeek DeepGEMM & FlashAttention PTX，揪出 38 个漏洞）、Anthropic 1.8 亿行 Rocq 证 239 个 OSS-Fuzz 入口、AWS Cedar。",
+            cap: "定理证明器彻底颠覆人审瓶颈：AI 可以在外面搜出六十万行证明，只要通过几千行 Proof Kernel 核验，结论就 100% 免疫幻觉。"
+          }
+        ];
+
+        function drawTierSvg(idx) {
+          var h = "";
+          if (idx === 0) {
+            /* Tier 0: Sampling dots inside huge input space */
+            h += '<rect x="18" y="16" width="356" height="176" rx="7" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.3" />';
+            h += '<text x="196" y="37" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="700" fill="var(--ink)">全部可能输入 × 并发时序空间（天文量级）</text>';
+            var dots = [
+              [58,72],[96,88],[132,68],[174,104],[110,126],[74,148],[156,144],[212,78],[248,116],[198,152],[264,74],[144,96],[86,110],[228,136]
+            ];
+            dots.forEach(function (d) {
+              h += '<circle cx="' + d[0] + '" cy="' + d[1] + '" r="4.2" fill="var(--ok)" opacity="0.82" />';
+            });
+            h += '<rect x="274" y="128" width="88" height="52" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="3 2" />';
+            h += '<circle cx="318" cy="144" r="5" fill="var(--accent)" />';
+            h += '<text x="318" y="160" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="700" fill="var(--accent)">未踩中的死角</text>';
+            h += '<text x="318" y="173" text-anchor="middle" font-family="var(--font-mono)" font-size="8.6" fill="var(--ink-secondary)">17,760 次测试漏过</text>';
+            h += '<text x="128" y="178" text-anchor="middle" font-family="var(--font-sans)" font-size="9.8" fill="var(--ok)">● 已覆盖的有限测试样例（绿灯）</text>';
+
+            h += '<line x1="374" y1="104" x2="416" y2="104" stroke="var(--ink-muted)" stroke-width="1.8" marker-end="url(#spec-arrow)" />';
+
+            h += '<rect x="424" y="34" width="318" height="140" rx="7" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.6" />';
+            h += '<text x="583" y="62" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" font-weight="600" fill="var(--warn)">SAMPLING VERDICT</text>';
+            h += '<text x="583" y="88" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="700" fill="var(--ink)">全部用例 Pass ≠ 系统无 Bug</text>';
+            h += '<line x1="452" y1="102" x2="714" y2="102" stroke="var(--rule)" />';
+            h += '<text x="583" y="124" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">· 只能发现渔网刚好撞见的错误</text>';
+            h += '<text x="583" y="145" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">· 静默数据损坏 / 罕见并发竞态极易漏网</text>';
+            h += '<text x="583" y="164" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" font-weight="600" fill="var(--accent)">进阶第一步：用 PBT 把具体样例升格成通用不变量</text>';
+
+            h += '<rect x="18" y="204" width="724" height="30" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+            h += '<text x="380" y="223" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">Dijkstra 铁律：测试只能证明 Bug 的存在，永远无法证明 Bug 的不存在。</text>';
+          } else if (idx === 1) {
+            /* Tier 1: Model Checking (TLA+ / Quint) */
+            h += '<rect x="18" y="34" width="176" height="140" rx="7" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.5" />';
+            h += '<text x="106" y="59" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--blue)">TLA+ / QUINT 规约</text>';
+            h += '<text x="106" y="82" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ink)">百行状态机模型</text>';
+            h += '<line x1="34" y1="94" x2="178" y2="94" stroke="var(--rule)" />';
+            h += '<text x="106" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" fill="var(--ink-secondary)">· 初始态 + 状态跃迁</text>';
+            h += '<text x="106" y="136" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" fill="var(--ink-secondary)">· Safety: 坏事永不发生</text>';
+            h += '<text x="106" y="156" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" fill="var(--ink-secondary)">· Liveness: 最终必收敛</text>';
+
+            h += '<line x1="194" y1="104" x2="228" y2="104" stroke="var(--ink-muted)" stroke-width="1.6" marker-end="url(#spec-arrow)" />';
+
+            /* State space graph box */
+            h += '<rect x="236" y="18" width="268" height="172" rx="7" fill="var(--bg-elevated)" stroke="var(--rule-strong)" stroke-width="1.4" />';
+            h += '<text x="370" y="39" text-anchor="middle" font-family="var(--font-sans)" font-size="11.5" font-weight="700" fill="var(--ink)">TLC 引擎：穷尽展开全部并发交错图</text>';
+            /* Graph edges */
+            h += '<line x1="274" y1="106" x2="328" y2="70" stroke="var(--ok)" stroke-width="1.4" />';
+            h += '<line x1="274" y1="106" x2="328" y2="106" stroke="var(--ok)" stroke-width="1.4" />';
+            h += '<line x1="274" y1="106" x2="328" y2="146" stroke="var(--accent)" stroke-width="2" />';
+            h += '<line x1="328" y1="70" x2="394" y2="64" stroke="var(--ok)" stroke-width="1.3" />';
+            h += '<line x1="328" y1="70" x2="394" y2="96" stroke="var(--ok)" stroke-width="1.3" />';
+            h += '<line x1="328" y1="106" x2="394" y2="122" stroke="var(--ok)" stroke-width="1.3" />';
+            h += '<line x1="328" y1="146" x2="394" y2="154" stroke="var(--accent)" stroke-width="2" />';
+            h += '<line x1="394" y1="154" x2="462" y2="154" stroke="var(--accent)" stroke-width="2.2" marker-end="url(#spec-arrow-accent)" />';
+            h += '<line x1="394" y1="64" x2="462" y2="74" stroke="var(--ok)" stroke-width="1.3" />';
+            /* Graph nodes */
+            var okNodes = [[274,106,"S0"],[328,70,"S1"],[328,106,"S2"],[394,64,"S3"],[394,96,"S4"],[394,122,"S5"],[468,74,"✓"]];
+            okNodes.forEach(function (n) {
+              h += '<circle cx="' + n[0] + '" cy="' + n[1] + '" r="12" fill="var(--bg-paper)" stroke="var(--ok)" stroke-width="1.4" />';
+              h += '<text x="' + n[0] + '" y="' + (n[1] + 3.5) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" font-weight="600" fill="var(--ok)">' + n[2] + '</text>';
+            });
+            h += '<circle cx="328" cy="146" r="12" fill="var(--bg-paper)" />';
+            h += '<circle cx="328" cy="146" r="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6" />';
+            h += '<text x="328" y="149.5" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" font-weight="700" fill="var(--accent)">乱序</text>';
+            h += '<circle cx="394" cy="154" r="12" fill="var(--bg-paper)" />';
+            h += '<circle cx="394" cy="154" r="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6" />';
+            h += '<text x="394" y="157.5" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" font-weight="700" fill="var(--accent)">重试</text>';
+            h += '<circle cx="474" cy="154" r="13" fill="var(--accent)" />';
+            h += '<text x="474" y="158" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="700" fill="#fff">违背</text>';
+            h += '<text x="370" y="182" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-muted)">自动遍历数百万种并发交错、延迟与宕机组合</text>';
+
+            h += '<line x1="504" y1="74" x2="538" y2="74" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#spec-arrow-ok)" />';
+            h += '<line x1="504" y1="146" x2="538" y2="146" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#spec-arrow-accent)" />';
+
+            h += '<rect x="546" y="34" width="196" height="68" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.5" />';
+            h += '<text x="644" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ok)">有界全状态通过</text>';
+            h += '<text x="644" y="83" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" fill="var(--ink-secondary)">设定规模内无任何死角路径</text>';
+
+            h += '<rect x="546" y="114" width="196" height="72" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.7" />';
+            h += '<text x="644" y="140" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--accent)">吐出最小反例 Trace</text>';
+            h += '<text x="644" y="160" text-anchor="middle" font-family="var(--font-mono)" font-size="9.6" fill="var(--ink)">S0 → 乱序 → 重试 → 违背</text>';
+            h += '<text x="644" y="176" text-anchor="middle" font-family="var(--font-sans)" font-size="9.6" fill="var(--ink-secondary)">精准复现人脑想不到的并发死锁</text>';
+
+            h += '<rect x="18" y="204" width="724" height="30" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+            h += '<text x="380" y="223" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">最适合分布式协议、订单/告警状态机与异步重试；需注意验证对象是设计模型，落地时需防代码漂移。</text>';
+          } else if (idx === 2) {
+            /* Tier 2: SMT Solver (Z3 / Dafny / Verus) */
+            h += '<rect x="18" y="28" width="212" height="152" rx="7" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.5" />';
+            h += '<text x="124" y="54" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="var(--blue)">反证法逻辑编码</text>';
+            h += '<text x="124" y="80" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="700" fill="var(--ink)">Program ∧ ¬Spec</text>';
+            h += '<line x1="36" y1="94" x2="212" y2="94" stroke="var(--rule)" />';
+            h += '<text x="124" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink-secondary)">· 程序所有分支与算术约束</text>';
+            h += '<text x="124" y="137" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink-secondary)">· 加上“规约被打破”的条件</text>';
+            h += '<text x="124" y="158" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" font-weight="600" fill="var(--blue)">无需逐个枚举 64 位整数</text>';
+
+            h += '<line x1="230" y1="104" x2="274" y2="104" stroke="var(--ink-muted)" stroke-width="1.8" marker-end="url(#spec-arrow)" />';
+
+            h += '<rect x="282" y="42" width="194" height="124" rx="8" fill="var(--purple-soft)" stroke="var(--purple)" stroke-width="1.8" />';
+            h += '<text x="379" y="74" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="700" fill="var(--purple)">Z3 / cvc5</text>';
+            h += '<text x="379" y="98" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="700" fill="var(--ink)">SMT 约束求解器</text>';
+            h += '<text x="379" y="122" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" fill="var(--ink-secondary)">“存不存在哪怕一组输入，</text>';
+            h += '<text x="379" y="140" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" fill="var(--ink-secondary)">能让上述公式同时成立？”</text>';
+
+            h += '<line x1="476" y1="78" x2="520" y2="66" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#spec-arrow-ok)" />';
+            h += '<line x1="476" y1="130" x2="520" y2="144" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#spec-arrow-accent)" />';
+
+            h += '<rect x="528" y="24" width="214" height="74" rx="6" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.8" />';
+            h += '<text x="635" y="48" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="700" fill="var(--ok)">UNSAT（数学无解）</text>';
+            h += '<text x="635" y="69" text-anchor="middle" font-family="var(--font-sans)" font-size="10.8" font-weight="600" fill="var(--ink)">反例不存在 = 全输入 100% 成立</text>';
+            h += '<text x="635" y="87" text-anchor="middle" font-family="var(--font-sans)" font-size="9.6" fill="var(--ink-secondary)">Verus 验证后擦除证明，生产零开销</text>';
+
+            h += '<rect x="528" y="110" width="214" height="76" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.7" />';
+            h += '<text x="635" y="134" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="700" fill="var(--accent)">SAT（抓出反例！）</text>';
+            h += '<text x="635" y="155" text-anchor="middle" font-family="var(--font-sans)" font-size="10.6" font-weight="600" fill="var(--ink)">直接解出触发 Bug 的精确输入</text>';
+            h += '<text x="635" y="174" text-anchor="middle" font-family="var(--font-mono)" font-size="9.4" fill="var(--ink-secondary)">例：refund=-999, denom=0 → NaN</text>';
+
+            h += '<rect x="18" y="204" width="724" height="30" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+            h += '<text x="380" y="223" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">自动化程度极高（Python z3-solver 几十行就能落地），但复杂非线性归纳易遭遇“SMT 超时脆性”。</text>';
+          } else {
+            /* Tier 3: Interactive Theorem Prover (Lean 4 / Rocq) + AI Asymmetric Loop */
+            h += '<rect x="18" y="16" width="224" height="76" rx="7" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.6" />';
+            h += '<text x="130" y="38" text-anchor="middle" font-family="var(--font-mono)" font-size="9.8" font-weight="600" fill="var(--blue)">HUMAN · 规约对齐（15:1 浓缩）</text>';
+            h += '<text x="130" y="60" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ink)">核心定理声明与数学边界</text>';
+            h += '<text x="130" y="79" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">人类只需死守这几十行规约，不读证明</text>';
+
+            h += '<rect x="18" y="112" width="224" height="80" rx="7" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.6" />';
+            h += '<text x="130" y="134" text-anchor="middle" font-family="var(--font-mono)" font-size="9.8" font-weight="600" fill="var(--warn)">AI AGENT · 概率证明搜索</text>';
+            h += '<text x="130" y="156" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ink)">海量 Tactics 试错与脚本生成</text>';
+            h += '<text x="130" y="176" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">可昼夜自动生成数十万行证明草稿</text>';
+
+            h += '<path d="M 242 54 L 298 54 L 298 76" fill="none" stroke="var(--blue)" stroke-width="1.6" marker-end="url(#spec-arrow)" />';
+            h += '<line x1="242" y1="136" x2="286" y2="136" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#spec-arrow)" />';
+            /* Feedback reject arrow from kernel back to AI (cleanly above label) */
+            h += '<path d="M 380 162 L 380 175 L 260 175 L 260 160 L 246 160" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-dasharray="3 2" marker-end="url(#spec-arrow-accent)" />';
+            h += '<text x="342" y="191" text-anchor="middle" font-family="var(--font-sans)" font-size="9.4" font-weight="600" fill="var(--accent)">拦截幻觉 · 返回逻辑缺口逼 AI 重试</text>';
+
+            h += '<rect x="294" y="82" width="212" height="80" rx="8" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="2.2" />';
+            h += '<rect x="334" y="73" width="132" height="18" rx="9" fill="var(--accent)" />';
+            h += '<text x="400" y="85.5" text-anchor="middle" font-family="var(--font-mono)" font-size="9.2" font-weight="700" fill="#fff">TINY TCB · 极小内核</text>';
+            h += '<text x="400" y="112" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="700" fill="var(--ink)">Lean 4 / Rocq Proof Kernel</text>';
+            h += '<text x="400" y="131" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--ink-secondary)">仅数千行确定性代码 · 逐条机械核验</text>';
+            h += '<text x="400" y="149" text-anchor="middle" font-family="var(--font-sans)" font-size="10" font-weight="600" fill="var(--accent)">零容忍任何逻辑跳步或幻觉</text>';
+
+            h += '<line x1="506" y1="122" x2="546" y2="122" stroke="var(--ok)" stroke-width="2" marker-end="url(#spec-arrow-ok)" />';
+
+            h += '<rect x="554" y="64" width="188" height="120" rx="7" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.8" />';
+            h += '<text x="648" y="92" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="700" fill="var(--ok)">Q.E.D. · 无限空间成立</text>';
+            h += '<line x1="572" y1="104" x2="724" y2="104" stroke="var(--rule)" />';
+            h += '<text x="648" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink)">· 覆盖无限输入与归纳性质</text>';
+            h += '<text x="648" y="147" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink)">· 精确框定浮点误差上界</text>';
+            h += '<text x="648" y="168" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" font-weight="600" fill="var(--ok)">1.8 亿行证明无需人读</text>';
+
+            h += '<rect x="18" y="204" width="724" height="30" rx="5" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+            h += '<text x="380" y="223" text-anchor="middle" font-family="var(--font-sans)" font-size="11" fill="var(--ink-secondary)">AI 吃掉最贵的证明搜索，极小 Proof Kernel 兜住 AI 幻觉——这就是新时代形式化验证的“不对称飞轮”。</text>';
+          }
+          return h;
+        }
+
+        function render(idx) {
+          var t = tiers[idx];
+          readout.textContent = t.readout;
+          mechEl.textContent = t.mech;
+          aiEl.textContent = t.ai;
+          casesEl.textContent = t.cases;
+          cap.textContent = t.cap;
+          panel.setAttribute("aria-labelledby", "s1-tab-" + idx);
+
+          tabs.forEach(function (tab, i) {
+            var active = i === idx;
+            tab.setAttribute("aria-selected", active ? "true" : "false");
+            tab.setAttribute("tabindex", active ? "0" : "-1");
+          });
+
+          svgG.innerHTML = drawTierSvg(idx);
+
+          if (window.gsap && !prefersReducedMotion.matches) {
+            window.gsap.fromTo(svgG.children, { opacity: 0.3 }, { opacity: 1, duration: 0.18, ease: "power1.out" });
+          }
+        }
+
+        tabs.forEach(function (tab, i) {
+          tab.addEventListener("click", function () {
+            render(i);
+            tab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+          });
+          tab.addEventListener("keydown", function (ev) {
+            var nextIdx = -1;
+            if (ev.key === "ArrowRight") nextIdx = (i + 1) % tabs.length;
+            else if (ev.key === "ArrowLeft") nextIdx = (i - 1 + tabs.length) % tabs.length;
+            else if (ev.key === "Home") nextIdx = 0;
+            else if (ev.key === "End") nextIdx = tabs.length - 1;
+            if (nextIdx !== -1) {
+              ev.preventDefault();
+              render(nextIdx);
+              tabs[nextIdx].focus();
+              tabs[nextIdx].scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+            }
+          });
+        });
+
+        render(0);
+      })();
+
+      /* 4. Stage 2: 3-Case × 4-Step Simulator */
+      (function initStage2() {
+        var curCase = "flywheel";
+        var step = 1;
+        var timer = null;
+        var graphG = document.getElementById("s2-graph");
+        var readout = document.getElementById("s2-readout");
+        var line1 = document.getElementById("s2-line-1");
+        var line2 = document.getElementById("s2-line-2");
+        var cap = document.getElementById("s2-cap");
+        var prevBtn = document.getElementById("s2-prev");
+        var nextBtn = document.getElementById("s2-next");
+        var autoBtn = document.getElementById("s2-auto");
+
+        var cases = {
+          flywheel: {
+            idx: 1,
+            tone: "ok",
+            badge: "AI 时代不对称飞轮",
+            nodes: [
+              { title: "1. 过去：人力算不过账", sub: "证明比写码贵 5~10x · 改码全碎" },
+              { title: "2. 供给反转：AI 接手搜索", sub: "大模型连夜试错生成证明脚本" },
+              { title: "3. 内核零容忍拦截幻觉", sub: "Lean / Rocq / Z3 吐出精确缺口" },
+              { title: "4. 人审 15:1 浓缩规约", sub: "TensorLean / 1.8 亿行 Rocq 落地" }
+            ],
+            steps: [
+              {
+                active: 0,
+                badge: "旧时代死结",
+                l1: "Step 1 / 4 · 过去形式化验证推不开，死结从来不是“没用”，而是纯手写证明极其昂贵",
+                l2: "博士级专家写证明耗时往往是写代码的 5~10 倍，业务一迭代证明全碎，只有航天与内核扛得住。",
+                cap: "旧经济学困局：证明搜索极其烧脑耗时，普通业务工程团队根本养不起这笔维护成本。"
+              },
+              {
+                active: 1,
+                badge: "成本打穿",
+                l1: "Step 2 / 4 · AI Agent 接手最昂贵的“证明搜索”，把生成证明脚本的成本打成白菜价",
+                l2: "大模型结合搜索循环极其擅长海量试错；需求侧单月 11,000 PR 喷涌也倒逼团队告别纯人肉 Review。",
+                cap: "供需双反转：AI 把构建与维护验证工件的成本打下来，同时海量的生成代码倒逼确定性兜底。"
+              },
+              {
+                active: 2,
+                badge: "兜住幻觉",
+                l1: "Step 3 / 4 · 极小的确定性 Proof Kernel 当裁判：只要差一步逻辑，当场拒收逼 AI 返工",
+                l2: "模型写普通业务代码容易悄悄混进幻觉；在 Lean / Rocq / Z3 面前，幻觉一秒穿帮，直到数学闭合。",
+                cap: "天生绝配：AI 擅长高难度创造性搜索，证明内核擅长毫秒级绝对严谨的机械核验。"
+              },
+              {
+                active: 3,
+                badge: "杠杆兑现",
+                l1: "Step 4 / 4 · 人类审阅重心从“读十万行代码/证明”上移到“把关浓缩后的数学规约”",
+                l2: "TensorLean 以 15:1 压缩比揪出 38 个 GPU 算子漏洞；Anthropic 生成 1.8 亿行 Rocq 证明，人一行不必读。",
+                cap: "新时代分工：AI 扛证明苦力，极小内核守数学底线，人类专注定义和审核核心规约。"
+              }
+            ]
+          },
+          circular: {
+            idx: 2,
+            tone: "accent",
+            badge: "规约偏差与自证循环",
+            nodes: [
+              { title: "1. 同源 AI 一手包办三件事", sub: "写代码 + 翻规约 + 构造证明" },
+              { title: "2. 遇阻触发“规约博弈”", sub: "塞矛盾前提(空真)或捏造公理" },
+              { title: "3. 证明内核欢喜亮绿灯", sub: "只查逻辑自洽 · 查不出意图偏离" },
+              { title: "4. 三招混合防线拆穿骗局", sub: "规约冻结 · 变异注入 · 差分对拍" }
+            ],
+            steps: [
+              {
+                active: 0,
+                badge: "同源隐患",
+                l1: "Step 1 / 4 · 自动形式化降低门槛后，最危险的捷径是让同一个 AI 既写实现、又写规约、还写证明",
+                l2: "形式化验证只证明“实现符合规约”，绝不证明“规约对齐了人类真实意图”。",
+                cap: "警惕单点信任链：自动形式化位于可信计算基（TCB）之内，不能盲目外包给改码的同一个上下文。"
+              },
+              {
+                active: 1,
+                badge: "规约博弈",
+                l1: "Step 2 / 4 · 证明卡壳时，RL 推理模型极易偷偷修改规约、加矛盾前提（空真）或声明非法 axiom",
+                l2: "2026 年研究实测：即使 Lean 编译通过率达 87%~99%，模型仍会暗中篡改前提绕过真正难题。",
+                cap: "空真（Vacuously True）陷阱：逻辑学里只要前提恒为假，后面推出任何荒谬结论都被判为真！"
+              },
+              {
+                active: 2,
+                badge: "虚假绿灯",
+                l1: "Step 3 / 4 · Proof Kernel 只认形式逻辑自洽——对着写空了的规约照样给出 100% 通过绿灯",
+                l2: "如果团队只看 CI 绿灯而不审规约，就会陷入“用 AI 写错的规约去证明 AI 写错的代码”的自证循环。",
+                cap: "核心警句：证明变便宜了，但规约没有（The proof got cheap. The specification didn't.）。"
+              },
+              {
+                active: 3,
+                badge: "混合破解",
+                l1: "Step 4 / 4 · 工程破解三板斧：人审冻结规约（禁 sorry/axiom）+ 故意注入真 Bug 变异测试 + 差分对拍",
+                l2: "塞进已知 Bug 如果证明器还亮绿灯，立刻抓出空真规约；再借参考模型与生产代码做百万级差分测试。",
+                cap: "拆权 + 反向证伪 + 混合防线：让形式化证明、变异测试与差分对拍互相盯着对方，彻底掐死自证循环。"
+              }
+            ]
+          },
+          monitoring: {
+            idx: 3,
+            tone: "blue",
+            badge: "Case Study：监控与归因",
+            nodes: [
+              { title: "1. 原始提问：证明系统有效？", sub: "直接让 AI 体检复杂项目的突破口" },
+              { title: "2. 切掉不可证的概率/语义层", sub: "真实因果 · 3σ 体感 · 摘要文笔" },
+              { title: "3. 挖出四块确定性骨架", sub: "守恒/缺数 · 告警状态机 · 水位 · 隔离" },
+              { title: "4. 零侵入外挂立刻抓真 Bug", sub: "Python Z3 + TLA+ 锁死静默失真" }
+            ],
+            steps: [
+              {
+                active: 0,
+                badge: "体检起点",
+                l1: "Step 1 / 4 · 直接问 AI：“评估一下，我们做监控和归因的项目，能否用形式化验证来验证有效性？”",
+                l2: "把“有效性”当成一整块铁板看会觉得完全没法证明；高杠杆的起手式是先用边界手术刀做切分。",
+                cap: "最低门槛起手式：不必先背半年定理证明语法，先让 AI 帮你的复杂仓库盘清“可证 vs 不可证”。"
+              },
+              {
+                active: 1,
+                badge: "划出禁区",
+                l1: "Step 2 / 4 · 果断切掉三类不能形式化的部分：商业真因果、2.5σ/3σ 业务阈值体感、报告文笔质量",
+                l2: "现实世界充满未观测混杂变量，这部分继续交回历史回测（Backtesting）、离线 Eval 与业务负责人定性。",
+                cap: "清醒克制：不拿定理证明器去硬证主观语义或开放世界因果，把算力留给真正的确定性骨架。"
+              },
+              {
+                active: 2,
+                badge: "精准掘金",
+                l1: "Step 3 / 4 · 剥出四块规约极短但 UT 极难兜全的核心：归因加和守恒、告警状态机、水位窗口、数据切片隔离",
+                l2: "例如：各维度贡献之和必等于总盘变动；缺数/零分母必报 unknown；乱序补数绝不重复开单或卡死 FIRING。",
+                cap: "意想不到的立即收获：看似充满统计噪音的业务系统，底层往往藏着最怕静默出错的数学与状态机铁律。"
+              },
+              {
+                active: 3,
+                badge: "轻量落地",
+                l1: "Step 4 / 4 · 无需重写线上语言：几十行 Python Z3 验守恒公式与单产品隔离，百行 TLA+ 验乱序告警收敛",
+                l2: "几分钟内抓出大额负向退款溢出、零分母 NaN 传染、五步并发重开单与跨节点派单死循环等深水隐患。",
+                cap: "外科手术式兜底：锁死最致命的那 10% 确定性骨架，把其余 90% 留给回测、UT 与大模型。"
+              }
+            ]
+          }
+        };
+
+        function stopAuto() {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          autoBtn.textContent = "▶ 自动演示";
+        }
+
+        function drawLeftPanel(c, toneVar, toneSoft) {
+          var g = "";
+          g += '<rect x="20" y="16" width="206" height="164" rx="7" fill="var(--bg-elevated)" stroke="var(--rule)" />';
+          g += '<text x="123" y="36" text-anchor="middle" font-family="var(--font-mono)" font-size="10.2" font-weight="600" fill="var(--ink-muted)">SIMULATION · CASE ' + c.idx + ' / 3</text>';
+
+          if (curCase === "flywheel") {
+            var sOn = function (n) { return step === n; };
+            g += '<rect x="34" y="46" width="178" height="28" rx="4" fill="' + (sOn(2) ? "var(--warn-soft)" : "var(--bg-paper)") + '" stroke="' + (sOn(2) ? "var(--warn)" : "var(--rule-strong)") + '" stroke-width="' + (sOn(2) ? "1.6" : "1.1") + '" />';
+            g += '<text x="123" y="64" text-anchor="middle" font-family="var(--font-sans)" font-size="9.8" font-weight="600" fill="' + (sOn(2) ? "var(--warn)" : "var(--ink)") + '">AI Agent：低成本证明搜索</text>';
+            g += '<line x1="90" y1="74" x2="90" y2="90" stroke="var(--ok)" stroke-width="1.5" />';
+            g += '<line x1="156" y1="90" x2="156" y2="74" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2 2" />';
+            g += '<rect x="34" y="90" width="178" height="28" rx="4" fill="' + (sOn(3) ? "var(--accent-soft)" : "var(--bg-paper)") + '" stroke="' + (sOn(3) ? "var(--accent)" : "var(--rule-strong)") + '" stroke-width="' + (sOn(3) ? "1.7" : "1.1") + '" />';
+            g += '<text x="123" y="108" text-anchor="middle" font-family="var(--font-sans)" font-size="9.8" font-weight="700" fill="' + (sOn(3) ? "var(--accent)" : "var(--ink)") + '">极小内核：零容忍拦截幻觉</text>';
+            g += '<rect x="34" y="124" width="178" height="20" rx="4" fill="' + (sOn(4) ? "var(--ok-soft)" : "var(--bg-paper)") + '" stroke="' + (sOn(4) ? "var(--ok)" : "var(--rule)") + '" />';
+            g += '<text x="123" y="137.5" text-anchor="middle" font-family="var(--font-sans)" font-size="9.2" font-weight="600" fill="' + (sOn(4) ? "var(--ok)" : "var(--ink-secondary)") + '">人审 15:1 规约 · 无需读证明</text>';
+          } else if (curCase === "circular") {
+            var isFixed = step === 4;
+            g += '<rect x="34" y="46" width="178" height="32" rx="5" fill="' + (isFixed ? "var(--ok-soft)" : "var(--accent-soft)") + '" stroke="' + (isFixed ? "var(--ok)" : "var(--accent)") + '" stroke-width="1.5" />';
+            g += '<text x="123" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="9.6" font-weight="700" fill="' + (isFixed ? "var(--ok)" : "var(--accent)") + '">' + (isFixed ? "拆权：人锁规约 ≠ AI 搜证明" : "警报：同源 AI 自写自证") + '</text>';
+            g += '<text x="123" y="73" text-anchor="middle" font-family="var(--font-mono)" font-size="8.6" fill="var(--ink-secondary)">' + (isFixed ? "禁 sorry/axiom + 变异注 Bug" : "空真前提 x>10 ∧ x<5 → 假绿灯") + '</text>';
+            g += '<rect x="34" y="88" width="84" height="52" rx="4" fill="var(--bg-paper)" stroke="var(--rule-strong)" />';
+            g += '<text x="76" y="109" text-anchor="middle" font-family="var(--font-sans)" font-size="9.6" font-weight="600" fill="var(--ink)">规约声明</text>';
+            g += '<text x="76" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="' + (isFixed ? "var(--ok)" : "var(--accent)") + '">' + (isFixed ? "人工冻结把关" : "被偷偷改弱") + '</text>';
+            g += '<rect x="128" y="88" width="84" height="52" rx="4" fill="var(--bg-paper)" stroke="var(--rule-strong)" />';
+            g += '<text x="170" y="109" text-anchor="middle" font-family="var(--font-sans)" font-size="9.6" font-weight="600" fill="var(--ink)">变异 + 对拍</text>';
+            g += '<text x="170" y="126" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="' + (isFixed ? "var(--ok)" : "var(--ink-muted)") + '">' + (isFixed ? "真 Bug 必翻红" : "尚未接入") + '</text>';
+          } else {
+            var cut2 = step >= 2;
+            var cut3 = step >= 3;
+            g += '<rect x="34" y="46" width="178" height="38" rx="4" fill="' + (cut2 ? "var(--bg-paper)" : "var(--warn-soft)") + '" stroke="' + (cut2 ? "var(--rule)" : "var(--warn)") + '" stroke-dasharray="3 2" />';
+            g += '<text x="123" y="63" text-anchor="middle" font-family="var(--font-sans)" font-size="9.4" font-weight="600" fill="var(--ink-muted)">不可证：回测 / Eval / 人</text>';
+            g += '<text x="123" y="77" text-anchor="middle" font-family="var(--font-sans)" font-size="8.6" fill="var(--ink-muted)">现实因果 · 3σ 阈值 · 报告文笔</text>';
+            g += '<line x1="32" y1="91" x2="214" y2="91" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="4 2" />';
+            g += '<rect x="34" y="98" width="178" height="46" rx="4" fill="' + (cut3 ? "var(--blue-soft)" : "var(--bg-paper)") + '" stroke="' + (cut3 ? "var(--blue)" : "var(--rule-strong)") + '" stroke-width="' + (cut3 ? "1.6" : "1.1") + '" />';
+            g += '<text x="123" y="115" text-anchor="middle" font-family="var(--font-sans)" font-size="9.6" font-weight="700" fill="' + (cut3 ? "var(--blue)" : "var(--ink)") + '">可证骨架：Z3 + TLA+</text>';
+            g += '<text x="123" y="132" text-anchor="middle" font-family="var(--font-sans)" font-size="8.8" fill="var(--ink-secondary)">守恒/缺数 · 告警机 · 水位 · 隔离</text>';
+          }
+
+          g += '<rect x="32" y="150" width="182" height="22" rx="4" fill="' + toneSoft + '" />';
+          g += '<text x="123" y="165" text-anchor="middle" font-family="var(--font-sans)" font-size="10.2" font-weight="700" fill="' + toneVar + '">' + c.badge + '</text>';
+          return g;
+        }
+
+        function draw() {
+          var c = cases[curCase];
+          var total = c.steps.length;
+          if (step > total) step = total;
+          var st = c.steps[step - 1];
+          prevBtn.disabled = step <= 1;
+          nextBtn.disabled = step >= total;
+          readout.textContent = "CASE " + c.idx + " / 3 · STEP " + step + " / " + total;
+          line1.textContent = st.l1;
+          line2.textContent = st.l2;
+          cap.textContent = st.cap;
+
+          var toneVar = c.tone === "ok" ? "var(--ok)" : c.tone === "blue" ? "var(--blue)" : "var(--accent)";
+          var toneSoft = c.tone === "ok" ? "var(--ok-soft)" : c.tone === "blue" ? "var(--blue-soft)" : "var(--accent-soft)";
+
+          var html = drawLeftPanel(c, toneVar, toneSoft);
+
+          var coords = [
+            { x: 244, y: 16, w: 235, h: 72 },
+            { x: 505, y: 16, w: 235, h: 72 },
+            { x: 505, y: 108, w: 235, h: 72 },
+            { x: 244, y: 108, w: 235, h: 72 }
+          ];
+          html += '<path d="M 479 52 L 501 52" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
+          html += '<path d="M 622 88 L 622 104" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
+          html += '<path d="M 505 144 L 483 144" stroke="var(--ink-muted)" stroke-width="1.6" fill="none" marker-end="url(#sim-arrow)" />';
+
+          c.nodes.forEach(function (n, idx) {
+            var pos = coords[idx];
+            var isCur = st.active === idx;
+            var isDone = idx < st.active;
+            var stroke = isCur ? toneVar : isDone ? "var(--ink-muted)" : "var(--rule-strong)";
+            var fill = isCur ? toneSoft : "var(--bg-elevated)";
+            var op = isCur ? "1" : isDone ? "0.8" : "0.52";
+            var sw = isCur ? "2.1" : "1.2";
+
+            html += '<g style="cursor:pointer" data-s2-step="' + (idx + 1) + '" opacity="' + op + '">';
+            html += '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + pos.w + '" height="' + pos.h + '" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
+            html += '<text x="' + (pos.x + 13) + '" y="' + (pos.y + 32) + '" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="' + (isCur ? toneVar : "var(--ink)") + '">' + n.title + '</text>';
+            html += '<text x="' + (pos.x + 13) + '" y="' + (pos.y + 55) + '" font-family="var(--font-sans)" font-size="10.8" fill="var(--ink-secondary)">' + n.sub + '</text>';
+            if (isCur) {
+              html += '<rect x="' + (pos.x + pos.w - 76) + '" y="' + (pos.y - 9) + '" width="66" height="18" rx="9" fill="' + toneVar + '" />';
+              html += '<text x="' + (pos.x + pos.w - 43) + '" y="' + (pos.y + 3) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="9.5" font-weight="700" fill="#fff">' + st.badge + '</text>';
+            }
+            html += '</g>';
+          });
+
+          graphG.innerHTML = html;
+          graphG.querySelectorAll("[data-s2-step]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              stopAuto();
+              step = parseInt(el.getAttribute("data-s2-step"), 10);
+              draw();
+            });
+          });
+        }
+
+        document.querySelectorAll("[data-s2-case]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            stopAuto();
+            curCase = b.getAttribute("data-s2-case");
+            step = 1;
+            document.querySelectorAll("[data-s2-case]").forEach(function (x) {
+              var active = x === b;
+              x.classList.toggle("is-active", active);
+              x.setAttribute("aria-pressed", active ? "true" : "false");
+            });
+            draw();
+          });
+        });
+
+        prevBtn.addEventListener("click", function () {
+          stopAuto();
+          if (step > 1) { step--; draw(); }
+        });
+        nextBtn.addEventListener("click", function () {
+          stopAuto();
+          var total = cases[curCase].steps.length;
+          if (step < total) { step++; draw(); }
+        });
+        autoBtn.addEventListener("click", function () {
+          if (timer) {
+            stopAuto();
+            return;
+          }
+          var total = cases[curCase].steps.length;
+          if (step >= total) step = 1;
+          draw();
+          autoBtn.textContent = "⏸ 暂停演示";
+          timer = setInterval(function () {
+            var maxS = cases[curCase].steps.length;
+            if (step >= maxS) {
+              stopAuto();
+              return;
+            }
+            step++;
+            draw();
+          }, 1800);
+        });
+        document.getElementById("s2-reset").addEventListener("click", function () {
+          stopAuto();
+          step = 1;
+          draw();
+        });
+
+        draw();
+      })();
+
+      /* 5. Stage 3: Inverse Pyramid of Trust (4-Layer Interactive Anatomy) */
+      (function initStage3() {
+        var idx = 0;
+        var svgG = document.getElementById("s3-svg");
+        var readout = document.getElementById("s3-readout");
+        var roleEl = document.getElementById("s3-role");
+        var guardEl = document.getElementById("s3-guard");
+        var toolsEl = document.getElementById("s3-tools");
+        var cap = document.getElementById("s3-cap");
+        var btns = Array.prototype.slice.call(document.querySelectorAll("[data-s3]"));
+
+        var layers = [
+          {
+            readout: "LAYER 1 / 4 · 代码架构与静态确定性约束（最宽投入层）",
+            title: "第一层 · 代码架构、强类型与静态确定性约束",
+            sub: "好接口 · 清晰目录边界 · 强类型编译器 · 指导根因修复的 Lint 规则",
+            width: 712,
+            tone: "ok",
+            role: "投入最多精力的最宽底座：既然仓库本身是 Agent 最大的上下文输入，先靠清晰设计与机械规则消灭整类低级错误。",
+            guard: "拦住跨进程非法导入、易错 API 滥用（如产品代码滥用 useEffect）、以及用注释给脏补丁发“通行证”的劣化循环。",
+            tools: "TypeScript 严格模式 / Rust 类型系统 / 架构依赖图 Lint / 基于属性的测试（Hypothesis · proptest）。",
+            cap: "土豆姐倒置信任金字塔第一铁律：加提示词之前先问能不能变成静态检查；加检查之前先问能不能靠好设计消除错误选项。"
+          },
+          {
+            readout: "LAYER 2 / 4 · 形式化验证与运行时证据（AI 时代新晋主力）",
+            title: "第二层 · 形式化验证与运行时行为证据",
+            sub: "TLA+ 验状态机 · Z3 验策略守恒 · Lean 证核心算法 · 差分对拍与状态图",
+            width: 604,
+            tone: "blue",
+            role: "AI 时代最具爆发力的承重层：把人肉审万行 Diff 升级为审查确定性验证工件，用极小证明内核给高吞吐生成代码兜底。",
+            guard: "抓出躲过 17,760 次测试的数据竞争、乱序补数告警死锁、归因加和失真、权限越界与多 Agent 派单死循环。",
+            tools: "Python z3-solver（轻量外挂）· TLA+ / Quint · Lean 4 / Verus · Bombadil UI 属性测试 · 变异测试反查空真。",
+            cap: "形式化验证不是要重写全站，而是像外科手术一样，焊死复杂项目里最致命的那 10% 数学不变量与并发骨架。"
+          },
+          {
+            readout: "LAYER 3 / 4 · 自然语言规则与领域上下文（审慎克制层）",
+            title: "第三层 · 自然语言指令（AGENTS.md / Skills / 文档）",
+            sub: "仅保留无法编码为静态检查或数学规约的灰度品味与协作约定",
+            width: 496,
+            tone: "warn",
+            role: "刻意收窄的补充层：自然语言在长上下文里会被稀释，只用来传达架构取舍、领域术语与难以形式化的判断原则。",
+            guard: "避免把 AGENTS.md 堆成几千行没人看、模型也记不住的“打补丁备忘录”，每出现重复犯错立即上移到前两层。",
+            tools: "精简版 AGENTS.md · 结构化形式化体检 Prompt · 领域 Feature Map（对齐用户视角的系统功能地图）。",
+            cap: "教训越重要，越不能只写在自然语言文档里祈祷模型记住——能铸进代码与证明内核的，一律往上提。"
+          },
+          {
+            readout: "LAYER 4 / 4 · 人类规约把关与最终责任（最精炼底尖）",
+            title: "第四层 · 人类规约评审与最终拍板",
+            sub: "跳过万行实现与证明脚本 · 死守核心数学规约对齐真实意图",
+            width: 388,
+            tone: "accent",
+            role: "金字塔最窄却最核心的终点：当代码与证明都能大规模生成，人类注意力必须集中在最不可替代的意图对齐与终责签字。",
+            guard: "彻底掐死 AI 规约博弈与自证循环：逐字核对核心规约与前置假设，审查反例 Trace、变异测试结果与商业取舍。",
+            tools: "规约文件 CODEOWNERS 冻结 · CI 硬拦 sorry / 非法 axiom · 结合业务现场做最终合入与上线拍板。",
+            cap: "证明变便宜了，但规约没有——把机械核验交还机器，把定义真理与承担终责还给具体的人。"
+          }
+        ];
+
+        function toneColor(t) {
+          if (t === "ok") return { fill: "var(--ok-soft)", stroke: "var(--ok)", text: "var(--ok)" };
+          if (t === "blue") return { fill: "var(--blue-soft)", stroke: "var(--blue)", text: "var(--blue)" };
+          if (t === "warn") return { fill: "var(--warn-soft)", stroke: "var(--warn)", text: "var(--warn)" };
+          return { fill: "var(--accent-soft)", stroke: "var(--accent)", text: "var(--accent)" };
+        }
+
+        function render(n) {
+          idx = Math.max(0, Math.min(layers.length - 1, n));
+          var cur = layers[idx];
+          readout.textContent = cur.readout;
+          roleEl.textContent = cur.role;
+          guardEl.textContent = cur.guard;
+          toolsEl.textContent = cur.tools;
+          cap.textContent = cur.cap;
+
+          btns.forEach(function (b, i) {
+            var active = i === idx;
+            b.classList.toggle("is-active", active);
+            b.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+
+          var html = "";
+          var startY = 12;
+          var rowH = 50;
+          var gap = 12;
+
+          layers.forEach(function (l, i) {
+            var y = startY + i * (rowH + gap);
+            var x = (760 - l.width) / 2;
+            var isCur = i === idx;
+            var c = toneColor(l.tone);
+            var fill = isCur ? c.fill : "var(--bg-elevated)";
+            var stroke = isCur ? c.stroke : "var(--rule-strong)";
+            var sw = isCur ? "2.1" : "1.2";
+            var op = isCur ? "1" : "0.72";
+
+            html += '<g style="cursor:pointer" data-s3-layer="' + i + '" opacity="' + op + '">';
+            html += '<rect x="' + x + '" y="' + y + '" width="' + l.width + '" height="' + rowH + '" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" />';
+            html += '<text x="380" y="' + (y + 21) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="' + (isCur ? c.text : "var(--ink)") + '">' + l.title + '</text>';
+            html += '<text x="380" y="' + (y + 40) + '" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink-secondary)">' + l.sub + '</text>';
+            html += '</g>';
+
+            if (i < layers.length - 1) {
+              html += '<line x1="380" y1="' + (y + rowH) + '" x2="380" y2="' + (y + rowH + gap) + '" stroke="var(--rule-strong)" stroke-width="1.5" stroke-dasharray="2 2" />';
+            }
+          });
+
+          svgG.innerHTML = html;
+          svgG.querySelectorAll("[data-s3-layer]").forEach(function (el) {
+            el.addEventListener("click", function () {
+              render(parseInt(el.getAttribute("data-s3-layer"), 10));
+            });
+          });
+
+          if (window.gsap && !prefersReducedMotion.matches) {
+            window.gsap.fromTo(svgG.children, { opacity: 0.35 }, { opacity: 1, duration: 0.18, ease: "power1.out" });
+          }
+        }
+
+        btns.forEach(function (b, i) {
+          b.addEventListener("click", function () {
+            render(i);
+          });
+        });
+
+        render(0);
+      })();
+    })();
+  </script>
+</body>
+</html>

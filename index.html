@@ -278,6 +278,7 @@
   <header class="site-header">
     <a class="site-brand" href="index.html">Notes &amp; Essays</a>
     <nav class="site-nav" aria-label="站点随笔">
+      <a href="07-formal-verification-in-the-ai-era.html">#07 新时代形式化验证</a>
       <a href="06-rights-and-duties-of-agents.html">#06 Agent 权责分化</a>
       <a href="05-inside-antigravity-orchestrator.html">#05 Orchestrator 双模交接</a>
       <a href="04-anatomy-of-claude-code-loop.html">#04 Claude Code Loop</a>
@@ -297,6 +298,57 @@
     </section>
 
     <div class="essay-list">
+      <article class="essay-card">
+        <div class="essay-meta">
+          <span class="essay-issue">ESSAY #07</span>
+          <span>·</span>
+          <time datetime="2026-11-23">2026-11-23</time>
+          <span>·</span>
+          <span>12 分钟阅读 · 含交互图解</span>
+        </div>
+        <h2><a href="07-formal-verification-in-the-ai-era.html">用数学给概率兜底：AI 时代的形式化验证</a></h2>
+        <a class="essay-thumb" href="07-formal-verification-in-the-ai-era.html" style="background: var(--bg-elevated); padding: 18px 20px;">
+          <svg viewBox="0 0 700 180" role="img" style="display:block; width:100%; height:auto;" aria-label="AI 时代形式化验证不对称飞轮图：人类把关核心数学规约，AI Agent 承担海量证明搜索，经由 TLA+、Z3、Lean 与 Rocq 极小确定性证明内核零容忍拦截幻觉，为生产级 GPU 算子、核心算法与监控归因骨架提供确定性兜底">
+            <rect x="16" y="14" width="176" height="52" rx="5" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.4" />
+            <text x="104" y="34" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ink-muted)">HUMAN · 15:1 浓缩</text>
+            <text x="104" y="53" text-anchor="middle" font-family="var(--font-sans)" font-size="11.2" font-weight="700" fill="var(--ink)">定义与把关核心规约</text>
+
+            <rect x="16" y="80" width="176" height="52" rx="5" fill="var(--bg-paper)" stroke="var(--rule-strong)" stroke-width="1.3" />
+            <text x="104" y="100" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--ink-muted)">AI AGENT · 证明搜索</text>
+            <text x="104" y="119" text-anchor="middle" font-family="var(--font-sans)" font-size="11.2" font-weight="700" fill="var(--ink)">昼夜试错生成证明脚本</text>
+
+            <path d="M 192 40 L 236 40 L 236 58 L 248 58" stroke="var(--rule-strong)" stroke-width="1.4" fill="none" />
+            <line x1="192" y1="98" x2="248" y2="98" stroke="var(--rule-strong)" stroke-width="1.4" />
+            <line x1="248" y1="116" x2="192" y2="116" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="3 2" />
+            <text x="220" y="128" text-anchor="middle" font-family="var(--font-sans)" font-size="8.6" fill="var(--accent)">拦幻觉重算</text>
+
+            <rect x="248" y="24" width="202" height="102" rx="6" fill="var(--bg-paper)" stroke="var(--accent)" stroke-width="1.9" />
+            <text x="349" y="47" text-anchor="middle" font-family="var(--font-mono)" font-size="9.2" font-weight="600" fill="var(--accent)">TINY TCB · 确定性内核</text>
+            <text x="349" y="70" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="var(--ink)">形式化检验引擎</text>
+            <line x1="266" y1="81" x2="432" y2="81" stroke="var(--rule)" />
+            <text x="349" y="99" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--ink-secondary)">TLA+ · Z3 · Verus · Lean 4</text>
+            <text x="349" y="116" text-anchor="middle" font-family="var(--font-sans)" font-size="9.2" fill="var(--ink-muted)">零容忍逻辑缺口 · 吐出最小反例</text>
+
+            <line x1="450" y1="75" x2="492" y2="75" stroke="var(--accent)" stroke-width="1.8" />
+
+            <rect x="492" y="14" width="192" height="118" rx="6" fill="var(--bg-paper)" stroke="var(--ink)" stroke-width="1.4" />
+            <text x="588" y="36" text-anchor="middle" font-family="var(--font-mono)" font-size="9.4" font-weight="600" fill="var(--accent)">Q.E.D. · 确定性兜底</text>
+            <line x1="510" y1="46" x2="666" y2="46" stroke="var(--rule)" />
+            <text x="588" y="67" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink)">AI 算子（TensorLean / PTX）</text>
+            <text x="588" y="87" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink)">并发状态机 &amp; 策略隔离</text>
+            <text x="588" y="107" text-anchor="middle" font-family="var(--font-sans)" font-size="10.4" fill="var(--ink)">监控归因守恒 &amp; 缺数纪律</text>
+            <text x="588" y="124" text-anchor="middle" font-family="var(--font-sans)" font-size="9.2" fill="var(--ink-muted)">外科手术锁死最致命的 10%</text>
+
+            <rect x="16" y="144" width="668" height="26" rx="4" fill="var(--bg-paper)" stroke="var(--rule)" />
+            <text x="350" y="161" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="500" fill="var(--ink-secondary)">证明变便宜了，但规约没有 · 规约冻结 + 变异注入 + 差分对拍，防自证循环</text>
+          </svg>
+        </a>
+        <p class="essay-excerpt">
+          从 TensorLean 在 DeepSeek 与 FlashAttention 中揪出躲过 17,760 次测试的漏洞，到土豆姐单月 11,000 PR 背后的倒置信任金字塔——以布道为主线，循序渐进拆解 PBT、TLA+、Z3 与 Lean/Rocq 的工作原理，划清规约偏差与自证循环等四道硬边界，并现场解剖“监控与归因系统”的可证边界与四步务实落地路线。
+        </p>
+        <a class="read-link" href="07-formal-verification-in-the-ai-era.html">阅读全文 &rarr;</a>
+      </article>
+
       <article class="essay-card">
         <div class="essay-meta">
           <span class="essay-issue">ESSAY #06</span>
