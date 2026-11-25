@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>机器与花园：AGI 前夜重读《有限与无限的游戏》 — Notes &amp; Essays</title>
+  <meta name="description" content="当一台天生擅长通关所有有限游戏的机器坐上牌桌，重读詹姆斯·卡斯 1986 年的《有限与无限的游戏》：大师级玩家、头衔与名字、意外的反转，以及 AGI 前夜把机器带进花园的实用主义。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("blog.theme");
+        if (t === "dark" || t === "light") {
+          document.documentElement.setAttribute("data-theme", t);
+          var m = document.querySelector('meta[name="color-scheme"]');
+          if (m) m.content = t;
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+
+      --font-serif: "Newsreader", "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      --font-sans: "Inter", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+      --measure: 68ch;
+      --wrap: 1120px;
+      accent-color: var(--accent);
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-paper: #161513;
+      --bg-elevated: #1f1d1a;
+      --ink: #eae4d9;
+      --ink-secondary: #b9b1a3;
+      --ink-muted: #8a8275;
+      --rule: #2e2b26;
+      --rule-strong: #eae4d9;
+      --accent: #e06b55;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-paper: #161513;
+        --bg-elevated: #1f1d1a;
+        --ink: #eae4d9;
+        --ink-secondary: #b9b1a3;
+        --ink-muted: #8a8275;
+        --rule: #2e2b26;
+        --rule-strong: #eae4d9;
+        --accent: #e06b55;
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-paper);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: clamp(16.5px, 1.05vw + 13px, 18.5px);
+      line-height: 1.88;
+      background: var(--bg-paper);
+      color: var(--ink);
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    ::selection {
+      background: rgba(158, 51, 33, 0.18);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .skip-link:focus {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 999;
+      width: auto;
+      height: auto;
+      clip-path: none;
+      padding: 8px 14px;
+      background: var(--ink);
+      color: var(--bg-paper);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+
+    /* Reading Progress Strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+      background: color-mix(in srgb, var(--bg-paper) 92%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+      transition: transform 0.22s ease;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.08s linear;
+    }
+
+    /* Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 26px 24px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .site-nav a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .site-nav a:focus-visible,
+    .site-brand:focus-visible,
+    .toc-list a:focus-visible,
+    .post-content a:focus-visible,
+    nav.series-nav a:focus-visible,
+    footer.post-footer a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      min-block-size: 28px;
+      min-inline-size: 28px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+    .theme-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Main Layout Grid */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 196px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Left Rail TOC */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-target-group: auto;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 10px;
+      border-left: 1.5px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a:is(:target-current, .is-active) {
+      color: var(--ink);
+      font-weight: 600;
+      border-left-color: var(--ink);
+    }
+
+    /* Article Header */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(27px, 3.6vw, 38px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 18px;
+      color: var(--ink);
+    }
+    header.post-header h1:focus,
+    .post-section:focus {
+      outline: none;
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 32px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt {
+      color: var(--ink-muted);
+    }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose */
+    .post-section {
+      scroll-margin-top: 64px;
+    }
+    .post-content p {
+      margin: 0 0 1.35em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.7vw, 27px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.35em 0 0.85em;
+      padding-top: 0.7em;
+      border-top: 1px solid var(--rule);
+      color: var(--ink);
+    }
+    .post-content strong {
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .post-content a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-color: var(--rule-strong);
+      text-underline-offset: 3px;
+      transition: color 0.15s ease, text-decoration-color 0.15s ease;
+    }
+    .post-content a:hover {
+      color: var(--accent);
+      text-decoration-color: var(--accent);
+    }
+
+    /* Museum Painting Figures */
+    figure.editorial-figure {
+      margin: 2.1em -20px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    @media (max-width: 780px) {
+      figure.editorial-figure {
+        margin: 1.7em 0;
+      }
+    }
+    figure.editorial-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      transition: filter 0.2s ease;
+    }
+    :root[data-theme="dark"] figure.editorial-figure img {
+      filter: brightness(0.92) contrast(1.02);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) figure.editorial-figure img {
+        filter: brightness(0.92) contrast(1.02);
+      }
+    }
+    figure.editorial-figure figcaption {
+      margin-top: 10px;
+      padding: 0 4px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.62;
+      color: var(--ink-muted);
+    }
+
+    /* Post Series Nav */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.72;
+      color: var(--ink-muted);
+    }
+    footer.post-footer a {
+      color: var(--ink-secondary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    footer.post-footer a:hover {
+      color: var(--accent);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm 18mm 20mm 18mm;
+    }
+    @media print {
+      :root {
+        --bg-paper: #ffffff;
+        --bg-elevated: #f5f2eb;
+      }
+      html, body {
+        background: #ffffff !important;
+        font-size: 11.5pt;
+        line-height: 1.75;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .reading-strip,
+      header.site-header,
+      aside.toc-rail,
+      nav.series-nav {
+        display: none !important;
+      }
+      main.layout {
+        display: block;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      article.post {
+        max-width: 100%;
+      }
+      figure.editorial-figure {
+        margin: 1.4em 0;
+      }
+      .post-content h2 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#post-title" class="skip-link visually-hidden">跳至正文</a>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">机器与花园：AGI 前夜重读《有限与无限的游戏》</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="站点与章节">
+      <a href="index.html">全部文章</a>
+      <a href="#master-player">大师级玩家</a>
+      <a href="#title-and-surprise">头衔与意外</a>
+      <a href="#machine-and-garden">机器与花园</a>
+      <a href="#boundary-and-horizon">边界与地平线</a>
+      <button type="button" class="theme-btn" id="theme-toggle">
+        <span class="visually-hidden">切换明暗主题，当前 </span><span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="文章目录">
+      <ul class="toc-list" id="toc-list" role="list">
+        <li><a href="#intro" class="is-active" aria-current="true">引子</a></li>
+        <li><a href="#master-player">当机器成了“大师级玩家”</a></li>
+        <li><a href="#title-and-surprise">头衔属于过去，意外属于未来</a></li>
+        <li><a href="#machine-and-garden">把机器带进花园</a></li>
+        <li><a href="#boundary-and-horizon">边界与地平线</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1 id="post-title" tabindex="-1">机器与花园：AGI 前夜重读《有限与无限的游戏》</h1>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-25">2026 年 11 月 25 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>5 分钟</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#09</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <section class="post-section" id="intro" tabindex="-1">
+          <p>1986 年，纽约大学宗教史教授詹姆斯·卡斯（James P. Carse）写过一本很薄的小书，叫《有限与无限的游戏》（<em>Finite and Infinite Games</em>）。</p>
+
+          <p>全书第一句话流传极广：“世上至少有两种游戏：有限游戏以取胜为目的，无限游戏以延续游戏为目的。”</p>
+
+          <p>过去很多年，这句话频繁出现在书腰和商业演讲里，听久了难免显得轻飘飘，像在劝人把眼光放长远些。可这两年，当 AI 真正进入日常工作、以周为单位刷新能力边界，再把这本四十年前的哲学小书翻出来重读，字句背后的分量忽然沉了下来。它谈的不再只是抽象的人生修辞，倒像一则提前四十年的预言：当一台天生擅长通关所有有限游戏的机器坐上牌桌，人究竟该怎么往下玩？</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/cezanne_card_players.jpg" alt="Paul Cézanne, Les Joueurs de cartes (1894–1895)" width="1600" height="1312" fetchpriority="high">
+            <figcaption>Paul Cézanne，《Les Joueurs de cartes》（玩纸牌的人，1894–1895，巴黎奥赛博物馆藏）。窄木桌、几张手牌、一只酒瓶，两个牌手低头俯身其中，桌外的一切仿佛都退出了视野。</figcaption>
+          </figure>
+        </section>
+
+        <section class="post-section" id="master-player" tabindex="-1">
+          <h2>当机器成了“大师级玩家”</h2>
+
+          <p>我们熟悉的生活，很大一部分就是由一张张这样的牌桌拼起来的。升学、考证、晋升、解算法题、啃透一套复杂系统的架构——每件事都有清晰的起点、终点和计分板。</p>
+
+          <p>在人力稀缺的年代，这并没有什么不好。哪怕是一场规则写死的有限游戏，也足够深、足够难，花十年甚至半辈子钻研透彻，就能换来体面与安稳。卡斯把在有限游戏里修炼到极致的人叫作<strong>大师级玩家（Master Player）</strong>。这个词在书里其实带着几分反讽：大师级玩家之所以战无不胜，是因为他们把规则里的每一种变化都练成了肌肉记忆，几乎不再会被场上的突发状况打乱阵脚——可也正是在消灭所有意外的过程中，人不知不觉被规则彻底驯化，反倒交出了自由。</p>
+
+          <p>直到 AI 坐上了牌桌。</p>
+
+          <p>剥掉市面上那些玄乎的形容，AI 眼下最擅长的事其实极其朴素：<strong>只要边界画清、规则写明、结果能够验证，它就是有史以来最极致的大师级玩家。</strong></p>
+
+          <p>围棋界最早体会到这种失重感。职业棋手面对 AI 时的挫败，往往不止于输掉几盘棋，而是突然发现自己背了二十年的定式与“棋理”，原来只是人类算力有限时的权宜之计。如今，同样的事情正发生在更日常的工位上：写了很多年底层代码、靠熟稔各种边角细节安身立命的资深工程师，看着那些曾需要多年浸泡才攒下的“手感”，在几个月里变成模型随手就能生成的标准输出；代码审查、方案权衡、竞品拆解，甚至设计稿与文案的初版——只要能拆出清晰的评估标尺，机器就能在短时间内跑完人类几十年的试错循环。</p>
+
+          <p>人心里隐隐发慌，大多源于这种错位：你花十年练熟的牌桌，突然来了一个不知疲倦、也不受情绪起伏影响的对手。如果继续蹲在封闭的规则里跟它比拼谁算得更准、记得更全、响应得更快，输赢其实早已写定。即便咬着牙赢下一两局，代价也是把自己先改造成一台更累的机器。</p>
+        </section>
+
+        <section class="post-section" id="title-and-surprise" tabindex="-1">
+          <h2>头衔属于过去，意外属于未来</h2>
+
+          <p>牌局打完，赢家通常会拿到一个<strong>头衔（Title）</strong>——冠军、资深专家、某某总监，或者某所名校、某家大厂的履历。卡斯指出，头衔有一个共同特征：它永远指向过去。它是一枚盖在已完结牌局上的印章，用来向后来者证明“我曾经赢过那一局”。而<strong>名字（Name）</strong>在你什么都还没做成、还没赢过任何一场比赛时就给了你，它指向的是尚未展开的未来。</p>
+
+          <p>更现实一点看，头衔对应的其实是岗位说明书里的“角色”。凡是能被写成标准角色、用固定指标衡量的工作，迟早都会被算力压平。AGI 到来前的这几年，让人觉得脚下发虚的，正是所有指向过去的头衔都在加速折旧。守着旧头衔的人，其实是在替一场已经散场的牌局站岗；愿意从头衔里退出来，回到自己的名字，人才重新保有一种不被替代的可能——角色可以被更便宜的算力接管，但一个具体的人没法被当成标准件替换。</p>
+
+          <p>比头衔折旧更难适应的，是人对<strong>意外（Surprise）</strong>的态度。</p>
+
+          <p>在有限游戏里，玩家最怕脱稿。人们拼命训练，是为了防止自己被意外击中，同时又想方设法制造意外去终结对手。所以卡斯说，有限游戏里的意外，是<strong>“过去战胜了未来”</strong>——胜负其实早已藏在赛前准备的算计里。</p>
+
+          <p>无限游戏则反了过来。无限游戏没有终场哨，如果明天的一切都和昨天严丝合缝、再无意料之外，游戏本身也就停了。对无限玩家而言，意外是<strong>“未来战胜了过去”</strong>，它打碎旧剧本，让故事得以继续往下写。</p>
+
+          <p>这一点放在大模型时代尤其耐人寻味。有人会问：AlphaGo 下出的第 37 手，或者模型写出的惊艳证明，难道不算意外吗？算，但它们大多仍是有限游戏里的意外——在封闭规则之内，机器靠远超人类的搜索深度打出对手没料到的招数，目的依然是终结比赛。而在旧规则本身已经失效、原本的牌桌不再有意义时，敢于承认旧剧本演不下去了，自己去立一套新规则、开一张新牌桌，这件事目前依然落在人身上。</p>
+        </section>
+
+        <section class="post-section" id="machine-and-garden" tabindex="-1">
+          <h2>把机器带进花园</h2>
+
+          <p>说到这里，倒不必把无限游戏理解成看淡胜负、远离机器。</p>
+
+          <p>卡斯自己恰恰反对这种二元对立。他在书里写过一条非常清醒的原则：<strong>有限游戏可以在无限游戏之内进行，但无限游戏永远无法装进有限游戏里。</strong> 账单、交付、现金流和市场竞争，都不会因为读了一本哲学书就自动消失。人在现实里生活，每天依然要打很多场有限的仗。</p>
+
+          <p>为了讲清人与技术的关系，卡斯借用了<strong>机器与花园（The Machine and the Garden）</strong>的对照。机器靠外力驱动，追求精准、可控、可重复；花园从内部生长，仰赖土壤、雨水、季节，园丁只能顺应而无法强迫它按图纸发芽。顺着这个比喻往今天问一句：当一台前所未有强大的机器开进院子，它究竟是在为花园服务，还是在把花园改造成机器的附庸？</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/turner_rain_steam_speed.jpg" alt="J. M. W. Turner, Rain, Steam and Speed — The Great Western Railway (1844)" width="1600" height="1194" loading="lazy">
+            <figcaption>J. M. W. Turner，《Rain, Steam and Speed — The Great Western Railway》（雨、蒸汽和速度——大西部铁路，1844，伦敦国家美术馆藏）。钢铁机车呼啸着冲过迷雾里的砖石拱桥，桥下河面仍有小舟轻荡，远处田野里还有农人在耕作。</figcaption>
+          </figure>
+
+          <p>机器已经开进院子，赶不走，也没必要赶走。真正务实的做法，是把主次摆正。</p>
+
+          <p>眼下这几年，能用 AI 把规则清晰、可验证、可重复的活干得更快更稳，本来就是实打实的底气。拿机器替自己跑完那些耗时耗力的有限仗，换回时间、余地和筹码，这和无限游戏毫不冲突。真正的麻烦，通常只出现在主次悄悄倒转的那一刻：工具顺手到一定程度，人会下意识把所有事都改造成适合工具处理的样子——比如为了方便模型跑评测，把原本模糊的用户痛点硬削成一套好看的跑分指标；或者因为出原型、写代码、产文档太快，团队整天忙着堆交付物，却没人愿意花半天去跟一个具体客户聊透真问题。久而久之，原本想照料的花园，反倒被修成了一座规整却没有生机的工作坊。</p>
+
+          <p>反过来看，当实现一个想法的成本越来越接近于零，机器其实帮人把那些真正长在泥土里的东西衬了出来。</p>
+
+          <p>有些事天生没法写成标准规则，也没法靠跑分验证。真正泡在一个具体的业务或物理现场，看见屏幕之外的真实磨损；在反复共事里，和具体的人攒下彼此托底的信任；在路线分叉、谁也算不准结果的时候，签上自己的名字替后果担责。这些东西笨拙、缓慢、没法批处理，却恰好是一座花园里真正能过冬的根系。</p>
+
+          <p>卡斯在书里还有一句常被提起的话：有限玩家在边界内玩，无限玩家<strong>与边界玩耍（play with boundaries）</strong>。放在今天，它其实有很具体的落点。以前产品写文档、研发写代码、设计画图的分工，原本是工业流水线为了协同画出来的；当 AI 把执行门槛打穿，一个懂业务的人直接带着模型跑通从想法到上线的闭环，或者在旧功能优化到尽头时敢把整个产品形态推倒重来，这大概才是今天“与边界玩耍”的真实样子。牌桌的边线既然本来就是人画的，规则跑不动的时候，人就有权把线重新画过。</p>
+        </section>
+
+        <section class="post-section" id="boundary-and-horizon" tabindex="-1">
+          <h2>边界与地平线</h2>
+
+          <p>有限游戏离不开<strong>边界（Boundary）</strong>。没有边线，就分不出出界与否；没有终场哨，就颁不出奖杯。人待在边界里久了，视线自然习惯往下看——盯着手里的牌、眼前的对手和下一回合的得失。</p>
+
+          <p>无限游戏没有边界，只有<strong>地平线（Horizon）</strong>。地平线不是围墙，也不是终点，它只是一种视线里的敞开。你永远走不到地平线面前，也跨不过它；可只要你往前迈出一步，它就跟着你退后一步，把一片新的海面摊在你眼前。</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/friedrich_moonrise_by_the_sea.jpg" alt="Caspar David Friedrich, Mondaufgang am Meer (1822)" width="1600" height="1224" loading="lazy">
+            <figcaption>Caspar David Friedrich，《Mondaufgang am Meer》（海上升明月，1822，柏林旧国家画廊藏）。礁石上的三人背对观者并肩而坐，望向海面尽头渐升的明月与远帆。</figcaption>
+          </figure>
+
+          <p>AGI 终究会来，也一定会把更多曾经看似稳固的牌桌彻底算穿。那些原本就靠拼时长、背规则撑起来的有限游戏，以后大概不需要人再硬扛了。</p>
+
+          <p>四十年前，卡斯用一句话结束了整本书：“世上只有一场无限游戏。”</p>
+
+          <p>牌桌还在，但牌桌之外，海面一直都在。</p>
+        </section>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇">
+        <a href="08-compression-and-essence-of-intelligence.html">&larr; #08 逼近 0.618：压缩、泛化与智能的本质</a>
+        <a href="index.html">返回目录 &uarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p><em>本文思想脉络参考自詹姆斯·卡斯（James P. Carse）1986 年著作《Finite and Infinite Games: A Vision of Life as Play and Possibility》（中译本《有限与无限的游戏》）；文中依次引用保罗·塞尚、约瑟夫·马洛德·威廉·透纳与卡斯帕·大卫·弗里德里希三幅馆藏画作。</em></p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      /* 1. Theme Toggle, color-scheme meta & cross-tab sync */
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      var darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function getStoredTheme() {
+        try {
+          var v = localStorage.getItem("blog.theme");
+          return v === "dark" || v === "light" ? v : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function syncThemeUI(stored) {
+        var resolved = stored || (darkMql.matches ? "dark" : "light");
+        if (stored) {
+          root.setAttribute("data-theme", stored);
+          if (metaScheme) metaScheme.content = stored;
+        } else {
+          root.removeAttribute("data-theme");
+          if (metaScheme) metaScheme.content = "light dark";
+        }
+        label.textContent = resolved.toUpperCase();
+      }
+
+      syncThemeUI(getStoredTheme());
+
+      darkMql.addEventListener("change", function () {
+        if (!getStoredTheme()) syncThemeUI(null);
+      });
+
+      window.addEventListener("storage", function (ev) {
+        if (ev.key === "blog.theme") {
+          var next = ev.newValue === "dark" || ev.newValue === "light" ? ev.newValue : null;
+          syncThemeUI(next);
+        }
+      });
+
+      btn.addEventListener("click", function () {
+        var stored = getStoredTheme();
+        var currentRendered = stored || (darkMql.matches ? "dark" : "light");
+        var target = currentRendered === "dark" ? "light" : "dark";
+        var sysTheme = darkMql.matches ? "dark" : "light";
+        if (target === sysTheme) {
+          try { localStorage.removeItem("blog.theme"); } catch (e) {}
+          syncThemeUI(null);
+        } else {
+          try { localStorage.setItem("blog.theme", target); } catch (e) {}
+          syncThemeUI(target);
+        }
+      });
+
+      /* 2. Reading Progress Strip & Scrollspy */
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var sections = ["intro", "master-player", "title-and-surprise", "machine-and-garden", "boundary-and-horizon"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll("#toc-list a"));
+      var supportsScrollTargetGroup = typeof CSS !== "undefined" && CSS.supports && CSS.supports("scroll-target-group: auto");
+
+      function updateProgress() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+        if (scrollTop > 220) strip.classList.add("is-visible");
+        else strip.classList.remove("is-visible");
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+
+        if (!supportsScrollTargetGroup) {
+          var currentSectionId = "intro";
+          for (var i = 0; i < sections.length; i++) {
+            if (sections[i].getBoundingClientRect().top <= 160) {
+              currentSectionId = sections[i].id;
+            }
+          }
+          tocLinks.forEach(function (link) {
+            var active = link.getAttribute("href") === "#" + currentSectionId;
+            link.classList.toggle("is-active", active);
+            link.setAttribute("aria-current", active ? "true" : "false");
+          });
+        }
+      }
+
+      if (supportsScrollTargetGroup) {
+        function syncNativeAriaCurrent() {
+          var currentLink = document.querySelector("#toc-list a:target-current");
+          tocLinks.forEach(function (link) {
+            var active = link === currentLink;
+            link.classList.remove("is-active");
+            link.setAttribute("aria-current", active ? "true" : "false");
+          });
+        }
+        syncNativeAriaCurrent();
+        document.addEventListener("scrollend", syncNativeAriaCurrent, { passive: true });
+      }
+
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
+    })();
+  </script>
+</body>
+</html>
