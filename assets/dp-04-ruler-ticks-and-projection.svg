@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-label="几何投影与尺子刻度密度变化原理图">
+  <title>几何投影与尺子刻度密度变化原理图</title>
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#235884"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#9e3321"/>
+    </marker>
+    <marker id="arr-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#4a4640"/>
+    </marker>
+    <marker id="arr-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#787167"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#256b45"/>
+    </marker>
+    
+  </defs>
+  <rect x="0.5" y="0.5" width="959" height="519" rx="10" fill="#fbf8f2" stroke="#d8d0c1"/>
+  
+  <text x="36" y="28" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" letter-spacing="1.4" fill="#787167">FIG 04 · GEOMETRIC RULER &amp; TICK DENSITY</text>
+  <text x="36" y="54" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="21" font-weight="700" fill="#191816">几何核心机制：为什么尺子箭头越长，刻度反而越密？</text>
+  <line x1="36" y1="68" x2="924" y2="68" stroke="#d8d0c1" stroke-width="1"/>
+
+  <!-- Panel A: Unit ruler (1,0) -->
+  <rect x="36" y="88" width="298" height="398" rx="8" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="52" y="114" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13.5" font-weight="700" fill="#191816">① 单位尺子 y = (1, 0)</text>
+  <text x="52" y="134" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#9e3321">‖y‖ = 1 · 每格间距 = 1.00</text>
+
+  <!-- Axes A -->
+  <line x1="60" y1="340" x2="320" y2="340" stroke="#b8ae9c" stroke-width="1"/>
+  <line x1="82" y1="395" x2="82" y2="162" stroke="#b8ae9c" stroke-width="1"/>
+  <text x="316" y="332" text-anchor="end" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11" fill="#787167">苹果</text>
+  <text x="90" y="172" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11" fill="#787167">梨</text>
+
+  <!-- Ruler strip A -->
+  <rect x="74" y="331" width="256" height="18" rx="3" fill="#f7e8e5" stroke="#9e3321" stroke-opacity="0.45"/>
+  <line x1="130.0" y1="332.0" x2="130.0" y2="348.0" stroke="#9e3321" stroke-width="1.3"/><text x="130.0" y="364.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">1</text><line x1="178.0" y1="332.0" x2="178.0" y2="348.0" stroke="#9e3321" stroke-width="1.3"/><text x="178.0" y="364.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">2</text><line x1="226.0" y1="332.0" x2="226.0" y2="348.0" stroke="#9e3321" stroke-width="1.3"/><text x="226.0" y="364.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">3</text><line x1="274.0" y1="332.0" x2="274.0" y2="348.0" stroke="#9e3321" stroke-width="1.3"/><text x="274.0" y="364.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">4</text><line x1="322.0" y1="332.0" x2="322.0" y2="348.0" stroke="#9e3321" stroke-width="1.3"/><text x="322.0" y="364.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">5</text>
+
+  <!-- Projection dashed line A -->
+  <line x1="274.0" y1="292.0" x2="274.0" y2="340.0" stroke="#235884" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <path d="M 266.0 340.0 L 266.0 332.0 L 274.0 332.0" fill="none" stroke="#235884" stroke-width="1.1"/>
+  <!-- Shadow segment A -->
+  <line x1="82" y1="340" x2="274.0" y2="340.0" stroke="#235884" stroke-width="5" opacity="0.32" stroke-linecap="round"/>
+  <!-- Vector y=(1,0) -->
+  <line x1="82" y1="340" x2="130.0" y2="340.0" stroke="#9e3321" stroke-width="2.4" marker-end="url(#arr-red)"/>
+  <text x="132.0" y="326.0" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="14" font-style="italic" font-weight="700" fill="#9e3321">y</text>
+  <!-- Vector x=(4,1) -->
+  <line x1="82" y1="340" x2="274.0" y2="292.0" stroke="#235884" stroke-width="2.4" marker-end="url(#arr-blue)"/>
+  <text x="270.0" y="282.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="12.5" font-weight="600" fill="#235884">x = (4, 1)</text>
+  <circle cx="82" cy="340" r="3.5" fill="#191816"/>
+
+  <!-- Readout box A -->
+  <rect x="52" y="408" width="266" height="62" rx="6" fill="#fbf8f2" stroke="#d8d0c1"/>
+  <text x="64" y="431" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#235884">影子长 = 4.00 · 尺长 = 1.00</text>
+  <text x="64" y="454" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">读数 = 4 × 1 = <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="700" fill="#9e3321">4 个</tspan>（只数苹果）</text>
+
+  <!-- Panel B: Price ruler (2,5) -->
+  <rect x="348" y="88" width="320" height="398" rx="8" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="364" y="114" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13.5" font-weight="700" fill="#191816">② 价目表尺子 y = (2, 5)</text>
+  <text x="364" y="134" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#9e3321">‖y‖ = √29 ≈ 5.39 · 每 1 元间距仅 0.186</text>
+
+  <!-- Axes B -->
+  <line x1="370" y1="385" x2="646" y2="385" stroke="#b8ae9c" stroke-width="1"/>
+  <line x1="424" y1="406" x2="424" y2="152" stroke="#b8ae9c" stroke-width="1"/>
+  <text x="642" y="378" text-anchor="end" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11" fill="#787167">苹果</text>
+  <text x="432" y="162" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11" fill="#787167">梨</text>
+
+  <!-- Ruler band B -->
+  <polygon points="427.5,403.2 517.3,178.7 498.7,171.3 408.9,395.8" fill="#f7e8e5" stroke="#9e3321" stroke-opacity="0.45" stroke-width="1"/>
+  <line x1="432.4" y1="388.3" x2="421.7" y2="384.1" stroke="#9e3321" stroke-width="1.4"/><line x1="431.1" y1="379.4" x2="424.6" y2="376.8" stroke="#9e3321" stroke-width="0.85"/><line x1="434.0" y1="372.2" x2="427.5" y2="369.6" stroke="#9e3321" stroke-width="0.85"/><line x1="436.9" y1="364.9" x2="430.4" y2="362.3" stroke="#9e3321" stroke-width="0.85"/><line x1="439.8" y1="357.7" x2="433.3" y2="355.1" stroke="#9e3321" stroke-width="0.85"/><line x1="446.8" y1="352.1" x2="436.2" y2="347.9" stroke="#9e3321" stroke-width="1.4"/><text x="419.0" y="345.0" text-anchor="end" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="10.5" fill="#9e3321">5</text><line x1="445.6" y1="343.2" x2="439.1" y2="340.6" stroke="#9e3321" stroke-width="0.85"/><line x1="448.5" y1="336.0" x2="442.0" y2="333.4" stroke="#9e3321" stroke-width="0.85"/><line x1="451.4" y1="328.7" x2="444.9" y2="326.1" stroke="#9e3321" stroke-width="0.85"/><line x1="454.2" y1="321.5" x2="447.7" y2="318.9" stroke="#9e3321" stroke-width="0.85"/><line x1="461.3" y1="315.9" x2="450.6" y2="311.7" stroke="#9e3321" stroke-width="1.4"/><text x="433.5" y="308.8" text-anchor="end" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="10.5" fill="#9e3321">10</text><line x1="460.0" y1="307.0" x2="453.5" y2="304.4" stroke="#9e3321" stroke-width="0.85"/><line x1="462.9" y1="299.8" x2="456.4" y2="297.2" stroke="#9e3321" stroke-width="0.85"/><line x1="465.8" y1="292.5" x2="459.3" y2="289.9" stroke="#9e3321" stroke-width="0.85"/><line x1="468.7" y1="285.3" x2="462.2" y2="282.7" stroke="#9e3321" stroke-width="0.85"/><line x1="475.8" y1="279.7" x2="465.1" y2="275.5" stroke="#9e3321" stroke-width="1.4"/><text x="448.0" y="272.6" text-anchor="end" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="10.5" fill="#9e3321">15</text><line x1="474.5" y1="270.8" x2="468.0" y2="268.2" stroke="#9e3321" stroke-width="0.85"/><line x1="477.4" y1="263.6" x2="470.9" y2="261.0" stroke="#9e3321" stroke-width="0.85"/><line x1="480.3" y1="256.3" x2="473.8" y2="253.7" stroke="#9e3321" stroke-width="0.85"/><line x1="483.2" y1="249.1" x2="476.7" y2="246.5" stroke="#9e3321" stroke-width="0.85"/><line x1="490.3" y1="243.5" x2="479.6" y2="239.2" stroke="#9e3321" stroke-width="1.4"/><text x="462.4" y="236.4" text-anchor="end" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="10.5" fill="#9e3321">20</text><line x1="489.0" y1="234.6" x2="482.5" y2="232.0" stroke="#9e3321" stroke-width="0.85"/><line x1="491.9" y1="227.4" x2="485.4" y2="224.8" stroke="#9e3321" stroke-width="0.85"/><line x1="494.8" y1="220.1" x2="488.3" y2="217.5" stroke="#9e3321" stroke-width="0.85"/><line x1="497.7" y1="212.9" x2="491.2" y2="210.3" stroke="#9e3321" stroke-width="0.85"/><line x1="504.8" y1="207.3" x2="494.1" y2="203.0" stroke="#9e3321" stroke-width="1.4"/><text x="476.9" y="200.2" text-anchor="end" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="10.5" fill="#9e3321">25</text><line x1="503.5" y1="198.4" x2="497.0" y2="195.8" stroke="#9e3321" stroke-width="0.85"/><line x1="506.4" y1="191.2" x2="499.9" y2="188.6" stroke="#9e3321" stroke-width="0.85"/><line x1="509.3" y1="183.9" x2="502.8" y2="181.3" stroke="#9e3321" stroke-width="0.85"/>
+
+  <!-- Projection dashed line B -->
+  <line x1="592.0" y1="343.0" x2="461.7" y2="290.9" stroke="#235884" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <path d="M 458.3 299.2 L 466.7 302.6 L 470.0 294.2" fill="none" stroke="#235884" stroke-width="1.1"/>
+  <!-- Shadow segment B -->
+  <line x1="424.0" y1="385.0" x2="461.7" y2="290.9" stroke="#235884" stroke-width="5.5" opacity="0.38" stroke-linecap="round"/>
+  <!-- Vector y=(2,5) -->
+  <line x1="424.0" y1="385.0" x2="508.0" y2="175.0" stroke="#9e3321" stroke-width="2.4" marker-end="url(#arr-red)"/>
+  <text x="518.0" y="181.0" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="12" font-weight="700" fill="#9e3321">y = (2, 5)</text>
+  <!-- Vector x=(4,1) -->
+  <line x1="424.0" y1="385.0" x2="592.0" y2="343.0" stroke="#235884" stroke-width="2.4" marker-end="url(#arr-blue)"/>
+  <text x="586.0" y="363.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#235884">x = (4, 1)</text>
+  <!-- Callout at projection point 13 -->
+  <circle cx="461.7" cy="290.9" r="4" fill="#235884"/>
+  <text x="475.7" y="284.9" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" font-weight="700" fill="#235884">落点刻度 = 13</text>
+  <circle cx="424.0" cy="385.0" r="3.5" fill="#191816"/>
+
+  <!-- Readout box B -->
+  <rect x="364" y="408" width="288" height="62" rx="6" fill="#fbf8f2" stroke="#d8d0c1"/>
+  <text x="376" y="431" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#235884">影子长 = 2.41 · 尺长 = 5.39</text>
+  <text x="376" y="454" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">读数 = 2.41 × 5.39 ≈ <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="700" fill="#9e3321">13 元</tspan></text>
+
+  <!-- Panel C: Mechanism explainer -->
+  <rect x="682" y="88" width="242" height="398" rx="8" fill="#fbf8f2" stroke="#b8ae9c" stroke-width="1.2"/>
+  <text x="700" y="116" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">WHY DENSER TICKS?</text>
+  <text x="700" y="142" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="17" font-weight="700" fill="#191816">刻度变密的秘密</text>
+  <line x1="700" y1="154" x2="906" y2="154" stroke="#d8d0c1"/>
+
+  <text x="700" y="182" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">沿尺子方向每走 1 几何单位，</text>
+  <text x="700" y="202" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">点积读数跳升 <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="700" fill="#9e3321">‖y‖</tspan> 格。</text>
+
+  <text x="700" y="236" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">反过来，每增加 1 格读数，</text>
+  <text x="700" y="256" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">在尺身上只需要走：</text>
+
+  <rect x="700" y="270" width="206" height="44" rx="6" fill="#f7e8e5" stroke="#9e3321" stroke-opacity="0.4"/>
+  <text x="803" y="298" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#9e3321">格距 = 1 / ‖y‖</text>
+
+  <text x="700" y="340" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">所以尺子箭头越长，单位长度</text>
+  <text x="700" y="360" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">塞进的刻度越多（密度 = ‖y‖）：</text>
+
+  <rect x="700" y="376" width="206" height="92" rx="6" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="803" y="400" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#191816">最终刻度读数</text>
+  <text x="803" y="424" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13" fill="#235884">影子长 (‖x‖ cos θ)</text>
+  <text x="803" y="442" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="12" fill="#787167">×</text>
+  <text x="803" y="460" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13" fill="#9e3321">刻度密度 (‖y‖)</text>
+
+</svg>

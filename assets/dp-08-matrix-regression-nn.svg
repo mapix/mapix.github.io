@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-label="矩阵乘法、线性回归与神经网络层统一在尺子模型下的原理图">
+  <title>矩阵乘法、线性回归与神经网络层统一在尺子模型下的原理图</title>
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#235884"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#9e3321"/>
+    </marker>
+    <marker id="arr-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#4a4640"/>
+    </marker>
+    <marker id="arr-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#787167"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#256b45"/>
+    </marker>
+    
+  </defs>
+  <rect x="0.5" y="0.5" width="959" height="559" rx="10" fill="#fbf8f2" stroke="#d8d0c1"/>
+  
+  <text x="36" y="28" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" letter-spacing="1.4" fill="#787167">FIG 08 · STACKED RULERS: MATRIX, REGRESSION &amp; NEURAL NETS</text>
+  <text x="36" y="54" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="21" font-weight="700" fill="#191816">把尺子摞起来：矩阵乘法、线性回归与神经网络一层</text>
+  <line x1="36" y1="68" x2="924" y2="68" stroke="#d8d0c1" stroke-width="1"/>
+
+  <!-- Top section: W (3x3) x X (3x4) = WX (3x4) -->
+  <rect x="36" y="86" width="888" height="232" rx="8" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="54" y="110" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#787167">MATRIX MULTIPLICATION · 每一格 = 一把行尺子量一个列篮子</text>
+
+  <!-- Matrix W (left) -->
+  <g transform="translate(56, 128)">
+    <text x="86" y="0" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#9e3321">W：3 把尺子（一把一行）</text>
+    <!-- Brackets -->
+    <path d="M 10 14 L 0 14 L 0 132 L 10 132" fill="none" stroke="#191816" stroke-width="1.8"/>
+    <path d="M 164 14 L 174 14 L 174 132 L 164 132" fill="none" stroke="#191816" stroke-width="1.8"/>
+    <!-- Highlight row 2 (calories) -->
+    <rect x="6" y="55" width="162" height="34" rx="5" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.6"/>
+    <!-- Row labels -->
+    <text x="34" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#9e3321">4</text>
+    <text x="87" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#9e3321">5</text>
+    <text x="140" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#9e3321">6</text>
+
+    <text x="34" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#9e3321">95</text>
+    <text x="87" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#9e3321">100</text>
+    <text x="140" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#9e3321">60</text>
+
+    <text x="34" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#9e3321">180</text>
+    <text x="87" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#9e3321">180</text>
+    <text x="140" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#9e3321">130</text>
+
+    <text x="87" y="152" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11" fill="#787167">行：价目 / 热量 / 重量</text>
+  </g>
+
+  <text x="252" y="206" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="22" font-weight="700" fill="#191816">×</text>
+
+  <!-- Matrix X (middle) -->
+  <g transform="translate(274, 128)">
+    <text x="96" y="0" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#235884">X：甲乙丙丁 4 个篮子（一列一人）</text>
+    <path d="M 10 14 L 0 14 L 0 132 L 10 132" fill="none" stroke="#191816" stroke-width="1.8"/>
+    <path d="M 184 14 L 194 14 L 194 132 L 184 132" fill="none" stroke="#191816" stroke-width="1.8"/>
+    <!-- Highlight col 3 (丙) -->
+    <rect x="104" y="18" width="38" height="110" rx="5" fill="#e7eff5" stroke="#235884" stroke-width="1.6"/>
+    <!-- Column headers -->
+    <text x="32" y="152" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">甲</text>
+    <text x="76" y="152" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">乙</text>
+    <text x="123" y="152" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#235884">丙</text>
+    <text x="166" y="152" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">丁</text>
+
+    <!-- Values -->
+    <text x="32" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">1</text>
+    <text x="76" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">2</text>
+    <text x="123" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#235884">0</text>
+    <text x="166" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">4</text>
+
+    <text x="32" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">2</text>
+    <text x="76" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">0</text>
+    <text x="123" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#235884">3</text>
+    <text x="166" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">1</text>
+
+    <text x="32" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">3</text>
+    <text x="76" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">1</text>
+    <text x="123" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#235884">2</text>
+    <text x="166" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#235884">0</text>
+  </g>
+
+  <text x="492" y="206" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="22" font-weight="700" fill="#191816">=</text>
+
+  <!-- Matrix WX (right) -->
+  <g transform="translate(514, 128)">
+    <text x="112" y="0" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#191816">WX：12 个点积一次算完</text>
+    <path d="M 10 14 L 0 14 L 0 132 L 10 132" fill="none" stroke="#191816" stroke-width="1.8"/>
+    <path d="M 218 14 L 228 14 L 228 132 L 218 132" fill="none" stroke="#191816" stroke-width="1.8"/>
+    <!-- Highlight cell (2,3) = 420 -->
+    <rect x="115" y="55" width="48" height="34" rx="5" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.8"/>
+
+    <!-- Row 1: 元 -->
+    <text x="34" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">32</text>
+    <text x="86" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">14</text>
+    <text x="139" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">27</text>
+    <text x="192" y="40" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">21</text>
+    <text x="242" y="40" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">元</text>
+
+    <!-- Row 2: 大卡 -->
+    <text x="34" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">475</text>
+    <text x="86" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">250</text>
+    <text x="139" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#9e3321">420</text>
+    <text x="192" y="77" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">480</text>
+    <text x="242" y="77" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#9e3321">大卡</text>
+
+    <!-- Row 3: 克 -->
+    <text x="34" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">930</text>
+    <text x="86" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">490</text>
+    <text x="139" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">800</text>
+    <text x="192" y="114" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#191816">900</text>
+    <text x="242" y="114" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">克</text>
+
+    <!-- Callout right of WX -->
+    <rect x="280" y="20" width="122" height="108" rx="6" fill="#fbf8f2" stroke="#d8d0c1"/>
+    <text x="341" y="44" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#9e3321">热量 · 丙</text>
+    <text x="341" y="66" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#4a4640">95×0 + 100×3</text>
+    <text x="341" y="84" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#4a4640">+ 60×2</text>
+    <text x="341" y="110" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#9e3321">= 420 大卡</text>
+
+    <text x="112" y="152" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11" fill="#787167">1000 尺 × 100 万篮 = 10 亿点积（GPU 眨眼算完）</text>
+  </g>
+
+  <!-- Bottom left: Linear regression -->
+  <rect x="36" y="334" width="434" height="196" rx="8" fill="#fbf8f2" stroke="#b8ae9c"/>
+  <text x="56" y="360" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#9e3321">LINEAR REGRESSION · 线性回归</text>
+  <text x="56" y="384" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="16" font-weight="700" fill="#191816">回归系数 w 就是一张学出来的价目表</text>
+  <line x1="56" y1="396" x2="450" y2="396" stroke="#d8d0c1"/>
+
+  <text x="56" y="422" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13" fill="#4a4640">面积 <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#235884" font-weight="600">90 平米</tspan> × <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#9e3321" font-weight="600">1.2 万/平米</tspan> = <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="600" fill="#191816">108 万</tspan></text>
+  <text x="56" y="446" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13" fill="#4a4640">卧室 <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#235884" font-weight="600">3 间</tspan> × <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#9e3321" font-weight="600">3 万/间</tspan> = <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="600" fill="#191816">9 万</tspan>　＋　底数 <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="600" fill="#b36b16">b = 5 万</tspan></text>
+
+  <rect x="56" y="464" width="394" height="48" rx="6" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="253" y="494" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#191816">
+    <tspan fill="#9e3321">[1.2, 3]</tspan> · <tspan fill="#235884">[90, 3]ᵀ</tspan> + <tspan fill="#b36b16">5</tspan> = <tspan fill="#9e3321">122 万</tspan>
+  </text>
+
+  <!-- Bottom right: Neural network layer -->
+  <rect x="490" y="334" width="434" height="196" rx="8" fill="#fbf8f2" stroke="#b8ae9c"/>
+  <text x="510" y="360" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#235884">NEURAL NETWORK LAYER · 神经网络的一层</text>
+  <text x="510" y="384" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="16" font-weight="700" fill="#191816">整层网络 = 一摞尺子并行打分，再过激活函数</text>
+  <line x1="510" y1="396" x2="904" y2="396" stroke="#d8d0c1"/>
+
+  <!-- 3->3 network diagram -->
+  <g transform="translate(540, 412)">
+    <!-- Background connections -->
+    <line x1="20" y1="14" x2="150" y2="14" stroke="#b8ae9c" stroke-width="1.2"/>
+    <line x1="20" y1="50" x2="150" y2="14" stroke="#b8ae9c" stroke-width="1.2"/>
+    <line x1="20" y1="86" x2="150" y2="14" stroke="#b8ae9c" stroke-width="1.2"/>
+    <line x1="20" y1="14" x2="150" y2="86" stroke="#b8ae9c" stroke-width="1.2"/>
+    <line x1="20" y1="50" x2="150" y2="86" stroke="#b8ae9c" stroke-width="1.2"/>
+    <line x1="20" y1="86" x2="150" y2="86" stroke="#b8ae9c" stroke-width="1.2"/>
+    <!-- Highlighted middle neuron (one ruler) -->
+    <line x1="20" y1="14" x2="150" y2="50" stroke="#9e3321" stroke-width="2.2"/>
+    <line x1="20" y1="50" x2="150" y2="50" stroke="#9e3321" stroke-width="2.2"/>
+    <line x1="20" y1="86" x2="150" y2="50" stroke="#9e3321" stroke-width="2.2"/>
+    <!-- Input nodes -->
+    <circle cx="20" cy="14" r="7" fill="#235884"/>
+    <circle cx="20" cy="50" r="7" fill="#235884"/>
+    <circle cx="20" cy="86" r="7" fill="#235884"/>
+    <text x="-8" y="55" text-anchor="end" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="15" font-style="italic" font-weight="700" fill="#235884">x</text>
+    <!-- Output nodes -->
+    <circle cx="150" cy="14" r="9" fill="#fbf8f2" stroke="#4a4640" stroke-width="1.5"/>
+    <circle cx="150" cy="50" r="9" fill="#f7e8e5" stroke="#9e3321" stroke-width="2"/>
+    <circle cx="150" cy="86" r="9" fill="#fbf8f2" stroke="#4a4640" stroke-width="1.5"/>
+    <!-- Formula on right -->
+    <text x="180" y="34" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#9e3321">每个神经元 = 一把尺子</text>
+    <text x="180" y="58" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13.5" font-weight="700" fill="#191816">y = σ(W x + b)</text>
+    <text x="180" y="82" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">先用 W 做点积，再过非线性激活</text>
+  </g>
+
+</svg>

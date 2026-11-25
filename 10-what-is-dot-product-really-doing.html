@@ -1,0 +1,1926 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("blog.theme");
+        if (t === "dark" || t === "light") {
+          document.documentElement.setAttribute("data-theme", t);
+          var m = document.querySelector('meta[name="color-scheme"]');
+          if (m) m.content = t;
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <title>拿一把尺子去量世界：循序渐进拆解向量点积 — Notes &amp; Essays</title>
+  <meta name="description" content="从曹冲称象与一张普通的水果小票出发，沿着加权求和、坐标本质、几何投影与刻度密度、余弦定理证明、余弦相似度与相关系数，一路串起矩阵乘法与神经网络。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-paper: #f6f2ea;
+      --bg-elevated: #efeae0;
+      --bg-card: #fbf8f2;
+      --ink: #191816;
+      --ink-secondary: #4a4640;
+      --ink-muted: #787167;
+      --rule: #d8d0c1;
+      --rule-strong: #191816;
+      --accent: #9e3321;
+      --accent-soft: rgba(158, 51, 33, 0.11);
+      --blue: #235884;
+      --blue-soft: rgba(35, 88, 132, 0.12);
+      --ok: #256b45;
+      --ok-soft: rgba(37, 107, 69, 0.12);
+      --warn: #b36b16;
+      --warn-soft: rgba(179, 107, 22, 0.12);
+
+      --font-serif: "Newsreader", "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      --font-sans: "Inter", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+      --measure: 68ch;
+      --wrap: 1120px;
+      accent-color: var(--accent);
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-paper: #161513;
+      --bg-elevated: #1f1d1a;
+      --bg-card: #1a1815;
+      --ink: #eae4d9;
+      --ink-secondary: #b9b1a3;
+      --ink-muted: #8a8275;
+      --rule: #2e2b26;
+      --rule-strong: #eae4d9;
+      --accent: #e06b55;
+      --accent-soft: rgba(224, 107, 85, 0.16);
+      --blue: #6aa8dc;
+      --blue-soft: rgba(106, 168, 220, 0.16);
+      --ok: #52b780;
+      --ok-soft: rgba(82, 183, 128, 0.15);
+      --warn: #e09f3e;
+      --warn-soft: rgba(224, 159, 62, 0.15);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-paper: #161513;
+        --bg-elevated: #1f1d1a;
+        --bg-card: #1a1815;
+        --ink: #eae4d9;
+        --ink-secondary: #b9b1a3;
+        --ink-muted: #8a8275;
+        --rule: #2e2b26;
+        --rule-strong: #eae4d9;
+        --accent: #e06b55;
+        --accent-soft: rgba(224, 107, 85, 0.16);
+        --blue: #6aa8dc;
+        --blue-soft: rgba(106, 168, 220, 0.16);
+        --ok: #52b780;
+        --ok-soft: rgba(82, 183, 128, 0.15);
+        --warn: #e09f3e;
+        --warn-soft: rgba(224, 159, 62, 0.15);
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-paper);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: clip;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: clamp(16.5px, 1.05vw + 13px, 18.5px);
+      line-height: 1.88;
+      background: var(--bg-paper);
+      color: var(--ink);
+    }
+
+    ::selection {
+      background: rgba(158, 51, 33, 0.18);
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    .skip-link:focus {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 999;
+      width: auto !important;
+      height: auto !important;
+      clip-path: none !important;
+      padding: 8px 14px;
+      background: var(--ink);
+      color: var(--bg-paper);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+
+    /* Reading Progress Strip */
+    .reading-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+      background: color-mix(in srgb, var(--bg-paper) 92%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--rule);
+      transform: translateY(-100%);
+      transition: transform 0.22s ease;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+    .reading-strip.is-visible {
+      transform: translateY(0);
+    }
+    .reading-strip-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .reading-strip-title {
+      color: var(--ink);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-strip-bar {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.08s linear;
+    }
+
+    /* Site Header */
+    header.site-header {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 26px 24px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--font-sans);
+    }
+    .site-brand {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .site-nav a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .site-nav a:hover {
+      color: var(--ink);
+    }
+    .site-nav a:focus-visible,
+    .site-brand:focus-visible,
+    .toc-list a:focus-visible,
+    .post-content a:focus-visible,
+    nav.series-nav a:focus-visible,
+    footer.post-footer a:focus-visible,
+    .theme-btn:focus-visible,
+    .btn-ctl:focus-visible,
+    .mx-cell:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .theme-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      min-block-size: 28px;
+      min-inline-size: 28px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink);
+    }
+
+    /* Main Layout */
+    main.layout {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 60px) 24px 96px;
+      display: grid;
+      grid-template-columns: 205px minmax(0, var(--measure)) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      main.layout {
+        grid-template-columns: minmax(0, var(--measure));
+        justify-content: center;
+      }
+      aside.toc-rail {
+        display: none;
+      }
+    }
+
+    /* Sticky TOC Rail with native scrollspy */
+    aside.toc-rail {
+      position: sticky;
+      top: 64px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      padding-top: 6px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      scroll-target-group: auto;
+    }
+    .toc-list a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      display: block;
+      padding-left: 11px;
+      border-left: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .toc-list a:hover {
+      color: var(--ink);
+    }
+    .toc-list a:is(:target-current, .target-current) {
+      color: var(--accent);
+      font-weight: 600;
+      border-left-color: var(--accent);
+    }
+
+    /* Article */
+    article.post {
+      min-width: 0;
+    }
+    header.post-header {
+      margin-bottom: 32px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--rule);
+    }
+    header.post-header h1 {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: clamp(27px, 3.6vw, 38px);
+      line-height: 1.24;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+    .post-subtitle {
+      margin: 0 0 18px;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.68;
+      color: var(--ink-secondary);
+    }
+    dl.post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 28px;
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    dl.post-meta div {
+      display: flex;
+      gap: 8px;
+    }
+    dl.post-meta dt { color: var(--ink-muted); }
+    dl.post-meta dd {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    /* Prose */
+    .post-section {
+      scroll-margin-top: 64px;
+    }
+    .post-content p {
+      margin: 0 0 1.32em;
+    }
+    .post-content h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 2.7vw, 27px);
+      font-weight: 700;
+      line-height: 1.32;
+      margin: 2.35em 0 0.78em;
+      color: var(--ink);
+    }
+    .post-content h3 {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      margin: 1.8em 0 0.55em;
+      color: var(--ink);
+    }
+    .post-content ul, .post-content ol {
+      margin: 0 0 1.4em;
+      padding-left: 1.4em;
+    }
+    .post-content li {
+      margin-bottom: 0.55em;
+    }
+    .post-content code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+    }
+    .post-content blockquote {
+      margin: 1.5em 0;
+      padding: 12px 18px;
+      border-left: 3px solid var(--accent);
+      background: var(--bg-elevated);
+      border-radius: 0 6px 6px 0;
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.72;
+    }
+    .post-content blockquote p:last-child {
+      margin-bottom: 0;
+    }
+    .math-inline {
+      font-family: var(--font-serif);
+      font-style: italic;
+      white-space: nowrap;
+    }
+
+    /* Formula callout box */
+    .formula-box {
+      margin: 1.45em 0;
+      padding: 16px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .formula-main {
+      font-family: var(--font-mono);
+      font-size: 15.5px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    .formula-note {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--ink-secondary);
+      line-height: 1.55;
+    }
+
+    /* Editorial SVG Figures */
+    figure.editorial-figure {
+      margin: 2em -44px;
+    }
+    @media (max-width: 820px) {
+      figure.editorial-figure {
+        margin: 1.6em 0;
+      }
+    }
+    figure.editorial-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: #fbf8f2;
+      transition: filter 0.2s ease;
+    }
+    :root[data-theme="dark"] figure.editorial-figure img {
+      filter: brightness(0.91) contrast(1.03);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) figure.editorial-figure img {
+        filter: brightness(0.91) contrast(1.03);
+      }
+    }
+    figure.editorial-figure figcaption {
+      margin-top: 10px;
+      padding: 0 4px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.62;
+      color: var(--ink-muted);
+    }
+
+    /* Interactive Stage Containers */
+    .stage-card {
+      margin: 2.1em -44px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    @media (max-width: 820px) {
+      .stage-card {
+        margin: 1.6em 0;
+      }
+    }
+    .stage-header {
+      padding: 11px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+    }
+    .stage-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .stage-meta-readout {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .stage-canvas {
+      padding: 16px;
+      background: var(--bg-card);
+    }
+    .stage-canvas svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+    .stage-controls {
+      padding: 12px 16px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-family: var(--font-sans);
+    }
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-ctl {
+      appearance: none;
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+    .btn-ctl:hover:not(:disabled) {
+      border-color: var(--ink);
+    }
+    .btn-ctl.is-active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .slider-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .slider-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .slider-box {
+      background: var(--bg-paper);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      padding: 8px 12px;
+    }
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .slider-head label {
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .slider-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .slider-box input[type="range"] {
+      width: 100%;
+      margin: 2px 0;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    @supports not (accent-color: var(--accent)) {
+      .slider-box input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+      }
+      .slider-box input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: linear-gradient(to right, var(--accent) var(--progress, 50%), var(--rule) var(--progress, 50%));
+      }
+      .slider-box input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-top: -5px;
+      }
+      .slider-box input[type="range"]::-moz-range-track {
+        height: 6px;
+        background: var(--rule);
+        border-radius: 3px;
+      }
+      .slider-box input[type="range"]::-moz-range-progress {
+        height: 6px;
+        background: var(--accent);
+        border-radius: 3px;
+      }
+      .slider-box input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border: none;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+      font-family: var(--font-sans);
+    }
+    @media (max-width: 640px) {
+      .readout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .readout-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      padding: 8px 11px;
+    }
+    .readout-pill span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      margin-bottom: 2px;
+    }
+    .readout-pill strong {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--ink);
+    }
+    .readout-pill.is-accent strong { color: var(--accent); }
+    .readout-pill.is-blue strong { color: var(--blue); }
+    .readout-pill.is-ok strong { color: var(--ok); }
+
+    .stage-caption {
+      padding: 10px 16px 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.58;
+      color: var(--ink-muted);
+      border-top: 1px dashed var(--rule);
+      background: var(--bg-card);
+    }
+
+    /* Stage 2 Proof Stepper */
+    .proof-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    @media (max-width: 720px) {
+      .proof-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .proof-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-family: var(--font-sans);
+    }
+    .proof-step-card {
+      padding: 11px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+      background: var(--bg-elevated);
+      opacity: 0.42;
+      transition: opacity 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .proof-step-card.is-visible {
+      opacity: 1;
+    }
+    .proof-step-card.is-current {
+      border-color: var(--accent);
+      background: var(--bg-paper);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .proof-step-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+    }
+    .proof-step-card.is-current .proof-step-label {
+      color: var(--accent);
+    }
+    .proof-eq {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .strike-common {
+      text-decoration: line-through;
+      text-decoration-color: var(--accent);
+      text-decoration-thickness: 2px;
+      opacity: 0.55;
+    }
+
+    /* Stage 3 Matrix Explorer */
+    .mx-board {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+    }
+    .mx-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .mx-caption {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
+    .mx-grid {
+      display: grid;
+      gap: 4px;
+      padding: 8px 10px;
+      border-left: 2px solid var(--ink);
+      border-right: 2px solid var(--ink);
+      border-radius: 6px;
+      background: var(--bg-paper);
+    }
+    .mx-grid.cols-3 { grid-template-columns: repeat(3, 52px); }
+    .mx-grid.cols-4 { grid-template-columns: repeat(4, 52px); }
+    .mx-hdr {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      text-align: center;
+      color: var(--ink-muted);
+      padding-bottom: 2px;
+    }
+    .mx-val, .mx-cell {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink);
+    }
+    .mx-val.is-row-hi {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .mx-val.is-col-hi {
+      background: var(--blue-soft);
+      border-color: var(--blue);
+      color: var(--blue);
+      font-weight: 700;
+    }
+    .mx-cell {
+      cursor: pointer;
+      border-color: var(--rule);
+      background: var(--bg-elevated);
+      transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+    }
+    .mx-cell:hover {
+      border-color: var(--accent);
+    }
+    .mx-cell.is-selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+    .mx-op {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink-muted);
+    }
+    .mx-detail {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.65;
+    }
+    .mx-detail-eq {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-top: 4px;
+    }
+
+    /* Summary Table */
+    .table-wrap {
+      margin: 1.6em 0;
+      overflow-x: auto;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+    }
+    table.summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.55;
+      background: var(--bg-card);
+    }
+    table.summary-table th,
+    table.summary-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--rule);
+    }
+    table.summary-table th {
+      background: var(--bg-elevated);
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    table.summary-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Series Nav & Footer */
+    nav.series-nav {
+      margin-top: 44px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    nav.series-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    nav.series-nav a:hover {
+      color: var(--accent);
+    }
+    footer.post-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.72;
+      color: var(--ink-muted);
+    }
+    footer.post-footer a {
+      color: var(--ink-secondary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    footer.post-footer a:hover {
+      color: var(--accent);
+    }
+    .end-mark {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+    }
+
+    @media print {
+      .reading-strip, header.site-header, aside.toc-rail, .stage-controls { display: none !important; }
+      main.layout { display: block; max-width: 100%; padding: 0; }
+      figure.editorial-figure, .stage-card { margin: 1.4em 0; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#post-title" class="skip-link visually-hidden">跳至正文</a>
+
+  <div class="reading-strip" id="reading-strip" aria-hidden="true">
+    <div class="reading-strip-inner">
+      <span class="reading-strip-title">拿一把尺子去量世界：循序渐进拆解向量点积</span>
+      <span id="reading-progress-label">0%</span>
+    </div>
+    <div class="reading-strip-bar" id="reading-bar"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="site-brand" href="index.html">Notes &amp; Essays</a>
+    <nav class="site-nav" aria-label="站点与章节">
+      <a href="index.html">全部文章</a>
+      <a href="#receipt">小票</a>
+      <a href="#ruler">尺子与坐标</a>
+      <a href="#geometry">几何投影</a>
+      <a href="#proof">数学证明</a>
+      <a href="#cosine-corr">余弦与相关</a>
+      <a href="#matrix-nn">矩阵与网络</a>
+      <button type="button" class="theme-btn" id="theme-toggle">
+        <span class="visually-hidden">切换明暗主题，当前 </span><span id="theme-label">LIGHT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout" id="post-top">
+    <aside class="toc-rail" aria-label="文章目录">
+      <ul class="toc-list" id="toc-list" role="list">
+        <li><a href="#intro" class="target-current" aria-current="true">引子：曹冲称象</a></li>
+        <li><a href="#receipt">一、超市小票与量纲约分</a></li>
+        <li><a href="#ruler">二、换把尺子，坐标也是量出来的</a></li>
+        <li><a href="#geometry">三、几何投影与刻度变密</a></li>
+        <li><a href="#proof">四、证明：同一个量算两遍</a></li>
+        <li><a href="#cosine-corr">五、对称性、余弦与相关系数</a></li>
+        <li><a href="#matrix-nn">六、矩阵乘法与神经网络</a></li>
+        <li><a href="#closing">七、回到大象</a></li>
+      </ul>
+    </aside>
+
+    <article class="post">
+      <header class="post-header">
+        <h1 id="post-title" tabindex="-1">拿一把尺子去量世界：循序渐进拆解向量点积</h1>
+        <p class="post-subtitle">
+          从曹冲称象与一张普通的水果小票出发，沿着加权求和、坐标本质、几何投影与刻度密度、余弦定理证明、余弦相似度与相关系数，一路串起矩阵乘法与神经网络。
+        </p>
+        <dl class="post-meta">
+          <div>
+            <dt>发布于</dt>
+            <dd><time datetime="2026-11-25">2026 年 11 月 25 日</time></dd>
+          </div>
+          <div>
+            <dt>阅读时间</dt>
+            <dd>10 分钟 · 含 3 个交互实验</dd>
+          </div>
+          <div>
+            <dt>系列</dt>
+            <dd>#10</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="post-content">
+        <!-- INTRO -->
+        <section class="post-section" id="intro" tabindex="-1">
+          <p>看到下面这个式子，你脑子里第一个蹦出来的念头是什么？</p>
+
+          <div class="formula-box">
+            <div class="formula-main">[3, 4, 6] · [600, 300, 50]ᵀ = 3×600 + 4×300 + 6×50 = 3300 kg</div>
+            <div class="formula-note">左边 [3, 4, 6] 是「被量的」（各搬了几块石头），右边 [600, 300, 50] 是「尺子」（每块多重）。</div>
+          </div>
+
+          <p>大多数人被应试教育训练出的第一反应是<strong>“怎么算”</strong>——赶紧拿笔把第一个乘第一个、第二个乘第二个、第三个乘第三个，再加起来。</p>
+
+          <p>但“怎么算”这件事，交给电脑就行。人脑真正该想的是另一件事：<strong>它在干什么？</strong></p>
+
+          <p>答案用中国小学生都听过的故事就能讲透——<strong>曹冲称象</strong>。大象太重，直接搬不上秤；可石头可以一块一块搬上去，只要吃水线齐平，船里压着的石头就和大象一样重。假设压到同一条吃水线，一共搬了 3 块 600 kg 的大石、4 块 300 kg 的中石、6 块 50 kg 的小石，那么石头一乘一加，就量出了大象的体重 <code>3300 kg</code>。</p>
+
+          <blockquote>
+            <p><strong>全篇唯一核心心智模型：</strong>向量点积不是枯燥的算术步骤，而是<strong>“拿一个向量当尺子，去量另一个向量”</strong>。</p>
+          </blockquote>
+
+          <p>在整个人工智能世界里，从向量检索到大语言模型的每一层权重计算，算得最多的运算，就是公式 <code>x · y = Σ xᵢyᵢ = ‖x‖‖y‖ cos θ</code> 中间那个小小的实心点。</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-01-elephant-and-map.svg" alt="曹冲称象与向量点积六大核心概念导览图" width="960" height="520" fetchpriority="high">
+            <figcaption>图 1：左栏是曹冲称象的向量表达——数量是被量的，单块重量是尺子；右栏是全篇地图，从同一个实心点出发，串起加权求和、尺子与坐标、几何投影、余弦与相关系数、长度勾股，直到矩阵乘法与神经网络。</figcaption>
+          </figure>
+        </section>
+
+        <!-- SECTION 1 -->
+        <section class="post-section" id="receipt" tabindex="-1">
+          <h2>一、从超市小票说起：加权求和、量纲约分与算力账本</h2>
+
+          <p>忘掉“线性代数”四个字，先看一张最普通的买水果小票：</p>
+
+          <ul>
+            <li>苹果：<code>1 个 × 4 元/个 = 4 元</code></li>
+            <li>梨：<code>2 个 × 5 元/个 = 10 元</code></li>
+            <li>橙子：<code>3 个 × 6 元/个 = 18 元</code></li>
+            <li>合计：<code>4 + 10 + 18 = 32 元</code></li>
+          </ul>
+
+          <p>这里藏着一个非常细腻、却常被忽略的细节——<strong>量纲约分（单位约分）</strong>：<code>1 个 × 4 元/个 = 4 元</code>，“个”与“/个”斜着约掉，最后干干净净只剩下“元”。</p>
+
+          <p>为什么这个小动作值得停下来看两秒？因为它悄悄暴露了点积里两个向量扮演着<strong>不对等的物理角色</strong>：第一串数 <code>x = (1, 2, 3)</code> 是数量，在算式里当<strong>权重</strong>；第二串数 <code>y = (4, 5, 6)</code> 是单价，是一张把“个数”换算成“多少钱”的<strong>换算标准</strong>。把数量当权重、把单价加起来，就是工程和统计里天天挂在嘴边的<strong>加权求和（weighted sum）</strong>。</p>
+
+          <p>再瞄一眼它的输入输出与计算代价：两串<strong>一样长</strong>的数进去，永远只吐出<strong>一个数</strong>（标量）。3 样东西只需 3 次乘法、2 次加法；哪怕扩展到 1000 维向量，也不过是 1000 次乘法、999 次加法（线性扫描一遍，<code>O(n)</code>），没有分支跳转，没有前后依赖。以后在任何论文里见到点积，别被求和符号吓住，直接当它<strong>一眨眼就算完</strong>。</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-02-receipt-and-units.svg" alt="超市小票加权求和、量纲约分与点积计算流程" width="960" height="480" loading="lazy">
+            <figcaption>图 2：小票的每一次乘法都在做单位约分（“个”与“/个”抵消，只剩“元”）；点积接收两串等长数列，线性扫一遍输出一个标量。</figcaption>
+          </figure>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section class="post-section" id="ruler" tabindex="-1">
+          <h2>二、视角翻转：把第二串数看成“一把尺子”</h2>
+
+          <p>小票谁都会算，但真正让点积活起来的，是下面这次<strong>视角翻转</strong>：把手里这篮水果 <code>x = (1, 2, 3)</code>（1 苹果、2 梨、3 橙子）固定在桌子上不动，把单价 <code>[4, 5, 6]</code> 看成<strong>一把尺子</strong>——它的作用，是把这篮水果量成“多少钱”。</p>
+
+          <p>既然它是尺子，我们就可以随时换一把尺子去量同一篮水果：</p>
+
+          <ul>
+            <li><strong>价目表尺子</strong> <code>[4, 5, 6]</code>（元/个）→ <code>1×4 + 2×5 + 3×6 = 32 元</code></li>
+            <li><strong>热量表尺子</strong> <code>[95, 100, 60]</code>（大卡/个，约）→ <code>95 + 200 + 180 = 475 大卡</code></li>
+            <li><strong>只数苹果的尺子</strong> <code>[1, 0, 0]</code> → <code>1×1 + 2×0 + 3×0 = 1 个</code></li>
+          </ul>
+
+          <p>请在这里停三秒，因为一句点石成金的洞见就藏在眼前：<strong>坐标，也是这样量出来的。</strong></p>
+
+          <p>盯紧第三把尺子 <code>[1, 0, 0]</code>：它给苹果权重 <code>1</code>、给梨和橙子权重 <code>0</code>，量出来的 <code>1</code>，恰好就是果篮向量 <code>x = (1, 2, 3)</code> 的<strong>第一个坐标</strong>！同理，拿 <code>[0, 1, 0]</code> 量出第二个坐标 <code>2</code>，拿 <code>[0, 0, 1]</code> 量出第三个坐标 <code>3</code>。</p>
+
+          <p>原来，我们以为写死在对象身上的“坐标”，本质上也是拿标准基向量当尺子量出来的读数。换上价目表或热量表，不过是换了一把倾斜的、带自己刻度的尺子去给同一篮东西打分。（在高等线性代数里，把向量量成一个数的“尺子”叫<strong>线性泛函 / 对偶向量</strong>，听起来吓人，其实说的就是它。）</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-03-swap-rulers.svg" alt="同一篮水果更换价目表、热量表与标准基三把尺子的测量对照" width="960" height="480" loading="lazy">
+            <figcaption>图 3：果篮 x = (1, 2, 3) 纹丝不动，连续换上价目表、热量表与标准基 e₁ 三把尺子。拿 (1, 0, 0) 量出的 1 正是 x 的第一个坐标。</figcaption>
+          </figure>
+        </section>
+
+        <!-- SECTION 3 -->
+        <section class="post-section" id="geometry" tabindex="-1">
+          <h2>三、走进几何空间：箭头、投影，以及“为什么尺子越长刻度越密”</h2>
+
+          <p>刚才我们一直在用算术和表格理解尺子；现在把视角推进一步，看看点积在几何空间里长什么样。</p>
+
+          <p>三样水果在三维空间里不好画，<strong>先退到两样</strong>：横轴代表苹果，纵轴代表梨。于是果篮变成了平面上的一支箭头 <code>x = (4, 1)</code>（4 个苹果、1 个梨，几何长度 <code>‖x‖ = √(4² + 1²) = √17 ≈ 4.12</code>），而尺子也变成了一支箭头 <code>y</code>。</p>
+
+          <h3>1. 为什么尺子箭头越长，刻度反而越密？</h3>
+
+          <p>先看单位尺子 <code>y = (1, 0)</code>（只数苹果）：它的长度 <code>‖y‖ = 1</code>，沿尺每走 <code>1</code> 个几何单位，点积增加 <code>1</code>，所以每 1 格的间距正好是 <code>1</code>。把 <code>x = (4, 1)</code> 垂直投影到尺子上，影子长 <code>4</code>，读数就是 <code>4 个</code>。</p>
+
+          <p>现在换成<strong>价目表尺子</strong> <code>y = (2, 5)</code>（苹果 2 元、梨 5 元）。尺子不仅转向了（与横轴成 68.2°），而且变长了：<code>‖y‖ = √(2² + 5²) = √29 ≈ 5.39</code>。</p>
+
+          <p>很多人看到这里会一愣：<strong>尺子变长了，刻度不应该变疏吗？为什么反而变密了？</strong></p>
+
+          <p>算一笔极简的账就豁然开朗：沿着 <code>y</code> 的方向每走 <strong>1 个几何单位长度</strong>（即单位向量 <code>ŷ = y / ‖y‖</code>），点积读数会跳升 <code>ŷ · y = ‖y‖ ≈ 5.39</code> 元！反过来说，<strong>读数每增加 1 元，在尺身上只需要前进 <code>1 / ‖y‖ ≈ 0.186</code> 个几何单位。</strong></p>
+
+          <p>所以尺子箭头越长，单位长度里塞进的刻度就越密（密度 = <code>‖y‖</code>）。于是把篮子 <code>x = (4, 1)</code> 垂直投影到 <code>y = (2, 5)</code> 上：</p>
+
+          <div class="formula-box">
+            <div class="formula-main">刻度读数 = 影子长度 (‖x‖ cos θ) × 刻度密度 (‖y‖) = 2.414 × 5.385 = 13 元</div>
+            <div class="formula-note">对照小票算法：4 × 2 + 1 × 5 = 8 + 5 = 13 元，分毫不差！换成热量表 (95, 100) 时 ‖y‖ ≈ 137.93，刻度密到每 100 大卡画一大格，读数 = 4×95 + 1×100 = 480 大卡。</div>
+          </div>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-04-ruler-ticks-and-projection.svg" alt="几何投影与尺子刻度密度变化原理图" width="960" height="520" loading="lazy">
+            <figcaption>图 4：从单位尺子 (1, 0) 切换到价目表 (2, 5)，尺长变为 √29 ≈ 5.39，每 1 元的刻度间距压缩为 1/5.39 ≈ 0.186。最终读数 = 影子长 × 刻度密度。</figcaption>
+          </figure>
+
+          <h3>2. 亲手转一转这把尺子（交互实验 1）</h3>
+          <p>光看静态图还不过瘾的话，直接点击下面 6 个典型预设，或者慢慢拖动“旋转角度”和“尺子长度”滑块——亲眼观察尺身刻度如何变密、影子如何缩成零或翻成负值，以及为什么拉长尺子时点积会翻倍、余弦相似度却纹丝不动：</p>
+
+          <!-- INTERACTIVE STAGE 1: RULER & PROJECTION -->
+          <div class="stage-card" id="stage-ruler">
+            <div class="stage-header">
+              <span class="stage-title">交互实验 1 · 旋转与拉长几何尺子（固定篮子 x = (4, 1)）</span>
+              <span class="stage-meta-readout" id="ruler-badge">价目表 y = (2, 5) · 读数 13 元</span>
+            </div>
+            <div class="stage-canvas">
+              <svg id="ruler-svg" viewBox="0 0 700 340" role="img" aria-label="交互式几何尺子与投影演示">
+                <!-- Dynamic SVG rendered by JS -->
+              </svg>
+              <div class="readout-grid">
+                <div class="readout-pill is-blue">
+                  <span>几何刻度法 · (‖x‖ cos θ) × ‖y‖</span>
+                  <strong id="ro-geom">2.41 × 5.39 = 13.00</strong>
+                </div>
+                <div class="readout-pill is-accent">
+                  <span>小票坐标法 · x₁y₁ + x₂y₂</span>
+                  <strong id="ro-alg">4×2 + 1×5 = 13.00</strong>
+                </div>
+                <div class="readout-pill is-ok">
+                  <span>纯方向 · 余弦相似度 cos θ</span>
+                  <strong id="ro-cos">0.59（夹角 54.2°）</strong>
+                </div>
+              </div>
+            </div>
+            <div class="stage-controls">
+              <div class="btn-row" role="group" aria-label="典型尺子预设">
+                <button type="button" class="btn-ctl" data-preset="apple">只数苹果 (1, 0)</button>
+                <button type="button" class="btn-ctl is-active" data-preset="price">价目表 (2, 5)</button>
+                <button type="button" class="btn-ctl" data-preset="calorie">热量表 (95, 100)</button>
+                <button type="button" class="btn-ctl" data-preset="perp">转到垂直 (0)</button>
+                <button type="button" class="btn-ctl" data-preset="back">转到背面 (-4.12)</button>
+                <button type="button" class="btn-ctl" data-preset="self">自己量自己 (4, 1)</button>
+              </div>
+              <div class="slider-grid">
+                <div class="slider-box">
+                  <div class="slider-head">
+                    <label for="slider-angle">尺子方向角</label>
+                    <span class="slider-val" id="val-angle">68.2°</span>
+                  </div>
+                  <input type="range" id="slider-angle" min="0" max="360" step="0.5" value="68.2">
+                </div>
+                <div class="slider-box">
+                  <div class="slider-head">
+                    <label for="slider-len">尺子长度 ‖y‖（决定刻度密度）</label>
+                    <span class="slider-val" id="val-len">5.39</span>
+                  </div>
+                  <input type="range" id="slider-len" min="0.5" max="6.5" step="0.05" value="5.39">
+                </div>
+              </div>
+            </div>
+            <div class="stage-caption" id="ruler-caption">
+              价目表 y = (2, 5)：尺子变长到 5.39，每 1 元只占 0.186 几何单位。拖动「尺子长度」滑块看看：刻度变密、点积成倍变化，但最右侧的余弦相似度 cos θ 始终不变！
+            </div>
+          </div>
+
+          <h3>3. 正、零、负三种符号，以及撞上勾股定理</h3>
+
+          <p>用长度为 1 的单位尺子转上一圈，点积的四种经典情形一目了然：</p>
+          <ul>
+            <li><strong>锐角同向</strong>：影子落在尺子正面，读数为<strong>正</strong>；</li>
+            <li><strong>转到垂直（90°）</strong>：影子缩成原点一个点，读数为 <strong><code>0</code></strong>（正交 = 这把尺子对它毫无感觉）；</li>
+            <li><strong>转到背面（&gt;90°）</strong>：影子落在尺子反方向延长线上，读数为<strong>负</strong>（完全反向时读出 <code>-√17 ≈ -4.12</code>）；</li>
+            <li><strong>拿篮子自己当尺子，量它自己</strong>：<code>x · x = 4×4 + 1×1 = 17</code>；几何上同向影子就是自己，<code>√17 × √17 = 17 = ‖x‖²</code>。这恰好就是<strong>勾股定理</strong> <code>‖x‖² = 4² + 1²</code>——原来向量的长度，就是“拿自己量自己再开方”：<code>‖x‖ = √(x · x)</code>。</li>
+          </ul>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-05-sign-and-pythagoras.svg" alt="点积正零负符号与勾股定理四象限原理图" width="960" height="520" loading="lazy">
+            <figcaption>图 5：固定篮子 x = (4, 1)，尺子旋转经过同向（正）、垂直（零）、背面（负），最后拿自己当尺子量出 17 = 4² + 1² = ‖x‖²，与勾股定理无缝合流。</figcaption>
+          </figure>
+        </section>
+
+        <!-- SECTION 4 -->
+        <section class="post-section" id="proof" tabindex="-1">
+          <h2>四、凭啥两种算法一定相等？——“同一个量，算两遍”</h2>
+
+          <p>到这里，一个敏锐的问题自然浮出水面：按尺子刻度读是 <code>‖x‖‖y‖ cos θ</code>（<code>2.41 × 5.39 ≈ 13</code>），按小票算却是 <code>Σ xᵢyᵢ</code>（<code>4×2 + 1×5 = 13</code>）。一个在三角投影里，一个在坐标算术里，<strong>凭什么永远相等？</strong></p>
+
+          <p>证明这件事，数学里有一招最优雅的思路：<strong>同一个量，用两种办法各算一遍。</strong></p>
+
+          <p>把 <code>x</code> 和 <code>y</code> 起点对齐，连起两支箭头的尖端，围成一个三角形。那个“同一个量”，就是第三条边 <code>x - y</code> 的长度平方 <code>‖x - y‖²</code>：</p>
+
+          <ol>
+            <li><strong>第一遍（按坐标 + 勾股定理展开）</strong>：差向量 <code>x - y = (x₁ - y₁, x₂ - y₂)</code>，由勾股定理展开完全平方：
+              <br><code>‖x - y‖² = (x₁ - y₁)² + (x₂ - y₂)² = (x₁² + x₂²) + (y₁² + y₂²) - 2(x₁y₁ + x₂y₂) = ‖x‖² + ‖y‖² - 2 Σ xᵢyᵢ</code>。
+              <br>（高维空间完全一样，只是把 2 项展开换成 <em>n</em> 项之和！）
+            </li>
+            <li><strong>第二遍（按初中余弦定理展开）</strong>：三角形两条邻边为 <code>‖x‖</code> 与 <code>‖y‖</code>，夹角为 <code>θ</code>，对边为 <code>‖x - y‖</code>：
+              <br><code>‖x - y‖² = ‖x‖² + ‖y‖² - 2 ‖x‖‖y‖ cos θ</code>。
+            </li>
+            <li><strong>消去公共项</strong>：两遍算的是同一条边，消去两边相同的 <code>‖x‖² + ‖y‖²</code>，再同除以 <code>-2</code>，剩下的两项只能相等：<strong><code>Σ xᵢyᵢ = ‖x‖‖y‖ cos θ</code></strong>。</li>
+          </ol>
+
+          <p>顺手用 <code>x = (4, 1)</code>、<code>y = (2, 5)</code> 验算一次数字闭环：第三边 <code>x - y = (2, -4)</code>，平方为 <code>2² + (-4)² = 20</code>；两边平方和 <code>‖x‖² + ‖y‖² = 17 + 29 = 46</code>；差值 <code>46 - 20 = 26</code>，除以 2 正好就是 <strong><code>13</code></strong>！</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-06-law-of-cosines-proof.svg" alt="用余弦定理与坐标展开证明点积两种算法等价" width="960" height="540" loading="lazy">
+            <figcaption>图 6：三角形第三边 ‖x - y‖² 充当桥梁——上方按坐标与勾股展开得到 -2Σxᵢyᵢ，下方按余弦定理展开得到 -2‖x‖‖y‖cos θ，消去公共项后两式合龙。</figcaption>
+          </figure>
+
+          <!-- INTERACTIVE STAGE 2: PROOF STEPPER -->
+          <div class="stage-card" id="stage-proof">
+            <div class="stage-header">
+              <span class="stage-title">交互实验 2 · 「同一个量算两遍」四步证明步进器</span>
+              <span class="stage-meta-readout" id="proof-badge">Step 1 / 4 · 构造第三条边</span>
+            </div>
+            <div class="stage-canvas">
+              <div class="proof-layout">
+                <svg id="proof-svg" viewBox="0 0 260 250" role="img" aria-label="余弦定理证明三角形示意图">
+                  <!-- Triangle x=(4,1), y=(2,5) -->
+                  <!-- Origin (36, 206), scale = 38 -->
+                  <polygon points="36,206 188,168 112,16" fill="var(--bg-elevated)" opacity="0.7"/>
+                  <!-- Angle arc -->
+                  <path id="p-arc" d="M 75 196 A 40 40 0 0 0 51 169" fill="none" stroke="var(--ink-muted)" stroke-width="1.5"/>
+                  <text id="p-theta" x="74" y="176" font-family="var(--font-serif)" font-size="15" font-style="italic" font-weight="700" fill="var(--ink)">θ</text>
+                  <!-- Third side x - y -->
+                  <line id="p-side" x1="112" y1="16" x2="188" y2="168" stroke="var(--warn)" stroke-width="2.6" stroke-dasharray="6 4"/>
+                  <text id="p-side-lbl" x="164" y="88" font-family="var(--font-mono)" font-size="12" font-weight="700" fill="var(--warn)">‖x - y‖</text>
+                  <!-- Vector y -->
+                  <line x1="36" y1="206" x2="112" y2="16" stroke="var(--accent)" stroke-width="2.5"/>
+                  <circle cx="112" cy="16" r="4" fill="var(--accent)"/>
+                  <text x="118" y="20" font-family="var(--font-mono)" font-size="12" font-weight="700" fill="var(--accent)">y=(2,5)</text>
+                  <!-- Vector x -->
+                  <line x1="36" y1="206" x2="188" y2="168" stroke="var(--blue)" stroke-width="2.5"/>
+                  <circle cx="188" cy="168" r="4" fill="var(--blue)"/>
+                  <text x="176" y="190" text-anchor="middle" font-family="var(--font-mono)" font-size="12" font-weight="700" fill="var(--blue)">x=(4,1)</text>
+                  <circle cx="36" cy="206" r="4" fill="var(--ink)"/>
+                  <text x="36" y="236" font-family="var(--font-mono)" font-size="11" fill="var(--ink-muted)">‖x‖²=17 · ‖y‖²=29 · ‖x-y‖²=20</text>
+                </svg>
+
+                <div class="proof-cards">
+                  <div class="proof-step-card is-visible is-current" data-pstep="1">
+                    <div class="proof-step-label">Step 1 · 锁定共同的第三条边</div>
+                    <div class="proof-eq">目标：对第三边平方 ‖x - y‖² 用两种办法各算一遍</div>
+                  </div>
+                  <div class="proof-step-card" data-pstep="2">
+                    <div class="proof-step-label">Step 2 · 按坐标 + 勾股定理展开</div>
+                    <div class="proof-eq">‖x - y‖² = <span class="p-common">‖x‖² + ‖y‖²</span> - 2 <span style="color:var(--blue)">Σ xᵢyᵢ</span></div>
+                  </div>
+                  <div class="proof-step-card" data-pstep="3">
+                    <div class="proof-step-label">Step 3 · 按初中余弦定理展开</div>
+                    <div class="proof-eq">‖x - y‖² = <span class="p-common">‖x‖² + ‖y‖²</span> - 2 <span style="color:var(--accent)">‖x‖‖y‖ cos θ</span></div>
+                  </div>
+                  <div class="proof-step-card" data-pstep="4">
+                    <div class="proof-step-label">Step 4 · 消去公共项 ‖x‖² + ‖y‖²，同除 -2</div>
+                    <div class="proof-eq"><span style="color:var(--blue)">Σ xᵢyᵢ</span>  =  <span style="color:var(--accent)">‖x‖‖y‖ cos θ</span>  （Q.E.D.）</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="stage-controls">
+              <div class="btn-row" role="group" aria-label="证明步骤切换">
+                <button type="button" class="btn-ctl is-active" data-step="1">Step 1 · 构边</button>
+                <button type="button" class="btn-ctl" data-step="2">Step 2 · 坐标展开</button>
+                <button type="button" class="btn-ctl" data-step="3">Step 3 · 余弦定理</button>
+                <button type="button" class="btn-ctl" data-step="4">Step 4 · 消项合龙</button>
+              </div>
+            </div>
+            <div class="stage-caption" id="proof-caption">
+              Step 1：将 x 与 y 的起点对齐，连接两端形成三角形，第三条边长度的平方 ‖x - y‖² 就是我们要算两遍的“同一个量”。
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 5 -->
+        <section class="post-section" id="cosine-corr" tabindex="-1">
+          <h2>五、对称性、去掉长度、再去掉均值：余弦相似度与相关系数</h2>
+
+          <p>证明打通之后，回头再看 <code>x · y = Σ xᵢyᵢ = ‖x‖‖y‖ cos θ</code>，三个极其重要的推论会依次浮现。</p>
+
+          <h3>1. 对称性：谁当尺子都一样</h3>
+          <p>拿 <code>y = (2, 5)</code> 当尺子量 <code>x = (4, 1)</code>，是 <code>影子 2.41 × 尺长 5.39 ≈ 13</code>；反过来拿 <code>x</code> 当尺子量 <code>y</code>，是 <code>影子 3.15 × 尺长 4.12 ≈ 13</code>。因为写成坐标，乘法天然满足交换律：<code>4×2 + 1×5 = 2×4 + 5×1 = 13</code>。</p>
+
+          <h3>2. 除掉长度：只比方向的余弦相似度</h3>
+          <p>很多场景（比如检索两段文本主题像不像）只关心<strong>方向是否一致</strong>，此时向量长短反而成了干扰——尺子从 <code>y</code> 拉长一倍到 <code>2y</code>，方向分毫未动，点积却从 <code>13</code> 翻倍成了 <code>26</code>。</p>
+
+          <p>干脆把两个长度都除掉，等价于先把两支箭头缩放到单位圆上再点积：</p>
+
+          <div class="formula-box">
+            <div class="formula-main">cos θ = (x · y) / (‖x‖ ‖y‖)  ∈  [-1, +1]</div>
+            <div class="formula-note">代入 x=(4,1), y=(2,5) 得到 13 / (√17 · √29) ≈ 0.59；换成 2y 分子分母同乘 2，结果仍是 0.59，且物理单位彻底约没。</div>
+          </div>
+
+          <h3>3. 先减均值再算余弦：皮尔逊相关系数</h3>
+          <p>再往前跨半步，一条更令人惊喜的桥梁会突然出现：<strong>先各减掉平均再算余弦，就是统计学里的相关系数。</strong></p>
+
+          <p>把两串数各自减掉自己的平均值（去中心化）：<code>x' = x - x̄</code>，<code>y' = y - ȳ</code>，再算一次余弦相似度 <code>r = (x' · y') / (‖x'‖‖y'‖)</code>，展开来就是统计学课本里那条令人生畏的<strong>皮尔逊相关系数</strong>！</p>
+
+          <p>用一组 4 天的数据就能一眼看穿（注意：算相关系数至少需要 3 个以上的数据点，只有 2 个数时减均值后必呈 <code>(a, -a)</code>，相关系数只能是 <code>±1</code>）：假设连续 4 天气温为 <code>[20, 24, 28, 32]</code>（均值 26）、冷饮销量为 <code>[10, 15, 21, 26]</code>（均值 18），各自减去均值后得到波动向量 <code>x' = [-6, -2, +2, +6]</code> 和 <code>y' = [-8, -3, +3, +8]</code>，做一次余弦相似度得 <code>r = 108 / (√80 · √146) ≈ 0.999</code>。原来统计学里的“相关”，几何上就是<strong>把两组数据平移到以均值为原点，再看它们波动方向的夹角余弦</strong>。</p>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-07-symmetry-cosine-correlation.svg" alt="点积对称性、余弦相似度与皮尔逊相关系数三阶演化图" width="960" height="500" loading="lazy">
+            <figcaption>图 7：三阶演化——① 互换尺子与被量者读数不变；② 除掉各自长度缩放到单位圆，得到 [-1, 1] 的余弦相似度；③ 先减去各自均值再算余弦，即皮尔逊相关系数。</figcaption>
+          </figure>
+        </section>
+
+        <!-- SECTION 6 -->
+        <section class="post-section" id="matrix-nn" tabindex="-1">
+          <h2>六、把尺子摞起来：矩阵乘法、线性回归与神经网络</h2>
+
+          <p>理解了“一把尺子量一个篮子”，矩阵乘法就再也不需要死记硬背“前行乘后列”了。</p>
+
+          <p>把价目表 <code>[4, 5, 6]</code>、热量表 <code>[95, 100, 60]</code>、重量表 <code>[180, 180, 130]</code> 这三把尺子<strong>一把一行摞起来</strong>，就是一个 <code>3×3</code> 矩阵 <code>W</code>。甲的果篮竖着排成一列 <code>[1, 2, 3]ᵀ</code>，量出来也是一列：<code>[32 元, 475 大卡, 930 克]ᵀ</code>。</p>
+
+          <p>再来乙、丙、丁三个人，每人占一列并排拼成 <code>3×4</code> 矩阵 <code>X</code>，乘在一起得到 <code>WX</code>，四个人的三项指标一次算完：</p>
+
+          <blockquote>
+            <p><strong>矩阵乘法结果里的每一格，就是左面的一把行尺子，去量右面的一个列篮子。</strong></p>
+          </blockquote>
+
+          <!-- INTERACTIVE STAGE 3: MATRIX PROBE -->
+          <div class="stage-card" id="stage-matrix">
+            <div class="stage-header">
+              <span class="stage-title">交互实验 3 · 矩阵乘法「尺子 × 篮子」格子探针</span>
+              <span class="stage-meta-readout" id="mx-badge">热量 · 丙 = 420 大卡</span>
+            </div>
+            <div class="stage-canvas">
+              <div class="mx-board">
+                <!-- Matrix W -->
+                <div class="mx-block">
+                  <div class="mx-caption">W：3 把尺子（行）</div>
+                  <div class="mx-grid cols-3" id="mx-w">
+                    <div class="mx-hdr">苹果</div><div class="mx-hdr">梨</div><div class="mx-hdr">橙子</div>
+                    <div class="mx-val" data-wrow="0">4</div><div class="mx-val" data-wrow="0">5</div><div class="mx-val" data-wrow="0">6</div>
+                    <div class="mx-val is-row-hi" data-wrow="1">95</div><div class="mx-val is-row-hi" data-wrow="1">100</div><div class="mx-val is-row-hi" data-wrow="1">60</div>
+                    <div class="mx-val" data-wrow="2">180</div><div class="mx-val" data-wrow="2">180</div><div class="mx-val" data-wrow="2">130</div>
+                  </div>
+                </div>
+
+                <div class="mx-op">×</div>
+
+                <!-- Matrix X -->
+                <div class="mx-block">
+                  <div class="mx-caption">X：4 个篮子（列）</div>
+                  <div class="mx-grid cols-4" id="mx-x">
+                    <div class="mx-hdr">甲</div><div class="mx-hdr">乙</div><div class="mx-hdr">丙</div><div class="mx-hdr">丁</div>
+                    <div class="mx-val" data-xcol="0">1</div><div class="mx-val" data-xcol="1">2</div><div class="mx-val is-col-hi" data-xcol="2">0</div><div class="mx-val" data-xcol="3">4</div>
+                    <div class="mx-val" data-xcol="0">2</div><div class="mx-val" data-xcol="1">0</div><div class="mx-val is-col-hi" data-xcol="2">3</div><div class="mx-val" data-xcol="3">1</div>
+                    <div class="mx-val" data-xcol="0">3</div><div class="mx-val" data-xcol="1">1</div><div class="mx-val is-col-hi" data-xcol="2">2</div><div class="mx-val" data-xcol="3">0</div>
+                  </div>
+                </div>
+
+                <div class="mx-op">=</div>
+
+                <!-- Matrix WX (clickable) -->
+                <div class="mx-block">
+                  <div class="mx-caption">WX：点击任意一格查看点积</div>
+                  <div class="mx-grid cols-4" id="mx-out">
+                    <div class="mx-hdr">甲</div><div class="mx-hdr">乙</div><div class="mx-hdr">丙</div><div class="mx-hdr">丁</div>
+                    <button type="button" class="mx-cell" data-r="0" data-c="0">32</button>
+                    <button type="button" class="mx-cell" data-r="0" data-c="1">14</button>
+                    <button type="button" class="mx-cell" data-r="0" data-c="2">27</button>
+                    <button type="button" class="mx-cell" data-r="0" data-c="3">21</button>
+                    <button type="button" class="mx-cell" data-r="1" data-c="0">475</button>
+                    <button type="button" class="mx-cell" data-r="1" data-c="1">250</button>
+                    <button type="button" class="mx-cell is-selected" data-r="1" data-c="2">420</button>
+                    <button type="button" class="mx-cell" data-r="1" data-c="3">480</button>
+                    <button type="button" class="mx-cell" data-r="2" data-c="0">930</button>
+                    <button type="button" class="mx-cell" data-r="2" data-c="1">490</button>
+                    <button type="button" class="mx-cell" data-r="2" data-c="2">800</button>
+                    <button type="button" class="mx-cell" data-r="2" data-c="3">900</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mx-detail" id="mx-detail">
+                <div><strong>当前选中：</strong>第 2 把尺子（<span style="color:var(--accent)">热量表 · 大卡/个</span>）× 第 3 个篮子（<span style="color:var(--blue)">丙 · 个</span>）</div>
+                <div class="mx-detail-eq" id="mx-detail-eq">95×0 + 100×3 + 60×2 = 0 + 300 + 120 = 420 大卡</div>
+              </div>
+            </div>
+            <div class="stage-caption">
+              放大到工业级规模：1,000 把尺子 × 1,000,000 个篮子 = 10 亿个互不干扰的点积格子，GPU 成千上万个核心并行开火，眨眼算完。
+            </div>
+          </div>
+
+          <p>走到这里，机器学习和深度学习的两块基石也完全敞亮了：</p>
+          <ul>
+            <li><strong>线性回归（<code>预测 = w · x + b</code>）</strong>：系数 <code>w</code> 就是一张从数据里学出来的价目表。例如预测房价：面积 <code>90 平米 × 1.2 万/平米 = 108 万</code>，卧室 <code>3 间 × 3 万/间 = 9 万</code>，加上底数 <code>b = 5 万</code>，预测房价 = <code>[1.2, 3] · [90, 3]ᵀ + 5 = 122 万</code>。</li>
+            <li><strong>神经网络的一层（<code>y = σ(Wx + b)</code>）</strong>：单个神经元是一把尺子给输入打分；一整层全连接网络是一摞尺子 <code>W</code> 并行量同一个输入 <code>x</code>，加上偏置 <code>b</code>，再过一个非线性激活函数（如 ReLU / GELU）。就连当下大模型最核心的 Attention 注意力机制，本质上也是拿 Query 向量当尺子，去量每一个 Key 向量跟自己有多契合。</li>
+          </ul>
+
+          <figure class="editorial-figure">
+            <img src="assets/dp-08-matrix-regression-nn.svg" alt="矩阵乘法、线性回归与神经网络层统一在尺子模型下的原理图" width="960" height="560" loading="lazy">
+            <figcaption>图 8：上栏展示 3×3 尺子矩阵 W 与 3×4 篮子矩阵 X 的批量点积；下栏展示线性回归（单张学出来的价目表）与神经网络单层（一摞尺子并行打分再过激活）。</figcaption>
+          </figure>
+        </section>
+
+        <!-- CLOSING -->
+        <section class="post-section" id="closing" tabindex="-1">
+          <h2>七、回到大象：一句话收束</h2>
+
+          <p>现在回头再看开篇那头站在木船上的大象：<code>[3, 4, 6] · [600, 300, 50]ᵀ = 3300 kg</code>。石头数量是被量的，每块石头多重是尺子，一乘一加就量出了大象。</p>
+
+          <p>我们一路走过的六个场景，原本散落在小学算术、解析几何、数理统计、线性代数和深度学习五门课本里，拆到最底层，其实只是同一个动作换了六件外衣：</p>
+
+          <div class="table-wrap">
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>场景</th>
+                  <th>被量的向量 x</th>
+                  <th>充当尺子的向量 y</th>
+                  <th>点积结果在量什么</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>超市小票</strong></td>
+                  <td>各种水果的数量（个）</td>
+                  <td>价目表 / 热量表</td>
+                  <td>总价（32 元）/ 总热量（475 大卡）</td>
+                </tr>
+                <tr>
+                  <td><strong>读取坐标</strong></td>
+                  <td>任意向量 (x₁, x₂, x₃)</td>
+                  <td>标准基 (1, 0, 0)</td>
+                  <td>向量在第一根轴上的坐标 x₁</td>
+                </tr>
+                <tr>
+                  <td><strong>几何投影</strong></td>
+                  <td>平面箭头 x</td>
+                  <td>倾斜且带密度的尺子 y</td>
+                  <td>影子长 × 刻度密度 = ‖x‖‖y‖ cos θ</td>
+                </tr>
+                <tr>
+                  <td><strong>向量长度</strong></td>
+                  <td>箭头 x</td>
+                  <td>箭头 x 自己</td>
+                  <td>长度的平方 ‖x‖²（勾股定理）</td>
+                </tr>
+                <tr>
+                  <td><strong>余弦 / 相关</strong></td>
+                  <td>归一化或去均值后的 x</td>
+                  <td>归一化或去均值后的 y</td>
+                  <td>纯方向相似度 [-1, 1] / 波动相关性 r</td>
+                </tr>
+                <tr>
+                  <td><strong>矩阵 / 神经网络</strong></td>
+                  <td>一排输入样本 X</td>
+                  <td>一摞权重尺子 W</td>
+                  <td>批量特征打分 WX（再加偏置过激活）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>下次再在公式、代码或论文里撞见那个小小的实心点 <code>·</code>，不必再条件反射地背诵计算步骤。只要在心里默念一句：</p>
+
+          <p><strong>点积，就是拿一个向量，去量另一个。</strong></p>
+        </section>
+      </div>
+
+      <nav class="series-nav" aria-label="上下篇">
+        <a href="09-finite-and-infinite-games.html">&larr; #09 机器与花园：AGI 前夜重读《有限与无限的游戏》</a>
+        <a href="index.html">返回目录 &uarr;</a>
+      </nav>
+
+      <footer class="post-footer">
+        <div class="end-mark">— END —</div>
+        <p><em>参考来源：小红书笔记 <a href="https://www.xiaohongshu.com/explore/6afe7198000000001c031448?xsec_token=CBDpoD_u3klmsDr2zLqQDepW87jjlbYVmi5NlobVqiYCc=&amp;xsec_source=app_share" target="_blank" rel="noopener">《向量点积，到底在干什么？》</a>（作者：城北朱公）。</em></p>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      /* =====================================================================
+       * 1. Dark Mode Toggle (meta color-scheme + localStorage + storage sync)
+       * ===================================================================== */
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var label = document.getElementById("theme-label");
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      var darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function getStoredTheme() {
+        try {
+          var v = localStorage.getItem("blog.theme");
+          return v === "dark" || v === "light" ? v : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function syncThemeUI(stored) {
+        var resolved = stored || (darkMql.matches ? "dark" : "light");
+        if (stored) {
+          root.setAttribute("data-theme", stored);
+          if (metaScheme) metaScheme.content = stored;
+        } else {
+          root.removeAttribute("data-theme");
+          if (metaScheme) metaScheme.content = "light dark";
+        }
+        label.textContent = resolved.toUpperCase();
+      }
+
+      syncThemeUI(getStoredTheme());
+
+      darkMql.addEventListener("change", function () {
+        if (!getStoredTheme()) syncThemeUI(null);
+      });
+
+      window.addEventListener("storage", function (ev) {
+        if (ev.key === "blog.theme") {
+          var next = ev.newValue === "dark" || ev.newValue === "light" ? ev.newValue : null;
+          syncThemeUI(next);
+        }
+      });
+
+      btn.addEventListener("click", function () {
+        var stored = getStoredTheme();
+        var currentRendered = stored || (darkMql.matches ? "dark" : "light");
+        var target = currentRendered === "dark" ? "light" : "dark";
+        var sysTheme = darkMql.matches ? "dark" : "light";
+        if (target === sysTheme) {
+          try { localStorage.removeItem("blog.theme"); } catch (e) {}
+          syncThemeUI(null);
+        } else {
+          try { localStorage.setItem("blog.theme", target); } catch (e) {}
+          syncThemeUI(target);
+        }
+      });
+
+      /* =====================================================================
+       * 2. Reading Progress Strip & Scrollspy (native + IntersectionObserver)
+       * ===================================================================== */
+      var strip = document.getElementById("reading-strip");
+      var bar = document.getElementById("reading-bar");
+      var progressLabel = document.getElementById("reading-progress-label");
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll("#toc-list a"));
+      var sectionNodes = Array.prototype.slice.call(document.querySelectorAll("section.post-section[id]"));
+      var supportsScrollTargetGroup = typeof CSS !== "undefined" && CSS.supports && CSS.supports("scroll-target-group: auto");
+
+      function updateProgress() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / docHeight) * 100))) : 0;
+        strip.classList.toggle("is-visible", scrollTop > 220);
+        bar.style.width = pct + "%";
+        progressLabel.textContent = pct + "%";
+      }
+
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
+
+      if (supportsScrollTargetGroup) {
+        function syncNativeAriaCurrent() {
+          var currentLink = document.querySelector("#toc-list a:target-current");
+          tocLinks.forEach(function (link) {
+            var active = link === currentLink;
+            link.classList.remove("target-current");
+            link.setAttribute("aria-current", active ? "true" : "false");
+          });
+        }
+        syncNativeAriaCurrent();
+        document.addEventListener("scrollend", syncNativeAriaCurrent, { passive: true });
+      } else if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              var id = entry.target.getAttribute("id");
+              tocLinks.forEach(function (link) {
+                var active = link.getAttribute("href") === "#" + id;
+                link.classList.toggle("target-current", active);
+                link.setAttribute("aria-current", active ? "true" : "false");
+              });
+            }
+          });
+        }, { rootMargin: "-40% 0px -55% 0px", threshold: 0 });
+        sectionNodes.forEach(function (sec) { io.observe(sec); });
+      }
+
+      /* =====================================================================
+       * 3. Stage 1: Interactive Geometric Ruler & Projection
+       * ===================================================================== */
+      var rulerSvg = document.getElementById("ruler-svg");
+      var sliderAngle = document.getElementById("slider-angle");
+      var sliderLen = document.getElementById("slider-len");
+      var valAngle = document.getElementById("val-angle");
+      var valLen = document.getElementById("val-len");
+      var rulerBadge = document.getElementById("ruler-badge");
+      var roGeom = document.getElementById("ro-geom");
+      var roAlg = document.getElementById("ro-alg");
+      var roCos = document.getElementById("ro-cos");
+      var rulerCaption = document.getElementById("ruler-caption");
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll("#stage-ruler [data-preset]"));
+
+      var BX = 4, BY = 1;
+      var BNORM = Math.hypot(BX, BY); // sqrt(17) ~ 4.1231
+      var activePreset = "price";
+      var calorieMode = false;
+
+      var PRESETS = {
+        apple: {
+          name: "只数苹果", unit: "个", yx: 1, yy: 0, calorie: false,
+          caption: "单位尺子 y = (1, 0)：尺长 = 1，每 1 格间距就是 1 个几何单位。篮子 (4, 1) 的垂直影子长 4，读数 = 4 个（只数苹果）。"
+        },
+        price: {
+          name: "价目表", unit: "元", yx: 2, yy: 5, calorie: false,
+          caption: "价目表 y = (2, 5)：尺子变长到 5.39，每 1 元只占 0.186 几何单位。拖动「尺子长度」滑块看看：刻度变密、点积成倍变化，但最右侧的余弦相似度 cos θ 始终不变！"
+        },
+        calorie: {
+          name: "热量表", unit: "大卡", yx: 95, yy: 100, calorie: true,
+          caption: "热量表 y = (95, 100)：尺长飙升到 137.93，刻度极密，图中每 100 大卡标一大格。投影落点直接读出 4×95 + 1×100 = 480 大卡！"
+        },
+        perp: {
+          name: "垂直单位尺", unit: "", yx: -1 / BNORM, yy: 4 / BNORM, calorie: false,
+          caption: "转到垂直（90°）：篮子垂直照下来，影子缩成原点一个点（长度 0），读数为 0。正交意味着这把尺子对它毫无感觉。"
+        },
+        back: {
+          name: "背面单位尺", unit: "", yx: -4 / BNORM, yy: -1 / BNORM, calorie: false,
+          caption: "转到背面（180°）：影子落在尺子的反方向延长线上，读数为负：-√17 ≈ -4.12。"
+        },
+        self: {
+          name: "自己量自己", unit: "", yx: 4, yy: 1, calorie: false,
+          caption: "拿篮子自己当尺子 y = x = (4, 1)：夹角 0°，影子就是自己（√17），尺长也是自己（√17），读数 = 17 = 4² + 1² = ‖x‖²（勾股定理！）。"
+        }
+      };
+
+      function updateSliderFallbackProgress(el) {
+        if (typeof CSS !== "undefined" && CSS.supports && !CSS.supports("accent-color", "auto")) {
+          var min = parseFloat(el.min), max = parseFloat(el.max), val = parseFloat(el.value);
+          var p = ((val - min) / (max - min)) * 100;
+          el.style.setProperty("--progress", p.toFixed(1) + "%");
+        }
+      }
+
+      function renderRuler(yx, yy, opts) {
+        var isCal = !!(opts && opts.calorie);
+        var unit = (opts && opts.unit) || "";
+        var ynorm = Math.hypot(yx, yy);
+        var ux = yx / ynorm, uy = yy / ynorm;
+        var dot = BX * yx + BY * yy;
+        var shadow = dot / ynorm; // signed projection length
+        var cosT = dot / (BNORM * ynorm);
+        var thetaDeg = Math.acos(Math.max(-1, Math.min(1, cosT))) * 180 / Math.PI;
+
+        // Coordinate mapping in 700x340 SVG: origin at (260, 246), scale = 36 px/unit
+        var ox = 260, oy = 246, sc = 36;
+        function pt(x, y) { return [ox + x * sc, oy - y * sc]; }
+
+        var pX = pt(BX, BY);
+        var drawYNorm = isCal ? 4.8 : ynorm;
+        var pY = pt(ux * drawYNorm, uy * drawYNorm);
+        var pProj = pt(ux * shadow, uy * shadow);
+
+        // Ruler band along line of y from -4.5 to +6.2 geometric units
+        var rMin = -4.6, rMax = 6.2;
+        var r0 = pt(ux * rMin, uy * rMin);
+        var r1 = pt(ux * rMax, uy * rMax);
+        var dx = r1[0] - r0[0], dy = r1[1] - r0[1];
+        var dL = Math.hypot(dx, dy);
+        var nx = -dy / dL * 9, ny = dx / dL * 9;
+        var bandPts = [
+          (r0[0] + nx).toFixed(1) + "," + (r0[1] + ny).toFixed(1),
+          (r1[0] + nx).toFixed(1) + "," + (r1[1] + ny).toFixed(1),
+          (r1[0] - nx).toFixed(1) + "," + (r1[1] - ny).toFixed(1),
+          (r0[0] - nx).toFixed(1) + "," + (r0[1] - ny).toFixed(1)
+        ].join(" ");
+
+        // Dynamic tick marks along ruler
+        var tickStepVal = isCal ? 100 : (ynorm > 4 ? 1 : (ynorm > 1.8 ? 1 : 1));
+        var majorEvery = isCal ? 100 : (ynorm > 3.2 ? 5 : 1);
+        var ticksHtml = "";
+        var maxRead = Math.ceil(rMax * ynorm);
+        var minRead = Math.floor(rMin * ynorm);
+        // Cap total ticks so SVG stays super fast
+        var step = isCal ? 100 : 1;
+        var kStart = Math.ceil(minRead / step) * step;
+        var kEnd = Math.floor(maxRead / step) * step;
+        for (var k = kStart; k <= kEnd; k += step) {
+          var dist = k / ynorm;
+          if (dist < rMin + 0.15 || dist > rMax - 0.15) continue;
+          var tp = pt(ux * dist, uy * dist);
+          var isMajor = (k % majorEvery === 0);
+          var tl = isMajor ? 0.9 : 0.45;
+          var x1 = tp[0] + nx * tl, y1 = tp[1] + ny * tl;
+          var x2 = tp[0] - nx * 0.25, y2 = tp[1] - ny * 0.25;
+          ticksHtml += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="var(--accent)" stroke-width="' + (isMajor ? "1.3" : "0.75") + '" opacity="' + (isMajor ? "0.9" : "0.55") + '"/>';
+          if (isMajor && k !== 0) {
+            var lx = tp[0] + nx * 2.1, ly = tp[1] + ny * 2.1;
+            ticksHtml += '<text x="' + lx.toFixed(1) + '" y="' + (ly + 3.5).toFixed(1) + '" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent)">' + k + '</text>';
+          }
+        }
+
+        // Right-angle marker at projection foot
+        var raHtml = "";
+        var pdx = pX[0] - pProj[0], pdy = pX[1] - pProj[1];
+        var pDist = Math.hypot(pdx, pdy);
+        if (pDist > 12) {
+          var v1x = (ox - pProj[0]), v1y = (oy - pProj[1]);
+          var v1L = Math.hypot(v1x, v1y);
+          if (v1L < 4) { v1x = ux * sc; v1y = -uy * sc; v1L = Math.hypot(v1x, v1y); }
+          v1x = v1x / v1L * 8; v1y = v1y / v1L * 8;
+          var v2x = pdx / pDist * 8, v2y = pdy / pDist * 8;
+          raHtml = '<path d="M ' + (pProj[0] + v1x).toFixed(1) + ' ' + (pProj[1] + v1y).toFixed(1) +
+            ' L ' + (pProj[0] + v1x + v2x).toFixed(1) + ' ' + (pProj[1] + v1y + v2y).toFixed(1) +
+            ' L ' + (pProj[0] + v2x).toFixed(1) + ' ' + (pProj[1] + v2y).toFixed(1) +
+            '" fill="none" stroke="var(--blue)" stroke-width="1.1"/>';
+        }
+
+        // Shadow color: blue for positive, accent for negative
+        var shadowCol = dot >= -0.005 ? "var(--blue)" : "var(--accent)";
+
+        rulerSvg.innerHTML =
+          '<defs>' +
+            '<marker id="r-arr-b" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1.2 L9 5 L0 8.8 z" fill="var(--blue)"/></marker>' +
+            '<marker id="r-arr-r" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1.2 L9 5 L0 8.8 z" fill="var(--accent)"/></marker>' +
+          '</defs>' +
+          '<rect x="0" y="0" width="700" height="340" rx="6" fill="var(--bg-paper)"/>' +
+          // Subtle grid axes
+          '<line x1="20" y1="' + oy + '" x2="680" y2="' + oy + '" stroke="var(--rule)" stroke-width="1"/>' +
+          '<line x1="' + ox + '" y1="16" x2="' + ox + '" y2="326" stroke="var(--rule)" stroke-width="1"/>' +
+          '<text x="672" y="' + (oy - 8) + '" text-anchor="end" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">苹果轴</text>' +
+          '<text x="' + (ox + 8) + '" y="28" font-family="var(--font-sans)" font-size="11" fill="var(--ink-muted)">梨轴</text>' +
+          // Ruler band & ticks
+          '<polygon points="' + bandPts + '" fill="var(--accent-soft)" stroke="var(--accent)" stroke-opacity="0.45" stroke-width="1"/>' +
+          ticksHtml +
+          // Projection line & right angle
+          '<line x1="' + pX[0].toFixed(1) + '" y1="' + pX[1].toFixed(1) + '" x2="' + pProj[0].toFixed(1) + '" y2="' + pProj[1].toFixed(1) + '" stroke="var(--blue)" stroke-width="1.3" stroke-dasharray="4 3"/>' +
+          raHtml +
+          // Shadow segment
+          '<line x1="' + ox + '" y1="' + oy + '" x2="' + pProj[0].toFixed(1) + '" y2="' + pProj[1].toFixed(1) + '" stroke="' + shadowCol + '" stroke-width="6" opacity="0.38" stroke-linecap="round"/>' +
+          '<circle cx="' + pProj[0].toFixed(1) + '" cy="' + pProj[1].toFixed(1) + '" r="4" fill="' + shadowCol + '"/>' +
+          // Ruler vector y
+          '<line x1="' + ox + '" y1="' + oy + '" x2="' + pY[0].toFixed(1) + '" y2="' + pY[1].toFixed(1) + '" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#r-arr-r)"/>' +
+          // Basket vector x = (4,1)
+          '<line x1="' + ox + '" y1="' + oy + '" x2="' + pX[0].toFixed(1) + '" y2="' + pX[1].toFixed(1) + '" stroke="var(--blue)" stroke-width="2.6" marker-end="url(#r-arr-b)"/>' +
+          '<circle cx="' + ox + '" cy="' + oy + '" r="3.8" fill="var(--ink)"/>' +
+          // Labels
+          '<text x="' + (pX[0] + 10).toFixed(1) + '" y="' + (pX[1] + 4).toFixed(1) + '" font-family="var(--font-mono)" font-size="12" font-weight="700" fill="var(--blue)">x = (4, 1)</text>' +
+          '<text x="' + Math.min(460, Math.max(16, pY[0] + 10)).toFixed(1) + '" y="' + Math.min(324, Math.max(24, pY[1] - 4)).toFixed(1) + '" font-family="var(--font-mono)" font-size="12" font-weight="700" fill="var(--accent)">y = (' + yx.toFixed(isCal ? 0 : 2).replace(/\.00$/, "") + ', ' + yy.toFixed(isCal ? 0 : 2).replace(/\.00$/, "") + ')</text>' +
+          // Info tag in top right
+          '<rect x="486" y="16" width="198" height="68" rx="6" fill="var(--bg-elevated)" stroke="var(--rule)"/>' +
+          '<text x="498" y="37" font-family="var(--font-sans)" font-size="11.5" fill="var(--ink-muted)">每 1 格读数的几何间距</text>' +
+          '<text x="498" y="57" font-family="var(--font-mono)" font-size="13" font-weight="700" fill="var(--accent)">1 / ‖y‖ = ' + (1 / ynorm).toFixed(3) + '</text>' +
+          '<text x="498" y="74" font-family="var(--font-mono)" font-size="11" fill="var(--ink-secondary)">影子 = ' + shadow.toFixed(2) + ' · 读数 = ' + dot.toFixed(2).replace(/\.00$/, "") + (unit ? " " + unit : "") + '</text>';
+
+        var dotStr = Math.abs(dot) < 0.005 ? "0" : dot.toFixed(2).replace(/\.00$/, "");
+        var yxStr = isCal ? String(Math.round(yx)) : yx.toFixed(2).replace(/\.00$/, "");
+        var yyStr = isCal ? String(Math.round(yy)) : yy.toFixed(2).replace(/\.00$/, "");
+        rulerBadge.textContent = (opts && opts.name ? opts.name + " " : "自定义尺子 ") +
+          "y = (" + yxStr + ", " + yyStr + ") · 读数 " + dotStr + (unit ? " " + unit : "");
+        roGeom.textContent = shadow.toFixed(2) + " × " + ynorm.toFixed(2) + " = " + dotStr;
+        roAlg.textContent = "4×(" + yxStr + ") + 1×(" + yyStr + ") = " + dotStr;
+        roCos.textContent = cosT.toFixed(2) + "（夹角 " + thetaDeg.toFixed(1) + "°）";
+      }
+
+      function applyPreset(key) {
+        activePreset = key;
+        var p = PRESETS[key];
+        calorieMode = p.calorie;
+        presetBtns.forEach(function (b) {
+          b.classList.toggle("is-active", b.getAttribute("data-preset") === key);
+        });
+        var deg = (Math.atan2(p.yy, p.yx) * 180 / Math.PI + 360) % 360;
+        var len = Math.hypot(p.yx, p.yy);
+        sliderAngle.value = deg.toFixed(1);
+        valAngle.textContent = deg.toFixed(1) + "°";
+        sliderLen.value = Math.min(6.5, Math.max(0.5, len)).toFixed(2);
+        valLen.textContent = p.calorie ? "137.93（缩放）" : len.toFixed(2);
+        updateSliderFallbackProgress(sliderAngle);
+        updateSliderFallbackProgress(sliderLen);
+        rulerCaption.textContent = p.caption;
+        renderRuler(p.yx, p.yy, p);
+      }
+
+      function onSliderInput() {
+        activePreset = null;
+        calorieMode = false;
+        presetBtns.forEach(function (b) { b.classList.remove("is-active"); });
+        var deg = parseFloat(sliderAngle.value);
+        var len = parseFloat(sliderLen.value);
+        valAngle.textContent = deg.toFixed(1) + "°";
+        valLen.textContent = len.toFixed(2);
+        updateSliderFallbackProgress(sliderAngle);
+        updateSliderFallbackProgress(sliderLen);
+        var rad = deg * Math.PI / 180;
+        var yx = len * Math.cos(rad);
+        var yy = len * Math.sin(rad);
+        rulerCaption.textContent = "自由探索模式：只拖动「尺子长度」时，刻度密度与点积读数等比例缩放，但余弦相似度 cos θ 纹丝不动！";
+        renderRuler(yx, yy, { name: "自定义尺子", unit: "", calorie: false });
+      }
+
+      presetBtns.forEach(function (b) {
+        b.addEventListener("click", function () { applyPreset(b.getAttribute("data-preset")); });
+      });
+      sliderAngle.addEventListener("input", onSliderInput);
+      sliderLen.addEventListener("input", onSliderInput);
+      applyPreset("price");
+
+      /* =====================================================================
+       * 4. Stage 2: Proof Stepper
+       * ===================================================================== */
+      var proofBtns = Array.prototype.slice.call(document.querySelectorAll("#stage-proof [data-step]"));
+      var proofCards = Array.prototype.slice.call(document.querySelectorAll("#stage-proof [data-pstep]"));
+      var proofBadge = document.getElementById("proof-badge");
+      var proofCaption = document.getElementById("proof-caption");
+      var proofCommons = Array.prototype.slice.call(document.querySelectorAll("#stage-proof .p-common"));
+
+      var PROOF_META = {
+        1: {
+          badge: "Step 1 / 4 · 构造第三条边",
+          caption: "Step 1：将 x 与 y 的起点对齐，连接两端形成三角形，第三条边长度的平方 ‖x - y‖² 就是我们要算两遍的“同一个量”。"
+        },
+        2: {
+          badge: "Step 2 / 4 · 按坐标展开",
+          caption: "Step 2：用纯代数按坐标差 (x₁-y₁)² + (x₂-y₂)² 展开并重新分组，自然冒出 -2 Σ xᵢyᵢ。"
+        },
+        3: {
+          badge: "Step 3 / 4 · 按余弦定理展开",
+          caption: "Step 3：用初中几何余弦定理对同一条边再算一遍，冒出 -2 ‖x‖‖y‖ cos θ。"
+        },
+        4: {
+          badge: "Step 4 / 4 · 消项合龙（Q.E.D.）",
+          caption: "Step 4：两式左边算的是同一条边，划去完全相同的 ‖x‖² + ‖y‖²，同除 -2，代数小票与几何投影严丝合缝！"
+        }
+      };
+
+      function setProofStep(step) {
+        proofBtns.forEach(function (b) {
+          b.classList.toggle("is-active", Number(b.getAttribute("data-step")) === step);
+        });
+        proofCards.forEach(function (c) {
+          var s = Number(c.getAttribute("data-pstep"));
+          c.classList.toggle("is-visible", s <= step);
+          c.classList.toggle("is-current", s === step);
+        });
+        proofCommons.forEach(function (el) {
+          el.classList.toggle("strike-common", step === 4);
+        });
+        proofBadge.textContent = PROOF_META[step].badge;
+        proofCaption.textContent = PROOF_META[step].caption;
+      }
+
+      proofBtns.forEach(function (b) {
+        b.addEventListener("click", function () { setProofStep(Number(b.getAttribute("data-step"))); });
+      });
+      setProofStep(1);
+
+      /* =====================================================================
+       * 5. Stage 3: Matrix Multiplication Probe
+       * ===================================================================== */
+      var W_ROWS = [
+        { name: "价目表", unit: "元", rate: "元/个", vals: [4, 5, 6] },
+        { name: "热量表", unit: "大卡", rate: "大卡/个", vals: [95, 100, 60] },
+        { name: "重量表", unit: "克", rate: "克/个", vals: [180, 180, 130] }
+      ];
+      var X_COLS = [
+        { name: "甲", vals: [1, 2, 3] },
+        { name: "乙", vals: [2, 0, 1] },
+        { name: "丙", vals: [0, 3, 2] },
+        { name: "丁", vals: [4, 1, 0] }
+      ];
+      var mxCells = Array.prototype.slice.call(document.querySelectorAll("#mx-out .mx-cell"));
+      var wNodes = Array.prototype.slice.call(document.querySelectorAll("#mx-w [data-wrow]"));
+      var xNodes = Array.prototype.slice.call(document.querySelectorAll("#mx-x [data-xcol]"));
+      var mxBadge = document.getElementById("mx-badge");
+      var mxDetail = document.getElementById("mx-detail");
+
+      function selectMatrixCell(r, c) {
+        mxCells.forEach(function (btn) {
+          var hit = Number(btn.getAttribute("data-r")) === r && Number(btn.getAttribute("data-c")) === c;
+          btn.classList.toggle("is-selected", hit);
+          btn.setAttribute("aria-pressed", hit ? "true" : "false");
+        });
+        wNodes.forEach(function (el) {
+          el.classList.toggle("is-row-hi", Number(el.getAttribute("data-wrow")) === r);
+        });
+        xNodes.forEach(function (el) {
+          el.classList.toggle("is-col-hi", Number(el.getAttribute("data-xcol")) === c);
+        });
+
+        var row = W_ROWS[r], col = X_COLS[c];
+        var prods = [
+          row.vals[0] * col.vals[0],
+          row.vals[1] * col.vals[1],
+          row.vals[2] * col.vals[2]
+        ];
+        var sum = prods[0] + prods[1] + prods[2];
+        mxBadge.textContent = row.name.replace("表", "") + " · " + col.name + " = " + sum + " " + row.unit;
+        mxDetail.innerHTML =
+          '<div><strong>当前选中：</strong>第 ' + (r + 1) + ' 把尺子（<span style="color:var(--accent)">' + row.name + ' · ' + row.rate +
+          '</span>）× 第 ' + (c + 1) + ' 个篮子（<span style="color:var(--blue)">' + col.name + ' · 个</span>）</div>' +
+          '<div class="mx-detail-eq">' +
+          row.vals[0] + '×' + col.vals[0] + ' + ' + row.vals[1] + '×' + col.vals[1] + ' + ' + row.vals[2] + '×' + col.vals[2] +
+          ' = ' + prods[0] + ' + ' + prods[1] + ' + ' + prods[2] + ' = ' + sum + ' ' + row.unit +
+          '</div>';
+      }
+
+      mxCells.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          selectMatrixCell(Number(btn.getAttribute("data-r")), Number(btn.getAttribute("data-c")));
+        });
+      });
+      selectMatrixCell(1, 2);
+    })();
+  </script>
+</body>
+</html>

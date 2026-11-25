@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-label="超市小票加权求和、量纲约分与点积计算流程">
+  <title>超市小票加权求和、量纲约分与点积计算流程</title>
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#235884"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#9e3321"/>
+    </marker>
+    <marker id="arr-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#4a4640"/>
+    </marker>
+    <marker id="arr-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#787167"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#256b45"/>
+    </marker>
+    
+  </defs>
+  <rect x="0.5" y="0.5" width="959" height="479" rx="10" fill="#fbf8f2" stroke="#d8d0c1"/>
+  
+  <text x="36" y="28" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" letter-spacing="1.4" fill="#787167">FIG 02 · WEIGHTED SUM &amp; UNIT CANCELLATION</text>
+  <text x="36" y="54" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="21" font-weight="700" fill="#191816">从超市小票看点积：加权求和、量纲约分与线性计算代价</text>
+  <line x1="36" y1="68" x2="924" y2="68" stroke="#d8d0c1" stroke-width="1"/>
+
+  <!-- Left: Receipt card -->
+  <g transform="translate(44, 92)">
+    <path d="M 0 0 L 356 0 L 356 320 L 344 308 L 332 320 L 320 308 L 308 320 L 296 308 L 284 320 L 272 308 L 260 320 L 248 308 L 236 320 L 224 308 L 212 320 L 200 308 L 188 320 L 176 308 L 164 320 L 152 308 L 140 320 L 128 308 L 116 320 L 104 308 L 92 320 L 80 308 L 68 320 L 56 308 L 44 320 L 32 308 L 20 320 L 8 308 L 0 316 Z" fill="#fffdf8" stroke="#b8ae9c" stroke-width="1.3"/>
+    <text x="178" y="34" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="18" font-weight="700" fill="#191816">水果小票</text>
+    <text x="24" y="62" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" fill="#787167">品名</text>
+    <text x="112" y="62" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" fill="#235884">数量(个)</text>
+    <text x="206" y="62" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" fill="#9e3321">单价(元/个)</text>
+    <text x="308" y="62" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" fill="#4a4640">小计(元)</text>
+    <line x1="20" y1="74" x2="336" y2="74" stroke="#d8d0c1"/>
+
+    <!-- Row 1: Apple -->
+    <circle cx="38" cy="106" r="10" fill="#c94b3b"/>
+    <text x="58" y="111" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="14" fill="#191816">苹果</text>
+    <text x="112" y="111" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#235884">1</text>
+    <text x="158" y="111" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#787167">×</text>
+    <text x="206" y="111" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#9e3321">4</text>
+    <text x="256" y="111" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#787167">=</text>
+    <text x="308" y="111" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#191816">4</text>
+
+    <!-- Row 2: Pear -->
+    <circle cx="38" cy="150" r="10" fill="#89a853"/>
+    <text x="58" y="155" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="14" fill="#191816">梨</text>
+    <text x="112" y="155" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#235884">2</text>
+    <text x="158" y="155" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#787167">×</text>
+    <text x="206" y="155" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#9e3321">5</text>
+    <text x="256" y="155" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#787167">=</text>
+    <text x="308" y="155" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#191816">10</text>
+
+    <!-- Row 3: Orange -->
+    <circle cx="38" cy="194" r="10" fill="#de8b35"/>
+    <text x="58" y="199" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="14" fill="#191816">橙子</text>
+    <text x="112" y="199" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#235884">3</text>
+    <text x="158" y="199" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#787167">×</text>
+    <text x="206" y="199" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#9e3321">6</text>
+    <text x="256" y="199" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="14" fill="#787167">=</text>
+    <text x="308" y="199" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#191816">18</text>
+
+    <line x1="20" y1="224" x2="336" y2="224" stroke="#d8d0c1" stroke-dasharray="4 3"/>
+    <text x="28" y="266" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="16" font-weight="700" fill="#191816">合计</text>
+    <text x="316" y="268" text-anchor="end" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="24" font-weight="700" fill="#9e3321">32 元</text>
+  </g>
+
+  <!-- Unit cancellation callout below receipt -->
+  <rect x="44" y="422" width="356" height="40" rx="6" fill="#f7e8e5" stroke="#9e3321" stroke-opacity="0.35"/>
+  <text x="222" y="447" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13.5" fill="#191816">
+    量纲约分：<tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#235884" font-weight="600">1 个</tspan> × <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#9e3321" font-weight="600">4 元/个</tspan> = <tspan font-family="'JetBrains Mono', Menlo, Consolas, monospace" fill="#9e3321" font-weight="700">4 元</tspan>（“个”约掉）
+  </text>
+  <line x1="127" y1="449" x2="143" y2="435" stroke="#9e3321" stroke-width="1.8"/>
+  <line x1="203" y1="449" x2="219" y2="435" stroke="#9e3321" stroke-width="1.8"/>
+
+  <!-- Right: Vector I/O diagram + computational cost -->
+  <rect x="434" y="92" width="490" height="370" rx="8" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="456" y="120" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#787167">INPUT → DOT PRODUCT → SCALAR OUTPUT</text>
+
+  <!-- Vector x boxes -->
+  <text x="518" y="148" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="16" font-style="italic" font-weight="700" fill="#235884">x（数量）</text>
+  <rect x="492" y="160" width="52" height="34" rx="5" fill="#e7eff5" stroke="#235884" stroke-width="1.4"/>
+  <text x="518" y="183" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#235884">1</text>
+  <rect x="492" y="202" width="52" height="34" rx="5" fill="#e7eff5" stroke="#235884" stroke-width="1.4"/>
+  <text x="518" y="225" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#235884">2</text>
+  <rect x="492" y="244" width="52" height="34" rx="5" fill="#e7eff5" stroke="#235884" stroke-width="1.4"/>
+  <text x="518" y="267" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#235884">3</text>
+
+  <!-- Vector y boxes -->
+  <text x="614" y="148" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="16" font-style="italic" font-weight="700" fill="#9e3321">y（单价）</text>
+  <rect x="588" y="160" width="52" height="34" rx="5" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.4"/>
+  <text x="614" y="183" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#9e3321">4</text>
+  <rect x="588" y="202" width="52" height="34" rx="5" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.4"/>
+  <text x="614" y="225" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#9e3321">5</text>
+  <rect x="588" y="244" width="52" height="34" rx="5" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.4"/>
+  <text x="614" y="267" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="16" font-weight="600" fill="#9e3321">6</text>
+
+  <!-- Pairwise multiply symbols -->
+  <text x="566" y="183" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" fill="#787167">×</text>
+  <text x="566" y="225" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" fill="#787167">×</text>
+  <text x="566" y="267" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" fill="#787167">×</text>
+
+  <!-- Arrows to Dot operator -->
+  <line x1="650" y1="177" x2="722" y2="213" stroke="#4a4640" stroke-width="1.4" marker-end="url(#arr-ink)"/>
+  <line x1="650" y1="219" x2="720" y2="219" stroke="#4a4640" stroke-width="1.4" marker-end="url(#arr-ink)"/>
+  <line x1="650" y1="261" x2="722" y2="225" stroke="#4a4640" stroke-width="1.4" marker-end="url(#arr-ink)"/>
+
+  <!-- Dot operator circle -->
+  <circle cx="752" cy="219" r="24" fill="#fbf8f2" stroke="#191816" stroke-width="1.8"/>
+  <circle cx="752" cy="219" r="4.5" fill="#9e3321"/>
+  <text x="752" y="260" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" fill="#787167">乘完相加</text>
+
+  <!-- Arrow to scalar output -->
+  <line x1="776" y1="219" x2="824" y2="219" stroke="#9e3321" stroke-width="1.8" marker-end="url(#arr-red)"/>
+  <rect x="832" y="194" width="68" height="50" rx="8" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.8"/>
+  <text x="866" y="226" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" font-weight="700" fill="#9e3321">32</text>
+  <text x="866" y="260" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#9e3321">输出：一个数</text>
+
+  <!-- Complexity card -->
+  <rect x="456" y="302" width="446" height="140" rx="7" fill="#fbf8f2" stroke="#d8d0c1"/>
+  <text x="476" y="328" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13.5" font-weight="700" fill="#191816">算起来有多便宜？—— 线性扫一遍 O(n)</text>
+  <line x1="476" y1="340" x2="882" y2="340" stroke="#d8d0c1" stroke-dasharray="3 3"/>
+  <text x="476" y="366" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" fill="#4a4640">   3 样水果：    3 次乘法 +   2 次加法</text>
+  <text x="476" y="392" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" fill="#4a4640">1000 维向量： 1000 次乘法 + 999 次加法</text>
+  <text x="476" y="422" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" font-weight="600" fill="#9e3321">→ 没有分支、没有循环依赖，论文里见到点积，当它一眨眼就算完。</text>
+
+</svg>

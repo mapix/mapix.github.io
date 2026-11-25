@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-label="用余弦定理与坐标展开证明点积两种算法等价">
+  <title>用余弦定理与坐标展开证明点积两种算法等价</title>
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#235884"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#9e3321"/>
+    </marker>
+    <marker id="arr-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#4a4640"/>
+    </marker>
+    <marker id="arr-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#787167"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#256b45"/>
+    </marker>
+    
+  </defs>
+  <rect x="0.5" y="0.5" width="959" height="539" rx="10" fill="#fbf8f2" stroke="#d8d0c1"/>
+  
+  <text x="36" y="28" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" letter-spacing="1.4" fill="#787167">FIG 06 · DOUBLE-COUNTING PROOF</text>
+  <text x="36" y="54" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="21" font-weight="700" fill="#191816">凭啥「影子 × 尺长」一定等于「对应乘加」？—— 同一个量算两遍</text>
+  <line x1="36" y1="68" x2="924" y2="68" stroke="#d8d0c1" stroke-width="1"/>
+
+  <!-- Left: Exact geometric triangle -->
+  <rect x="36" y="88" width="332" height="416" rx="8" fill="#f4efe4" stroke="#d8d0c1"/>
+  <text x="54" y="114" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11" fill="#787167">THE SHARED QUANTITY · 共同的第三条边</text>
+
+  <!-- Triangle fill -->
+  <polygon points="86,396 262.0,352.0 174.0,176.0" fill="#fbf8f2" stroke="none" opacity="0.7"/>
+
+  <!-- Angle arc -->
+  <path d="M 130.6 384.8 A 46 46 0 0 0 103.1 353.3" fill="none" stroke="#4a4640" stroke-width="1.4"/>
+  <text x="132.7" y="359.2" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="16" font-style="italic" font-weight="700" fill="#191816">θ</text>
+
+  <!-- Third side x - y -->
+  <line x1="174.0" y1="176.0" x2="262.0" y2="352.0" stroke="#b36b16" stroke-width="2.6" stroke-dasharray="7 4"/>
+  <rect x="226.0" y="244.0" width="110" height="42" rx="5" fill="#f8efe0" stroke="#b36b16" stroke-width="1.2"/>
+  <text x="281.0" y="262.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" font-weight="700" fill="#b36b16">‖x - y‖</text>
+  <text x="281.0" y="278.0" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="10.5" fill="#4a4640">平方 = 20</text>
+
+  <!-- Vector y -->
+  <line x1="86" y1="396" x2="174.0" y2="176.0" stroke="#9e3321" stroke-width="2.6" marker-end="url(#arr-red)"/>
+  <text x="166.0" y="166.0" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" font-weight="700" fill="#9e3321">y = (2, 5)</text>
+  <text x="94.0" y="286.0" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#9e3321">‖y‖=√29</text>
+
+  <!-- Vector x -->
+  <line x1="86" y1="396" x2="262.0" y2="352.0" stroke="#235884" stroke-width="2.6" marker-end="url(#arr-blue)"/>
+  <text x="238.0" y="376.0" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" font-weight="700" fill="#235884">x = (4, 1)</text>
+  <text x="174.0" y="394.0" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#235884">‖x‖=√17</text>
+
+  <circle cx="86" cy="396" r="4" fill="#191816"/>
+
+  <!-- Numerical check box -->
+  <rect x="52" y="424" width="300" height="66" rx="6" fill="#fbf8f2" stroke="#d8d0c1"/>
+  <text x="64" y="446" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#191816">数字闭环验算（x-y = (2, -4)）：</text>
+  <text x="64" y="466" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#4a4640">‖x-y‖² = 2²+(-4)² = 20</text>
+  <text x="64" y="483" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#9e3321">(‖x‖²+‖y‖²-20)/2 = (17+29-20)/2 = 13</text>
+
+  <!-- Right: Two paths deriving ||x - y||^2 -->
+  <!-- Path A: Coordinates -->
+  <rect x="388" y="88" width="536" height="148" rx="8" fill="#e7eff5" stroke="#235884" stroke-width="1.4"/>
+  <text x="408" y="114" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13.5" font-weight="700" fill="#235884">第一遍：按坐标 + 勾股定理展开（纯代数）</text>
+  <text x="408" y="146" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13.5" fill="#191816">‖x - y‖² = (x₁ - y₁)² + (x₂ - y₂)²</text>
+  <text x="408" y="176" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="13.5" fill="#4a4640">         = (x₁² + x₂²) + (y₁² + y₂²) - 2(x₁y₁ + x₂y₂)</text>
+  <rect x="406" y="192" width="498" height="34" rx="5" fill="#fbf8f2" stroke="#235884" stroke-opacity="0.5"/>
+  <text x="655" y="214" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15.5" font-weight="700" fill="#191816">
+    ‖x - y‖² = <tspan fill="#787167">‖x‖² + ‖y‖²</tspan> - 2 <tspan fill="#235884">Σ xᵢ yᵢ</tspan>
+  </text>
+
+  <!-- Path B: Law of cosines -->
+  <rect x="388" y="252" width="536" height="106" rx="8" fill="#f7e8e5" stroke="#9e3321" stroke-width="1.4"/>
+  <text x="408" y="278" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="13.5" font-weight="700" fill="#9e3321">第二遍：按初中余弦定理展开（纯几何）</text>
+  <text x="408" y="302" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12.5" fill="#4a4640">三角形两边为 ‖x‖、‖y‖，夹角 θ，对边为 ‖x - y‖：</text>
+  <rect x="406" y="314" width="498" height="34" rx="5" fill="#fbf8f2" stroke="#9e3321" stroke-opacity="0.5"/>
+  <text x="655" y="336" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15.5" font-weight="700" fill="#191816">
+    ‖x - y‖² = <tspan fill="#787167">‖x‖² + ‖y‖²</tspan> - 2 <tspan fill="#9e3321">‖x‖ ‖y‖ cos θ</tspan>
+  </text>
+
+  <!-- Convergence arrow -->
+  <line x1="656" y1="358" x2="656" y2="394" stroke="#191816" stroke-width="2" marker-end="url(#arr-ink)"/>
+  <text x="670" y="382" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" font-weight="600" fill="#4a4640">消去相同的 ‖x‖² + ‖y‖²，同除 -2</text>
+
+  <!-- Conclusion box -->
+  <rect x="388" y="402" width="536" height="102" rx="8" fill="#fbf8f2" stroke="#9e3321" stroke-width="2"/>
+  <text x="656" y="432" text-anchor="middle" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="11.5" fill="#9e3321">Q.E.D. · 代数与几何严丝合缝</text>
+  <text x="656" y="468" text-anchor="middle" font-family="'Newsreader', 'Noto Serif SC', Georgia, serif" font-size="25" font-weight="700" fill="#191816">
+    <tspan fill="#235884">Σ xᵢ yᵢ</tspan>  =  <tspan fill="#9e3321">‖x‖ ‖y‖ cos θ</tspan>
+  </text>
+  <text x="656" y="492" text-anchor="middle" font-family="'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', -apple-system, sans-serif" font-size="12" fill="#4a4640">高维空间同样成立：只是把 2 项展开换成 n 项之和</text>
+
+</svg>
