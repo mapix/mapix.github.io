@@ -8,9 +8,9 @@
 
 玩笑归玩笑，数字本身的巧合当然没有魔力——困惑度的绝对数值本就取决于分词方式和评测数据集。但这个小插曲之所以让人会心一笑，是因为它恰好撞上了一个严肃的问题：那条曲线一直往下压，尽头到底在哪里？
 
-![困惑度阶梯与未知门槛](assets/ci-01-perplexity-staircase.jpg)
+![Jacopo de' Barbari（归属），《卢卡·帕乔利肖像》（Portrait of Fra Luca Pacioli，约 1495）](assets/ci-01-barbari-pacioli.jpg)
 
-*困惑度一路向下，从未被单独设计的能力顺着同一条曲线接连浮现，尽头是一个尚无法命名的问号。*
+*Jacopo de' Barbari（归属），《Portrait of Fra Luca Pacioli》（卢卡·帕乔利肖像，约 1495，那不勒斯国立卡波迪蒙特美术馆藏）。撰写《神圣比例》的数学家左手按着欧几里得《几何原本》，右手指向石板上的几何图形，案头摆着圆规与木制十二面体，空中悬着一只装水的半透明水晶多面体。*
 
 这组曲线把一个反复被提起的命题推到了台前：**压缩即智能**。
 
@@ -26,9 +26,9 @@
 
 有一个很干净的实验：只把黑白棋的落子坐标按顺序喂给模型，从不教它规则，也从未给它看过棋盘，只要求它预测下一手落在哪里。按说模型可以去背常见开局和局部套路，可后来研究者检查它的内部状态时发现，它竟然自己长出了一张完整的 8×8 棋盘，清清楚楚追踪着此刻每个格子是黑、是白还是空。人为拨动它内部代表某一格棋子的状态，它对下一手的判断立刻随之改变。
 
-![只看落子坐标却浮现棋盘，臃肿卡片在挤压下坍缩成圆周规律](assets/ci-03-othello-grokking.jpg)
+![Sofonisba Anguissola，《下棋》（Partita a scacchi，1555）](assets/ci-02-anguissola-chess.jpg)
 
-*只读坐标序列却在内部重建了整张棋盘；当存储空间收紧，臃肿的查表记忆被迫坍缩成简洁的规则。*
+*Sofonisba Anguissola，《Partita a scacchi》（下棋，1555，波兰波兹南国家博物馆藏）。庭院树影下，三姐妹围在一张方格棋盘前，手停在棋子上方，目光越过盘面彼此试探。*
 
 **规律不是谁塞进去的，而是压缩压力逼出来的。** 把每一盘棋的走法死记下来太费空间，想要把预测误差再往下压一点，唯一的出路是自己悟出棋盘背后的规则。
 
@@ -48,9 +48,9 @@
 
 假设面前有一百万个散落在圆周上的点。当成数据库存下来，是一百万组坐标；压到尽头，只剩下一行方程 $x^2 + y^2 = r^2$。最微妙的跃迁就在这一刻发生：你原本只是为了省空间、去压缩过去见过的那一百万个点，可这条最短的生成规则，顺手就把第一百万零一个从未见过的点也算出来了。
 
-![巨幅 1:1 地图穿过沙漏瓶颈，化作勾勒圆与星空的圆规](assets/ci-04-borges-and-circle.jpg)
+![Giovanni Paolo Panini，《现代罗马画廊》（Modern Rome，1757）](assets/ci-03-panini-modern-rome.jpg)
 
-*1:1 的庞大档案穿过有限容量的瓶颈，被迫坍缩成一条极简的生成法则，从而把边界延伸进从未见过的区域。*
+*Giovanni Paolo Panini，《Modern Rome》（现代罗马画廊，1757，纽约大都会艺术博物馆藏）。穹顶大厅的四壁密密麻麻挂满罗马各处建筑与广场的画作，仿佛想把整座城市原样搬进一间屋子，前景的观者正俯身案前翻看图纸。*
 
 所以，泛化能力并不是压缩之外多出来的神秘附赠品。当你只能用有限的尺度去容纳无限的现实，抽离共性、丢掉噪点、把事实压成生成法则，是唯一行得通的活法。人类语言里的每一个抽象概念，本质上也是大脑在有限带宽下做出的有损压缩——丢掉每一只具体猫的偶然差异，留下那个能接住陌生新例子的结构。
 
@@ -70,17 +70,17 @@
 
 如果智能的唯一目标就是把预测误差压到最低、让世界毫无意外，那最理性的选择根本不是去认识宇宙，而是把自己关进一间漆黑、隔音、一成不变的屋子。在暗室里，下一秒永远和上一秒相同，困惑度直接归零。
 
-![左：毫无意外的漆黑暗室；右：推开门走向风浪与未知](assets/ci-05-dark-room-and-door.jpg)
+![Vilhelm Hammershøi，《白色房门（敞开的门）》（White Doors, or Open Doors，1905）](assets/ci-04-hammershoi-open-doors.jpg)
 
-*只追求预测误差归零，最完美的归宿是左侧的暗室；活着的智能却会推开门，走进充满意外的现实。*
+*Vilhelm Hammershøi，《White Doors, or Open Doors》（白色房门，1905，哥本哈根大卫收藏馆藏）。灰白安静的空室里没有一丝多余物件，几扇白门层层向深处敞开，微凉的日光斜落在空荡的地板上。*
 
 可活着的智能恰恰拒绝待在暗室里。它不会为了“猜得准”就退回死水，而是主动推开门，走进充满噪音和不确定性的现实里去试探、去干预、去承受反例，再把新撞出来的世界重新压成秩序。被动压缩历史数据，只能拟合一个静止的世界；敢在未知里行动并接受现实的敲打，智能才算真正闭环。
 
 ## 智能的本质
 
-![混沌碎片穿过棱镜凝结为秩序轨道，人站在露台望向地平线](assets/ci-06-essence-of-intelligence.jpg)
+![Vincent van Gogh，《星月夜》（De sterrennacht，1889）](assets/ci-05-vangogh-starry-night.jpg)
 
-*混沌穿过有限的棱镜被压成秩序，而决定光束下一刻投向何方的，不在棱镜本身。*
+*Vincent van Gogh，《De sterrennacht》（星月夜，1889，纽约现代艺术博物馆藏）。沉睡的村庄与深色柏树上方，翻涌的夜空与星云旋转出清晰而克制的涡流，秩序与未知在同一片天幕下彼此咬合。*
 
 回头再看“压缩即智能”，它真正有力之处，在于剥掉了智能身上所有神秘的修辞，露出了最朴素的物理起点：**以有限对抗无限。**
 
@@ -94,4 +94,4 @@
 
 ---
 
-*延伸阅读：OpenAI 首席科学家 Jakub Pachocki [Perplexity and Intelligence](https://openai.com/index/perplexity-and-intelligence/)、机器之心编译报道 [《刚刚，OpenAI首次公开预训练核心指标》](https://mp.weixin.qq.com/s/naPnZnOTCEMixOAsHG4OWQ)，以及小红书笔记 [《压缩即智能？》](https://www.xiaohongshu.com/explore/6b056c74000000002b0329fd?xsec_token=CB8awwuYrHVZCEJvOqxdQfAym0s30hwEK6oNg7ODpsfMs=&xsec_source=app_share)。*
+*延伸阅读：OpenAI 首席科学家 Jakub Pachocki [Perplexity and Intelligence](https://openai.com/index/perplexity-and-intelligence/)、机器之心编译报道 [《刚刚，OpenAI首次公开预训练核心指标》](https://mp.weixin.qq.com/s/naPnZnOTCEMixOAsHG4OWQ)，以及小红书笔记 [《压缩即智能？》](https://www.xiaohongshu.com/explore/6b056c74000000002b0329fd?xsec_token=CB8awwuYrHVZCEJvOqxdQfAym0s30hwEK6oNg7ODpsfMs=&xsec_source=app_share)。文中 5 幅公版馆藏画作依次引自雅各布·德·巴尔巴里（归属）、索福尼斯巴·安圭索拉、乔瓦尼·保罗·帕尼尼、威廉·哈默肖伊与文森特·梵高。*
