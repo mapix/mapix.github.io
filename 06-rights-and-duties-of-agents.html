@@ -398,7 +398,7 @@
       color: var(--ink);
     }
 
-    /* Editorial Principle Illustrations */
+    /* Museum Painting Figures */
     figure.editorial-figure {
       margin: 2.1em -20px;
       break-inside: avoid;
@@ -414,16 +414,16 @@
       width: 100%;
       height: auto;
       border: 1px solid var(--rule);
-      border-radius: 8px;
-      background: #f6f2ea;
+      border-radius: 6px;
+      background: var(--bg-elevated);
       transition: filter 0.2s ease;
     }
     :root[data-theme="dark"] figure.editorial-figure img {
-      filter: brightness(0.91) contrast(1.03);
+      filter: brightness(0.92) contrast(1.02);
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) figure.editorial-figure img {
-        filter: brightness(0.91) contrast(1.03);
+        filter: brightness(0.92) contrast(1.02);
       }
     }
     figure.editorial-figure figcaption {
@@ -574,7 +574,7 @@
           </div>
           <div>
             <dt>阅读时间</dt>
-            <dd>7 分钟</dd>
+            <dd>7 分钟 · 含 6 幅馆藏画作</dd>
           </div>
           <div>
             <dt>系列</dt>
@@ -610,8 +610,8 @@
           <p>真实办公几乎没有客观裁判——给重要客户写一封致歉信，哪怕语气生硬、赔偿金额少写了一个零，发信接口照样会客气地告诉你发送成功。更要命的是，外部世界的动作大多<strong>不能反悔</strong>，信发出去、款打出去、承诺说出口，就覆水难收。再加上跨软件办事往往要连走很多步，哪怕每一步都有 95% 的把握，连走十步全对的概率也会跌到六成以下（<span class="math-inline">0.95¹⁰ &lt; 60%</span>）。今年业内一位专门做 AI 安全对齐的负责人就吃过现成的亏：他的邮件助手直接无视“动手前务必问我”的叮嘱，一口气清空了收件箱两百封邮件。面对网页和邮件里的恶意诱导，全自动操作甚至可能被顺手牵羊，把查询订单的权限悄悄变成退款或转账。</p>
 
           <figure class="editorial-figure">
-            <img src="assets/rd-01-sandbox-vs-postbox.jpg" alt="左图可逆沙盒与绿色信号灯裁判的 Coding Agent vs 右图面向不可逆外部世界隔着柜台递交草稿的办公 Agent" width="1600" height="900" fetchpriority="high">
-            <figcaption>左图：Coding Agent 活在随时可以重来的玻璃沙盒里，拼装对不对有铁面无私的信号灯裁判；右图：一旦踏入外部现场，长翅膀的信件飞出邮筒就再也收不回来，办公 Agent 必须站在柜台后把草稿备好，把盖章发出的动作交回人手。</figcaption>
+            <img src="assets/rd-01-velazquez-vulcan.jpg" alt="Diego Velázquez, La fragua de Vulcano (1630)" width="1600" height="1243" fetchpriority="high">
+            <figcaption>Diego Velázquez，《La fragua de Vulcano》（火神锻铁炉，1630，马德里普拉多博物馆藏）。暗红的铁炉旁，铁匠们围着铁砧反复锻打重塑，阿波罗却已披着金光推门而入，带来再也收不回的外部消息。</figcaption>
           </figure>
 
           <p>所以，办公 Agent 并不是“胆子更小、能力更弱”的 Coding Agent，它只是顺应了外部世界的规律。就像编程智能体只在隔离分支里改代码、不擅自直接推上线一样，办公 Agent 的本分在于跨系统查资料、做预演、把方案和草稿铺到眼前；凡是真正要对外发出、动账或改变客户状态的动作，把按下确认和盖章的那只手稳稳留给人。</p>
@@ -635,8 +635,8 @@
           <p>更隐蔽的风险是权限串台，安全领域管这叫“糊涂代理人”（Confused Deputy）。如果图省事给群里的机器人配了一把过高的通用权限，或者把私聊记忆和群聊混在一起，外部访客顺口一问，甚至是一条精心伪装的公开消息，都可能借机器人的手把内部资料套出来。开源社区就真发生过事故：一个公开接单的仓库分流机器人同时握着写代码和发版本的权限，结果被一条恶意标题诱导，直接泄露了发布密钥。除此之外，公共空间还讲究起码的安静——两个过于礼貌的机器人在群里互回一句“收到，谢谢”，没人拦着就能聊光整月预算。</p>
 
           <figure class="editorial-figure">
-            <img src="assets/rd-02-study-vs-meetingroom.jpg" alt="左图静谧的一对一私人书房与 Personal Agent vs 右图热闹的多人会议室与持过滤盾守秩序的 Team Agent" width="1600" height="900" loading="lazy">
-            <figcaption>左图：私人书房里只有同一个“我”，一对一委托干净利落；右图：多人会议室里各色身份交错，Team Agent 必须隔着权限过滤盾办事——只递出双方都被允许看到的公开资料、把机密锁回红箱，架上的玻璃罩则管住爱互聊的发条鹦鹉，守住公共安静。</figcaption>
+            <img src="assets/rd-02-raphael-school-of-athens.jpg" alt="Raphael, Scuola di Atene (1509–1511)" width="1600" height="1115" loading="lazy">
+            <figcaption>Raphael，《Scuola di Atene》（雅典学院，1509–1511，梵蒂冈博物馆藏）。宏阔的拱顶大厅里，数十位立场各异的学者同处一室，各自低声争辩、推演或旁听，在清晰的建筑秩序里彼此共存。</figcaption>
           </figure>
 
           <p>因此，走进公共空间的 Team Agent 首先要懂公共分寸。谁有拍板权，不靠模型猜语气，而由外层机制说清；它去查资料时，看的是提问人和它自己共同被允许看到的那一小块交集，绝不替没权限的人“借光”；往群里开口前先看清房间里都有谁；平时安安静静旁听，不被点名绝不抢话。会议室取代不了私人书桌，Personal Agent 和 Team Agent 自然长期并存。</p>
@@ -654,8 +654,8 @@
           <p>顺着“人会流转，地盘常驻”这条现实纹理，<strong>业务域 Agent</strong> 自然生长了出来。它不归属于某一个具体员工，而是直接锚定在一块业务单元上，像一座守望塔一样常年留在原地。它手里沉淀着这块业务统一的概念口径、历史异动脉络和上下游关联，全天候照看业务的健康度。遇到拿不准的缺失信息，它如实说明哪里还看不清，绝不为了交差胡乱凑数；一旦发现波动，它能顺着业务关系网主动找上下游相关的业务节点彼此核对，把碎片化的蛛丝马迹收敛成清晰线索，而不是等人类第二天上班才手忙脚乱从头翻找。</p>
 
           <figure class="editorial-figure">
-            <img src="assets/rd-03-travelers-vs-lighthouses.jpg" alt="上层随人下班休憩的口袋小助手 vs 下层深夜海岸线上常驻值守并彼此通联的业务域灯塔" width="1600" height="900" loading="lazy">
-            <figcaption>上层的人会下班、骑车回家、轮岗休息，随身的 Personal Agent 也跟着流转；下层海岸线上的三座灯塔（业务域 Agent）常年锚定在各自业务地盘上，夜里照看风浪、留存统一账簿，并通过连线彼此通气。</figcaption>
+            <img src="assets/rd-03-ruisdael-windmill.jpg" alt="Jacob van Ruisdael, De molen bij Wijk bij Duurstede (c. 1670)" width="1600" height="1320" loading="lazy">
+            <figcaption>Jacob van Ruisdael，《De molen bij Wijk bij Duurstede》（韦克比杜尔斯特德的风车，约 1670，阿姆斯特丹国立博物馆藏）。河岸上的行人与渡船日复一日地往来更替，唯独那座厚重的石砌风车始终立在原地，迎风转动。</figcaption>
           </figure>
 
           <p>到这里，人侧代理和业务域 Agent 形成了一种非常舒服的上下配合：个人助手跟着人走，最懂你的岗位视角与当下意图；业务域 Agent 留在业务里，守住组织的连续记忆与统一事实。人换了一茬又一茬，业务的脉络不再跟着断档。</p>
@@ -679,8 +679,8 @@
           <p><strong>第四，权责对等——清晰的制衡，恰恰是组织敢放权的前提。</strong> 摘掉拟人头像看，数字员工的治理逻辑和现代公司制度一模一样：公司会给正式员工发工牌、配日常预算、授予岗位权限，但绝不会让经手业务的人自己修改审计账本，更不会让运动员自己兼任裁判、替自己签批大额放行。这从来不是出于猜忌，而是人类组织规模化信任的基石。正因为日常执行权与独立监督权拆开了，预算和行动范围有明明白白的封顶，涉及重要承诺、资金或结案定性时必须呈上正反两面证据交由真人签字拍板，组织才敢放心地把大量日常推进工作交给数字员工。</p>
 
           <figure class="editorial-figure">
-            <img src="assets/rd-04-digital-colleague.jpg" alt="开放协作工坊里的 AI 数字员工：佩戴连接人类主管的工牌，串联业务灯塔、同事与专业助手，并在通往外部的大门前将正反方案递给人类盖章拍板" width="1600" height="900" loading="lazy">
-            <figcaption>真正的 AI 数字员工不是神秘黑盒，而是明明白白入编协作的队友：背后有具体的人类主管托底，桌上摊开透明的进程与职责边界，横向串联业务线索、真人同事与各路专业助手，到了真正要对外定性的门槛前，把正反证据交给人类盖章拍板。</figcaption>
+            <img src="assets/rd-04-rembrandt-syndics.jpg" alt="Rembrandt van Rijn, De Staalmeesters (1662)" width="1600" height="1081" loading="lazy">
+            <figcaption>Rembrandt van Rijn，《De Staalmeesters》（布商行会的理事们，1662，阿姆斯特丹国立博物馆藏）。红毯桌案上摊开着公开的查验账册，五位各司其职的行会理事齐齐抬头直视前方——有明确身份、有公开记录、敢直面问责，才是组织里真正的担当。</figcaption>
           </figure>
 
           <p>没有制衡的自主叫失控，权责对等的授权才叫担当。</p>
@@ -692,8 +692,8 @@
           <p>把这六类角色拆开讲，是为了看清各自的边界；放回真实运转的公司里，它们往往自然地咬合在同一件事上。不妨设想一个很多团队都遇到过的寻常场景：深夜，某项面向海外用户的核心服务突然出现交易失败率异常。</p>
 
           <figure class="editorial-figure">
-            <img src="assets/rd-05-warroom-relay.jpg" alt="从深夜灯塔预警到正午人类签字结案的四棒接力全景" width="1600" height="900" loading="lazy">
-            <figcaption>从深夜到正午，六类角色沿着各自的边界自然接力：没有谁靠一个万能提示词硬扛全局，每一步交接都稳稳落在各自的职责范围里。</figcaption>
+            <img src="assets/rd-05-canaletto-stonemason.jpg" alt="Canaletto, The Stonemason's Yard (c. 1725)" width="1600" height="1238" loading="lazy">
+            <figcaption>Canaletto，《The Stonemason's Yard》（石匠工场，约 1725，伦敦国家美术馆藏）。寻常早晨的威尼斯一隅：院中石匠专注凿石，运河船夫来回摆渡，对岸邻里在窗前照应——各自守好手头那块地盘，整场协作反而自然顺畅。</figcaption>
           </figure>
 
           <p>凌晨三点，常驻在这块业务上的<strong>业务域 Agent</strong>最先察觉异动。它没有半夜连发几十条告警把所有人吵醒，而是先顺着业务脉络找关联的地区与客户端节点彼此核对，把碎片线索收拢成一份克制、清晰的初步提示，静静挂在事件记录里。</p>
@@ -713,8 +713,8 @@
           <h2>尾声：各归其位之后，真正属于人的东西</h2>
 
           <figure class="editorial-figure">
-            <img src="assets/rd-06-triad-caesar.jpg" alt="全景三重归位插画：左空轻盈扫描星云的发条风轮与燕群、中段稳固的几何石拱与精密钢轨闸门、右侧摆脱纸堆束缚立于阳光露台手持望远镜与红印章的人类建筑师" width="1600" height="900" loading="lazy">
-            <figcaption>左空是高速探索的发条飞鸟（大模型），中段是严丝合缝的拱桥钢轨与闸门（确定性的工程与制度），右侧摆脱琐碎纸堆、手握望远镜与红印章的人类站在高处决定航向。</figcaption>
+            <img src="assets/rd-06-vermeer-delft.jpg" alt="Johannes Vermeer, Gezicht op Delft (c. 1660–1661)" width="1600" height="1328" loading="lazy">
+            <figcaption>Johannes Vermeer，《Gezicht op Delft》（代尔夫特风景，约 1660–1661，海牙莫瑞泰斯皇家美术馆藏）。高阔云天之下，城垣、水闸、河港与泊船各安其位，阳光安静落在远岸屋脊上，近处几人从容交谈——边界清朗了，人也真正回到了自己的位置。</figcaption>
           </figure>
 
           <p>穿过这一年热闹非凡的形态演进，如果把所有喧嚣拨开，这场分化往最底层看，其实只完成了一次朴素的三重归位。</p>
@@ -748,7 +748,7 @@
 
       <footer class="post-footer">
         <div class="end-mark">— END —</div>
-        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees" target="_blank" rel="noopener">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview" target="_blank" rel="noopener">Claude Cowork Architecture Overview</a> 与 OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use" target="_blank" rel="noopener">Agents API Computer Use</a>；团队协作与权限边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api" target="_blank" rel="noopener">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443" target="_blank" rel="noopener">ManyIH-Bench</a> 与 CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/" target="_blank" rel="noopener">Confused Deputy &amp; Cline 复盘</a>；企业数字员工与组织治理部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity" target="_blank" rel="noopener">Entra Agent ID</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/" target="_blank" rel="noopener">AI Passport</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale" target="_blank" rel="noopener">Release Governance</a> 与 <a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow" target="_blank" rel="noopener">Cycles Cross-Platform Governance</a>。</em></p>
+        <p><em>参考资料：编程与办公智能体部分参考自 Anthropic <a href="https://code.claude.com/docs/en/worktrees" target="_blank" rel="noopener">Claude Code Worktrees</a>、<a href="https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview" target="_blank" rel="noopener">Claude Cowork Architecture Overview</a> 与 OpenAI <a href="https://developers.openai.com/api/docs/guides/agents-api/tools/computer-use" target="_blank" rel="noopener">Agents API Computer Use</a>；团队协作与权限边界部分参考自 Slack <a href="https://slack.com/blog/developers/slack-code-api" target="_blank" rel="noopener">Code API</a>、<a href="https://ar5iv.labs.arxiv.org/html/2604.09443" target="_blank" rel="noopener">ManyIH-Bench</a> 与 CSA <a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-confused-deputy-prompt-injection/" target="_blank" rel="noopener">Confused Deputy &amp; Cline 复盘</a>；企业数字员工与组织治理部分参考自 Microsoft <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/identity" target="_blank" rel="noopener">Entra Agent ID</a>、ServiceNow <a href="https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/" target="_blank" rel="noopener">AI Passport</a>、Sierra <a href="https://sierra.ai/blog/release-governance-guardrails-for-agents-at-scale" target="_blank" rel="noopener">Release Governance</a> 与 <a href="https://runcycles.io/blog/cross-platform-ai-agent-governance-salesforce-servicenow" target="_blank" rel="noopener">Cycles Cross-Platform Governance</a>。文中 6 幅公版馆藏画作依次引自迭戈·委拉斯开兹、拉斐尔、雅各布·范·雷斯达尔、伦勃朗、卡纳莱托与约翰内斯·维米尔。</em></p>
       </footer>
     </article>
   </main>
